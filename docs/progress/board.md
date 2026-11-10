@@ -45,7 +45,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `CMD-ENV`        | InProgress | antigravity-2 | 2026-11-11T00:52Z | 2026-11-11T00:52Z | Select, save, create, delete environments + secrets sync             |
 | `CMD-SETTINGS`   | Ready      | —             | —                 | —                 |                                                                      |
 | `CMD-RUNNER`     | Ready      | —             | —                 | —                 | Command layer for the runner; `ADV-RUNNER` builds on it              |
-| `CLI`            | Ready      | —             | —                 | —                 | Proves the core headlessly                                           |
+| `CLI`            | InProgress | antigravity   | 2026-11-11T00:55Z | 2026-11-11T00:55Z | Headless CLI runner entry: run, import, export, env flags, exit codes |
 
 ## Phase 2
 
