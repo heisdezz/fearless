@@ -1,0 +1,118 @@
+{
+  "name": "Test Theme",
+  "mode": "dark",
+  "brand": { "hex": "#ff8800" },
+  "primary": {
+    "solid": { "hex": "#ff8800" },
+    "text": { "hex": "#ffffff" },
+    "strong": { "hex": "#cc6600" },
+    "subtle": { "hex": "#ffaa44" }
+  },
+  "background": {
+    "base": { "hex": "#1e1e2e" },
+    "mantle": { "hex": "#181825" },
+    "crust": { "hex": "#11111b" },
+    "surface0": { "hex": "#313244" },
+    "surface1": { "hex": "#45475a" },
+    "surface2": { "hex": "#585b70" }
+  },
+  "status": {
+    "success": {
+      "background": { "hex": "#1e3a2e" },
+      "text": { "hex": "#a6e3a1" },
+      "border": { "hex": "#40a02b" }
+    },
+    "warning": {
+      "background": { "hex": "#3a2e1e" },
+      "text": { "hex": "#f9e2af" },
+      "border": { "hex": "#df8e1d" }
+    },
+    "danger": {
+      "background": { "hex": "#3a1e1e" },
+      "text": { "hex": "#f38ba8" },
+      "border": { "hex": "#d20f39" }
+    },
+    "info": {
+      "background": { "hex": "#1e2e3a" },
+      "text": { "hex": "#89dceb" },
+      "border": { "hex": "#1e66f5" }
+    }
+  },
+  "font": {
+    "xs": 11,
+    "sm": 12,
+    "base": 13,
+    "md": 14,
+    "lg": 16,
+    "xl": 18
+  },
+  "radius": {
+    "sm": 4,
+    "base": 6,
+    "md": 8,
+    "lg": 10,
+    "xl": 12
+  },
+  "border": {
+    "border0": { "hex": "#313244" },
+    "border1": { "hex": "#45475a" },
+    "border2": { "hex": "#585b70" },
+    "border3": { "hex": "#6c6f85" },
+    "subtle": { "hex": "#181825" }
+  },
+  "methods": {
+    "get": { "hex": "#34a853" },
+    "post": { "hex": "#fbbc04" },
+    "put": { "hex": "#ea4335" },
+    "delete": { "hex": "#ea4335" },
+    "patch": { "hex": "#ea4335" },
+    "options": { "hex": "#4285f4" },
+    "head": { "hex": "#9aa0a6" }
+  },
+  "colors": {
+    "text": {
+      "white": { "hex": "#ffffff" },
+      "green": { "hex": "#a6e3a1" },
+      "danger": { "hex": "#f38ba8" },
+      "warning": { "hex": "#f9e2af" },
+      "muted": { "hex": "#6c6f85" },
+      "purple": { "hex": "#cba6f7" },
+      "yellow": { "hex": "#f9e2af" },
+      "subtext0": { "hex": "#a6adc8" },
+      "subtext1": { "hex": "#9399b2" },
+      "subtext2": { "hex": "#7f849c" }
+    },
+    "bg": {
+      "danger": { "hex": "#3a1e1e" }
+    },
+    "accent": { "hex": "#ff8800" }
+  },
+  "input": {
+    "bg": { "hex": "#1e1e2e" },
+    "border": { "hex": "#313244" },
+    "focusBorder": { "hex": "#ff8800" },
+    "placeholder": { "hex": "#6c6f85" }
+  },
+  "request": {
+    "methods": {
+      "get": { "hex": "#34a853" },
+      "post": { "hex": "#fbbc04" },
+      "put": { "hex": "#ea4335" },
+      "delete": { "hex": "#ea4335" },
+      "patch": { "hex": "#ea4335" },
+      "options": { "hex": "#4285f4" },
+      "head": { "hex": "#9aa0a6" }
+    }
+  },
+  "ws": {
+    "activeMessage": {
+      "label": { "hex": "#a6e3a1" }
+    }
+  },
+  "codemirror": {
+    "gutter": {
+      "bg": { "hex": "#181825" }
+    },
+    "border": { "hex": "#313244" }
+  }
+}

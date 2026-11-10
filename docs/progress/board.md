@@ -21,31 +21,31 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 ## Phase 1
 
-| Package          | State      | Agent         | Claimed (UTC)     | Updated (UTC)     | Notes                                                                |
-| ---------------- | ---------- | ------------- | ----------------- | ----------------- | -------------------------------------------------------------------- |
-| `MODEL`          | Done       | zed-agent-1   | 2026-11-10T21:35Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 72.6 % coverage, race-clean            |
-| `EVENTS`         | Done       | zed-agent-1   | 2026-11-10T22:00Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 100 % coverage, race-clean             |
-| `BUS`            | InReview   | zed-agent-1   | 2026-11-10T22:45Z | 2026-11-10T23:10Z | Builds, vet-clean, 78 % coverage, race-clean (-count=5)              |
-| `FORMAT-CODE`    | InReview   | antigravity   | 2026-11-10T22:30Z | 2026-11-10T22:40Z | Builds, vet-clean, race-clean, 98.4 % coverage                       |
-| `FORMAT-BRU`     | InReview   | zed-agent-1   | 2026-11-10T23:15Z | 2026-11-11T00:25Z | Parser+mapper+writer; 357/357 parse, 335/335 round-trip, 77 % cov    |
-| `FORMAT-YAML`    | InReview   | zed-agent-1   | 2026-11-11T00:30Z | 2026-11-11T01:05Z | 64/64 yml fixtures; 86.5 % coverage; three body shapes handled       |
-| `VARS`           | InReview   | kilo          | 2026-11-10T21:08Z | 2026-11-11T02:45Z | Builds, vet-clean, race-clean, 84.2 % cov, all fixture cases pass    |
-| `TPL`            | InReview   | zed-agent-1   | 2026-11-11T02:25Z | 2026-11-11T02:50Z | vars blocks natively; 89.5 % cov; zero goja dependency               |
-| `COOKIES`        | InReview   | mimo-flash    | 2026-11-10T21:06Z | 2026-11-10T23:00Z | Implemented; race-clean, 83.3% cov, repo green; D-010 raised         |
-| `PERSIST`        | InReview   | antigravity   | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage                       |
-| `COLLECTION`     | InReview   | antigravity   | 2026-11-10T23:28Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 83.2 % cov, 1000 reqs in 22ms         |
-| `BUILD`          | InReview   | antigravity   | 2026-11-10T23:59Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 84.6 % cov, all body modes + synth    |
-| `PROXY`          | InReview   | antigravity   | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage                       |
-| `TLS`            | InReview   | antigravity   | 2026-11-10T23:13Z | 2026-11-10T23:25Z | Builds, vet-clean, race-clean, 85.4 % coverage                       |
-| `AUTH-CORE`      | InReview   | zed-agent-1   | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov              |
-| `TRANSPORT`      | InReview   | zed-agent-1   | 2026-11-11T01:45Z | 2026-11-11T02:20Z | Redirect matrix, cookies, streaming, timeline; 86 % cov              |
-| `ENGINE`         | InReview   | antigravity   | 2026-11-11T00:20Z | 2026-11-11T00:40Z | Builds, vet-clean, race-clean, 86.8 % cov, phase-order asserted      |
+| Package          | State      | Agent         | Claimed (UTC)     | Updated (UTC)     | Notes                                                                  |
+| ---------------- | ---------- | ------------- | ----------------- | ----------------- | ---------------------------------------------------------------------- |
+| `MODEL`          | Done       | zed-agent-1   | 2026-11-10T21:35Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 72.6 % coverage, race-clean              |
+| `EVENTS`         | Done       | zed-agent-1   | 2026-11-10T22:00Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 100 % coverage, race-clean               |
+| `BUS`            | InReview   | zed-agent-1   | 2026-11-10T22:45Z | 2026-11-10T23:10Z | Builds, vet-clean, 78 % coverage, race-clean (-count=5)                |
+| `FORMAT-CODE`    | InReview   | antigravity   | 2026-11-10T22:30Z | 2026-11-10T22:40Z | Builds, vet-clean, race-clean, 98.4 % coverage                         |
+| `FORMAT-BRU`     | InReview   | zed-agent-1   | 2026-11-10T23:15Z | 2026-11-11T00:25Z | Parser+mapper+writer; 357/357 parse, 335/335 round-trip, 77 % cov      |
+| `FORMAT-YAML`    | InReview   | zed-agent-1   | 2026-11-11T00:30Z | 2026-11-11T01:05Z | 64/64 yml fixtures; 86.5 % coverage; three body shapes handled         |
+| `VARS`           | InReview   | kilo          | 2026-11-10T21:08Z | 2026-11-11T02:45Z | Builds, vet-clean, race-clean, 84.2 % cov, all fixture cases pass      |
+| `TPL`            | InReview   | zed-agent-1   | 2026-11-11T02:25Z | 2026-11-11T02:50Z | vars blocks natively; 89.5 % cov; zero goja dependency                 |
+| `COOKIES`        | InReview   | mimo-flash    | 2026-11-10T21:06Z | 2026-11-10T23:00Z | Implemented; race-clean, 83.3% cov, repo green; D-010 raised           |
+| `PERSIST`        | InReview   | antigravity   | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage                         |
+| `COLLECTION`     | InReview   | antigravity   | 2026-11-10T23:28Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 83.2 % cov, 1000 reqs in 22ms           |
+| `BUILD`          | InReview   | antigravity   | 2026-11-10T23:59Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 84.6 % cov, all body modes + synth      |
+| `PROXY`          | InReview   | antigravity   | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage                         |
+| `TLS`            | InReview   | antigravity   | 2026-11-10T23:13Z | 2026-11-10T23:25Z | Builds, vet-clean, race-clean, 85.4 % coverage                         |
+| `AUTH-CORE`      | InReview   | zed-agent-1   | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov                |
+| `TRANSPORT`      | InReview   | zed-agent-1   | 2026-11-11T01:45Z | 2026-11-11T02:20Z | Redirect matrix, cookies, streaming, timeline; 86 % cov                |
+| `ENGINE`         | InReview   | antigravity   | 2026-11-11T00:20Z | 2026-11-11T00:40Z | Builds, vet-clean, race-clean, 86.8 % cov, phase-order asserted        |
 | `CMD-SEND`       | InReview   | antigravity   | 2026-11-11T00:45Z | 2026-11-11T00:55Z | Builds, vet-clean, race-clean, 87.4 % cov, terminal invariant verified |
-| `CMD-COLLECTION` | InReview   | antigravity-2 | 2026-11-11T00:05Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 85.7 % coverage, idempotent           |
-| `CMD-ENV`        | InProgress | antigravity-2 | 2026-11-11T00:52Z | 2026-11-11T00:52Z | Select, save, create, delete environments + secrets sync             |
-| `CMD-SETTINGS`   | Ready      | —             | —                 | —                 |                                                                      |
-| `CMD-RUNNER`     | Ready      | —             | —                 | —                 | Command layer for the runner; `ADV-RUNNER` builds on it              |
-| `CLI`            | InProgress | antigravity   | 2026-11-11T00:55Z | 2026-11-11T00:55Z | Headless CLI runner entry: run, import, export, env flags, exit codes |
+| `CMD-COLLECTION` | InReview   | antigravity-2 | 2026-11-11T00:05Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 85.7 % coverage, idempotent             |
+| `CMD-ENV`        | InReview   | antigravity-2 | 2026-11-11T00:52Z | 2026-11-11T00:58Z | Builds, vet-clean, race-clean, 88.5 % cov, select/save/create/delete   |
+| `CMD-SETTINGS`   | Ready      | —             | —                 | —                 |                                                                        |
+| `CMD-RUNNER`     | Ready      | —             | —                 | —                 | Command layer for the runner; `ADV-RUNNER` builds on it                |
+| `CLI`            | InProgress | antigravity   | 2026-11-11T00:55Z | 2026-11-11T00:55Z | Headless CLI runner entry: run, import, export, env flags, exit codes  |
 
 ## Phase 2
 
