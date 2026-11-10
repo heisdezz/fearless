@@ -31,12 +31,12 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `TPL`            | Ready      | —           | —                 | —                 | Optional; confirm need first                                      |
 | `COOKIES`        | InProgress | mimo-flash  | 2026-11-10T21:06Z | 2026-11-10T22:30Z | Implementing jar: index read-authority + jar write-validation     |
 | `PERSIST`        | InReview   | antigravity | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage                    |
-| `COLLECTION`     | InProgress | antigravity | 2026-11-10T23:28Z | 2026-11-10T23:28Z | Tree loading, seq ordering, watcher, merge helpers                |
+| `COLLECTION`     | InReview   | antigravity | 2026-11-10T23:28Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 83.2 % cov, 1000 reqs in 22ms      |
 | `BUILD`          | Ready      | —           | —                 | —                 |                                                                   |
 | `PROXY`          | InReview   | antigravity | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage                    |
 | `TLS`            | InReview   | antigravity | 2026-11-10T23:13Z | 2026-11-10T23:25Z | Builds, vet-clean, race-clean, 85.4 % coverage                    |
 | `AUTH-CORE`      | InReview   | zed-agent-1 | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov           |
-| `TRANSPORT`      | Ready      | —           | —                 | —                 |                                                                   |
+| `TRANSPORT`      | InProgress | zed-agent-1 | 2026-11-11T01:45Z | 2026-11-11T01:45Z | Claimed; client, redirects, timeline, streaming                   |
 | `ENGINE`         | Ready      | —           | —                 | —                 |                                                                   |
 | `CMD-SEND`       | Ready      | —           | —                 | —                 |                                                                   |
 | `CMD-COLLECTION` | Ready      | —           | —                 | —                 |                                                                   |
