@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race ./...
+
+  # The layering rule from docs/implementation/go-architecture.md §1:
+  # core/ and app/ must never reach the GUI. This is the Go analogue of Bruno's
+  # renderer/main boundary, enforced mechanically instead of by convention.
+  layer-guard:
+    name: Layer guard (core and app are GUI-free)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: core/ and app/ must not import a GUI toolkit
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden='github.com/egoist/mygo|github.com/lobehub/lobe-mygo|gioui.org|fyne.io'
+          if go list -deps ./internal/core/... ./internal/app/... 2>/dev/null | grep -Eq "$forbidden"; then
+            echo "::error::core/ or app/ depends on a GUI toolkit. See docs/implementation/go-architecture.md §1."
+            go list -deps ./internal/core/... ./internal/app/... | grep -E "$forbidden"
+            exit 1
+          fi
+          echo "Layer guard passed: core/ and app/ are GUI-free."
+
+      - name: presenters must not import a GUI toolkit
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden='github.com/egoist/mygo|github.com/lobehub/lobe-mygo|gioui.org|fyne.io'
+          if go list -deps ./internal/ui/presenters/... 2>/dev/null | grep -Eq "$forbidden"; then
+            echo "::error::presenters must stay toolkit-free so they can be unit-tested headlessly."
+            exit 1
+          fi
+          echo "Presenter guard passed."
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: gofmt
+        shell: bash
+        run: |
+          set -euo pipefail
+          unformatted=$(gofmt -l . | grep -v '^bruno/' || true)
+          if [ -n "$unformatted" ]; then
+            echo "::error::These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+  no-cgo:
+    name: Pure Go (no cgo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build with CGO disabled
+        run: CGO_ENABLED=0 go build ./...
