@@ -23,14 +23,14 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | ---------------- | ---------- | ----------- | ----------------- | ----------------- | --------------------------------------------------------- |
 | `MODEL`          | Done       | zed-agent-1 | 2026-11-10T21:35Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 72.6 % coverage, race-clean |
 | `EVENTS`         | Done       | zed-agent-1 | 2026-11-10T22:00Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 100 % coverage, race-clean  |
-| `BUS`            | InProgress | zed-agent-1 | 2026-11-10T22:45Z | 2026-11-10T22:45Z | Claimed; D-007 settled                                    |
+| `BUS`            | InReview   | zed-agent-1 | 2026-11-10T22:45Z | 2026-11-10T23:10Z | Builds, vet-clean, 78 % coverage, race-clean (-count=5)   |
 | `FORMAT-CODE`    | InReview   | antigravity | 2026-11-10T22:30Z | 2026-11-10T22:40Z | Builds, vet-clean, race-clean, 98.4 % coverage            |
 | `FORMAT-BRU`     | Ready      | —           | —                 | —                 | Largest Phase-1 risk                                      |
 | `FORMAT-YAML`    | Ready      | —           | —                 | —                 |                                                           |
-| `VARS`           | InProgress | kilo        | 2026-11-10T21:08Z | 2026-11-10T21:08Z | Scopes, precedence, interpolation                               |
+| `VARS`           | InProgress | kilo        | 2026-11-10T21:08Z | 2026-11-10T21:08Z | Scopes, precedence, interpolation                         |
 | `TPL`            | Ready      | —           | —                 | —                 | Optional; confirm need first                              |
 | `COOKIES`        | Claimed    | mimo-flash  | 2026-11-10T21:06Z | 2026-11-10T21:06Z | Cookie jar, trustworthy-origin policy, persistence hook   |
-| `PERSIST`        | Ready      | —           | —                 | —                 |                                                           |
+| `PERSIST`        | InProgress | antigravity | 2026-11-10T22:45Z | 2026-11-10T22:45Z | Spooling, cache lifecycle, eviction, atomic write         |
 | `COLLECTION`     | Ready      | —           | —                 | —                 |                                                           |
 | `BUILD`          | Ready      | —           | —                 | —                 |                                                           |
 | `PROXY`          | Ready      | —           | —                 | —                 |                                                           |
