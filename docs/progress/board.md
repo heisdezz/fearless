@@ -29,14 +29,14 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `FORMAT-YAML`    | InReview   | zed-agent-1 | 2026-11-11T00:30Z | 2026-11-11T01:05Z | 64/64 yml fixtures; 86.5 % coverage; three body shapes handled    |
 | `VARS`           | InProgress | kilo        | 2026-11-10T21:08Z | 2026-11-10T21:22Z | Initial interpolate/scopes/prompts impl + tests passing           |
 | `TPL`            | Ready      | —           | —                 | —                 | Optional; confirm need first                                      |
-| `COOKIES`        | InProgress | mimo-flash  | 2026-11-10T21:06Z | 2026-11-10T22:30Z | Implementing jar: index read-authority + jar write-validation     |
+| `COOKIES`        | InReview   | mimo-flash  | 2026-11-10T21:06Z | 2026-11-10T23:00Z | Implemented; race-clean, 83.3% cov, repo green; D-010 raised      |
 | `PERSIST`        | InReview   | antigravity | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage                    |
 | `COLLECTION`     | InReview   | antigravity | 2026-11-10T23:28Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 83.2 % cov, 1000 reqs in 22ms      |
-| `BUILD`          | Ready      | —           | —                 | —                 |                                                                   |
+| `BUILD`          | InProgress | antigravity | 2026-11-10T23:59Z | 2026-11-10T23:59Z | Request builder, URL synthesis, body render, Content-Type/Length  |
 | `PROXY`          | InReview   | antigravity | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage                    |
 | `TLS`            | InReview   | antigravity | 2026-11-10T23:13Z | 2026-11-10T23:25Z | Builds, vet-clean, race-clean, 85.4 % coverage                    |
 | `AUTH-CORE`      | InReview   | zed-agent-1 | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov           |
-| `TRANSPORT`      | InProgress | zed-agent-1 | 2026-11-11T01:45Z | 2026-11-11T01:45Z | Claimed; client, redirects, timeline, streaming                   |
+| `TRANSPORT`      | InReview   | zed-agent-1 | 2026-11-11T01:45Z | 2026-11-11T02:20Z | Redirect matrix, cookies, streaming, timeline; 86 % cov           |
 | `ENGINE`         | Ready      | —           | —                 | —                 |                                                                   |
 | `CMD-SEND`       | Ready      | —           | —                 | —                 |                                                                   |
 | `CMD-COLLECTION` | Ready      | —           | —                 | —                 |                                                                   |
