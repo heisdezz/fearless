@@ -88,3 +88,17 @@ _None yet._
 - **What I need:** nothing from me; logged so the tree-wide gates are not mistaken for a regression in another package.
 - **Proposed resolution:** `n, err := s.evictLocked(...)` (or `_, err :=`).
 - **Status:** OPEN
+
+## B-005 — ENGINE calls template/model with field names that do not exist
+
+- **Date:** 2026-11-11T03:30Z
+- **Package:** `ENGINE`
+- **Agent:** zed-agent-1 (reporter)
+- **Blocked on:** `antigravity` (current `ENGINE` owner)
+- **Problem:** `internal/core/engine/pipeline.go` does not compile against the delivered `model` and `template` packages:
+  - `in.Item.Request.Vars.Req` — the field is `Vars.PreRequest` (and `Vars.PostResponse`).
+  - `tplRes.Vars` — `template.Result` exposes `Values []model.Variable`, plus helpers `AsMap()` and `Lookup(name)`.
+  - `build.BuildInput{Ancestors: ...}` — no such field on the current `BUILD` type.
+- **What I need:** nothing from me; logged so it is not mistaken for a regression in `MODEL`/`TPL`.
+- **Proposed resolution:** use `Vars.PreRequest` and iterate `tplRes.AsMap()`; reconcile the `BUILD` input field with that package's owner.
+- **Status:** OPEN

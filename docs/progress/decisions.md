@@ -151,3 +151,43 @@ Use this for anything that crosses a package boundary: new exported symbols, int
 - **Consequence:** `docs/flows/scripting-flow.md` §1 describes both blocks as running through JS runtimes (`VarsRuntime`). That remains true for genuine expressions. `TPL` therefore supersedes nothing but covers the declarative subset, and `SCRIPT-POST` keeps responsibility for arbitrary JavaScript in these blocks.
 - **Action required:** `SCRIPT-POST` should call `template.PostResponse` first and fall back to the engine only for values reported unresolved, so variable blocks stay cheap in the common case.
 - **Supersedes:** —
+
+## D-011 — Rulings on the open items (D-006, UQ-D3, UQ-D4, UQ-D6)
+
+- **Date:** 2026-11-11T03:20Z
+- **Raised by:** zed-agent-1, on instruction to decide rather than defer
+- **Affects:** `INFRA`, `FORMAT-BRU`, `ADV-HISTORY`, all packages
+- **Supersedes:** D-006 (confirmed), UQ-D3 / UQ-D4 / UQ-D6 from `research/unresolved-questions.md`
+
+### D-006 — CONFIRMED: the layout is `internal/`
+
+The code lives at `internal/core`, `internal/app` and `internal/ui`, and the CI guard checks those paths. The `./core/... ./app/...` form in `go-architecture.md` §1 is shorthand that was never a real path — and reading it literally made the guard pass vacuously (B-002).
+
+Nothing at the repository root conflicts: `internal/app` is the application layer and the root `app/` directory is empty and untracked.
+
+**No further action.** Treat `./internal/...` as the only correct form in scripts.
+
+### UQ-D4 — DECIDED: semantics-preserving writer, not byte-exact
+
+Measured: **5 of 335** upstream requests (1 %) reproduce byte-for-byte through parse → write. Byte-exact fidelity would mean replicating Bruno's writer quirks — key ordering anomalies, inconsistent blank lines, ad-hoc `'''` handling — and it would break on the first formatting fix, because the "correct" output would then differ from the fixture.
+
+The property that matters is that no information is lost, and that guarantee holds at **335/335**. Saving a file may reformat it; it will not lose a field.
+
+**Consequence:** users who keep a Bruno collection in git will see a formatting diff on first save in this application. That is expected and acceptable. Never claim byte-compatibility.
+
+### UQ-D3 — DECIDED: metadata always, bodies on failure or explicit save
+
+- Every execution keeps a metadata row: timestamp, collection/item UIDs, environment, method, URL, status, duration, size, error.
+- **Bodies are retained** when the request failed, or when the user explicitly saves the result as an example. Successful bodies are referenced by `BodyRef` and are subject to the normal spool GC.
+- **Retention:** prune by age _and_ total size — rows older than 30 days, then oldest-first until the store is under 200 MB. Both are settings (`PrivacySettings.HistoryRetainDays`, plus a size cap), so a user who wants everything can disable pruning.
+- **Rationale:** the audit value of history is in _what was called and what came back when it broke_. Keeping every successful body doubles disk usage for data nobody re-reads, and the spool already deduplicates by content hash.
+
+### UQ-D6 — DECIDED: v1 scope is HTTP + collections + scripting
+
+**In v1:** HTTP requests (all body modes), collections in both dialects, environments and variables, auth through OAuth2, scripting/tests/assertions, the collection runner, and import from Postman and curl.
+
+**Deferred, explicitly:** gRPC, WebSocket, mock server, AI assistant, integrated terminal, OpenAPI sync, WSDL import, and the docs/tiptap editor.
+
+**Rationale:** every deferred item either needs a subsystem with its own risk profile (gRPC/WS transports, mock server) or was excluded by the Go-only constraint (terminal, AI, Chromium-rendered previews). Deferring them keeps the compatibility work — both codecs, scripting, auth — on the critical path rather than diluted.
+
+- **Action required:** `board.md` Phase 7 items stay `Ready` but must not block any Phase 1–6 milestone; the roadmap's acceptance gates are the definition of v1.
