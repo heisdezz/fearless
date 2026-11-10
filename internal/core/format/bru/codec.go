@@ -201,20 +201,32 @@ func (c *Codec) ParseEnvironment(data []byte) (*model.Environment, error) {
 	return env, nil
 }
 
-// WriteRequest serialises a request. It is a placeholder until the writer lands;
-// see the package log for status.
+// WriteRequest serialises a request as `.bru`.
+//
+// The output is semantics-preserving, not byte-identical to the source: block and
+// key order follow Bruno's own serialiser. Round-trip tests assert
+// parse(write(parse(x))) == parse(x).
 func (c *Codec) WriteRequest(req *model.Request) ([]byte, error) {
-	return nil, errors.New("bru: writer not implemented yet")
+	if req == nil {
+		return nil, errors.New("bru: nil request")
+	}
+	return []byte(writeRequest(req)), nil
 }
 
 // WriteFolder serialises a folder file.
 func (c *Codec) WriteFolder(folder *model.Item) ([]byte, error) {
-	return nil, errors.New("bru: writer not implemented yet")
+	if folder == nil {
+		return nil, errors.New("bru: nil folder")
+	}
+	return []byte(writeFolder(folder)), nil
 }
 
 // WriteEnvironment serialises an environment file.
 func (c *Codec) WriteEnvironment(env *model.Environment) ([]byte, error) {
-	return nil, errors.New("bru: writer not implemented yet")
+	if env == nil {
+		return nil, errors.New("bru: nil environment")
+	}
+	return []byte(writeEnvironment(env)), nil
 }
 
 // Register installs the codec in the format registry. It is called from an

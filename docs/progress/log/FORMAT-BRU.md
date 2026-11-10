@@ -18,21 +18,21 @@ Package: `internal/core/format/bru/**`. Depends on `internal/core/model` and `in
   - `auth.go` — `auth { mode }` + `auth:<mode>` → the auth union for all 12 modes.
   - `codec.go` — `format.Codec` implementation for request/folder/environment/collection-config.
 - **Tests:** 45 test functions across `parser_test.go`, `mapper_test.go`, `upstream_test.go`. `go test -race` passes; **79.3 % statement coverage**; `gofmt` and `go vet` clean.
-- **Conformance:** **357 of 357** v2 `.bru` files in the Bruno clone parse *and* map with zero failures. Four legacy v1 files are detected and skipped (`isV1Dialect`); the test fails if more than a quarter of the corpus is classified v1, so a broken detector cannot silently pass.
+- **Conformance:** **357 of 357** v2 `.bru` files in the Bruno clone parse _and_ map with zero failures. Four legacy v1 files are detected and skipped (`isV1Dialect`); the test fails if more than a quarter of the corpus is classified v1, so a broken detector cannot silently pass.
 
 ### Grammar rules that took empirical work to get right
 
 These are the parts a from-scratch implementation gets wrong, recorded so nobody has to rediscover them:
 
-| Rule | Why it matters |
-| --- | --- |
-| **Text-block terminator is `nl "}"` with the brace at column 0** | An indented `  }` inside a JS script or JSON body is *content*. My first attempt accepted indented braces and truncated every script containing an object literal. |
-| **Terminator selection is backtracking, not greedy-longest** | `textblock = textline (~tagend nl textline)*` combined with the column-0 rule; the first viable terminator wins. Taking the *last* one made block 1 swallow blocks 2–5. |
-| **Text bodies are outdented by 2 spaces** (`outdentString(str, 2)`), and the newline after `{` is not part of the body | Verified in `bruToJson.js`. |
-| **`'''` multiline values strip exactly 4 characters per line** (`line.slice(4)`), keep the leading newline, and empty short lines | Different rule from text bodies; both are implemented separately. |
-| **`assert` is a dictionary, not a text block** | It uses `assertdictionary`, whose keys may contain dots (`res.body.items`) and whose values may contain spaces (`lt 1000`). Classifying it as text silently produced zero assertions. |
-| **`tags: [ … ]` is a list-valued pair**, newline-separated | `value = list \| multilinetextblock \| singlelinevalue`. Missing this failed 13 corpus files. |
-| **Blank `maxRedirects:` means unset, not 0** | Bruno distinguishes them; `ItemSettings` uses pointers so inheritance still works. |
+| Rule                                                                                                                              | Why it matters                                                                                                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Text-block terminator is `nl "}"` with the brace at column 0**                                                                  | An indented `  }` inside a JS script or JSON body is _content_. My first attempt accepted indented braces and truncated every script containing an object literal.                    |
+| **Terminator selection is backtracking, not greedy-longest**                                                                      | `textblock = textline (~tagend nl textline)*` combined with the column-0 rule; the first viable terminator wins. Taking the _last_ one made block 1 swallow blocks 2–5.               |
+| **Text bodies are outdented by 2 spaces** (`outdentString(str, 2)`), and the newline after `{` is not part of the body            | Verified in `bruToJson.js`.                                                                                                                                                           |
+| **`'''` multiline values strip exactly 4 characters per line** (`line.slice(4)`), keep the leading newline, and empty short lines | Different rule from text bodies; both are implemented separately.                                                                                                                     |
+| **`assert` is a dictionary, not a text block**                                                                                    | It uses `assertdictionary`, whose keys may contain dots (`res.body.items`) and whose values may contain spaces (`lt 1000`). Classifying it as text silently produced zero assertions. |
+| **`tags: [ … ]` is a list-valued pair**, newline-separated                                                                        | `value = list \| multilinetextblock \| singlelinevalue`. Missing this failed 13 corpus files.                                                                                         |
+| **Blank `maxRedirects:` means unset, not 0**                                                                                      | Bruno distinguishes them; `ItemSettings` uses pointers so inheritance still works.                                                                                                    |
 
 ### Notes
 
@@ -43,8 +43,20 @@ These are the parts a from-scratch implementation gets wrong, recorded so nobody
 
 ### Not done in this package
 
-- **The writer.** `WriteRequest`, `WriteFolder`, `WriteEnvironment` return a "not implemented yet" error. Writing is a separate concern from parsing (ordering, `~` prefixes, `'''` re-quoting, multiline re-indentation) and is the natural next unit of work. Recorded so `COLLECTION` and the export path are not blocked unexpectedly.
 - **gRPC/WebSocket bodies** (`body:grpc`, `body:ws`) parse as text blocks but are not mapped onto the model, which has no fields for them yet.
 - **v1 dialect** is detected and skipped, not parsed.
+- **`omitHeaders`/`disableParsingResponseJson`** are written by the writer if set but are not read by the mapper (no model behaviour depends on them yet).
 
-- **Open:** awaiting review. `FORMAT-YAML` and `COLLECTION` are unblocked for reading; anything that writes `.bru` needs the writer first.
+### 2026-11-11T00:25Z — zed-agent-1 (writer)
+
+- **Did:** Added `writer.go` and wired `WriteRequest`, `WriteFolder`, `WriteEnvironment` into the codec.
+  - Block order follows Bruno's `jsonToBru`: meta, method, params, headers, auth, body, script, tests, vars, assertions, settings, docs.
+  - Standard verbs use a bare `get { }` block; a custom verb uses `http { method: … }`.
+  - Disabled rows keep their `~`; keys containing `: " { } space` are quoted; multiline values use `'''` with 2-space indent.
+  - Only the active auth mode's non-empty fields are written.
+  - Settings omit unset fields entirely, so inheritance survives a save.
+- **Tests:** 9 writer tests plus `TestRoundTripRequests`. **Round-trip: 335 of 335 requests parse → write → parse with no model change, 0 failures.** Full suite `-race`, coverage 77.2 %.
+- **Bug found by the round-trip test:** text bodies were written unindented, but the parser outdents by 2, so every save would strip two real characters from a JSON body. Fixed by indenting body lines by 2; `TestWriteJSONBodySurvivesNestedBraces` pins it.
+- **Bug found by the round-trip test:** trailing newlines in text blocks were trimmed on write but present in the source, so `tests` blocks differed after one round trip. Fixed by preserving the text verbatim; this is why the round-trip test compares models rather than bytes.
+
+- **Open:** awaiting review. Writer and parser are complete for the v2 dialect; `COLLECTION`, `FORMAT-YAML` and the export path are unblocked.
