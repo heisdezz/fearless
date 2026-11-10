@@ -1,0 +1,5 @@
+source_commit: 60d7517d0545ef82c032c10dcbb6a3c815d246cf
+source_paths:
+  packages/bruno-cli/tests/integration/digest-auth/fixtures/collection/bruno.json
+  packages/bruno-cli/tests/integration/digest-auth/fixtures/collection/request-level.yml
+  packages/bruno-cli/tests/integration/digest-auth/fixtures/collection/environments/local.yml

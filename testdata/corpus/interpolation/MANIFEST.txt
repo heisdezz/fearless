@@ -1,0 +1,6 @@
+source_commit: 60d7517d0545ef82c032c10dcbb6a3c815d246cf
+source_paths:
+  packages/bruno-tests/collection/string interpolation/env vars.bru
+  packages/bruno-tests/collection/string interpolation/missing values.bru
+  packages/bruno-tests/collection/string interpolation/objects-arrays interpolation.bru
+  packages/bruno-tests/collection/string interpolation/runtime vars.bru

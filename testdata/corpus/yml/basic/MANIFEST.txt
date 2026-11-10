@@ -1,0 +1,9 @@
+source_commit: 60d7517d0545ef82c032c10dcbb6a3c815d246cf
+source_paths:
+  packages/bruno-cli/tests/commands/docs/fixtures/yml-collection/opencollection.yml
+  packages/bruno-cli/tests/commands/docs/fixtures/yml-collection/request_1.yml
+  packages/bruno-cli/tests/commands/docs/fixtures/yml-collection/request_2.yml
+  packages/bruno-cli/tests/commands/docs/fixtures/yml-collection/folder_1/folder.yml
+  packages/bruno-cli/tests/commands/docs/fixtures/yml-collection/folder_1/request_1.yml
+  packages/bruno-cli/tests/commands/docs/fixtures/yml-collection/folder_2/folder.yml
+  packages/bruno-cli/tests/commands/docs/fixtures/yml-collection/folder_2/request_1.yml

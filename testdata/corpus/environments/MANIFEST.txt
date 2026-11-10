@@ -1,0 +1,4 @@
+source_commit: 60d7517d0545ef82c032c10dcbb6a3c815d246cf
+source_paths:
+  packages/bruno-tests/collection/environments/Local.bru
+  packages/bruno-tests/collection/environments/Prod.bru

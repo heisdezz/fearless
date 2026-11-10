@@ -1,0 +1,7 @@
+source_commit: 60d7517d0545ef82c032c10dcbb6a3c815d246cf
+source_paths:
+  packages/bruno-cli/tests/commands/docs/fixtures/collection/bruno.json
+  packages/bruno-cli/tests/commands/docs/fixtures/collection/request_1.bru
+  packages/bruno-cli/tests/commands/docs/fixtures/collection/request_2.bru
+  packages/bruno-cli/tests/commands/docs/fixtures/collection/folder_1/folder.bru
+  packages/bruno-cli/tests/commands/docs/fixtures/collection/folder_1/request_1.bru
