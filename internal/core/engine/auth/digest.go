@@ -72,10 +72,16 @@ func (d *digestTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return first, nil
 	}
 
+	// Without a way to rebuild the request there is no retry to make. Returning the
+	// 401 is honest: the caller sees the server's answer rather than an invented
+	// failure.
+	if d.rewind == nil {
+		return first, nil
+	}
+
 	// The body of the 401 must be closed before the retry, or the connection
 	// cannot be reused and the server may treat the two attempts as unrelated.
-	_, _ = io.Copy(io.Discard, io.LimitReader(first.Body, 1<<16))
-	_ = first.Body.Close()
+	_ = closeAndDrain(first.Body)
 
 	attempts := 1
 	if ch.Stale {
@@ -104,6 +110,18 @@ func (d *digestTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		ch = nextChallenge
 	}
 	return last, nil
+}
+
+// closeAndDrain discards and closes a response body.
+//
+// Draining a bounded amount first lets the connection be reused, which matters
+// because the retry should ideally travel over the same connection.
+func closeAndDrain(body io.ReadCloser) error {
+	if body == nil {
+		return nil
+	}
+	_, _ = io.Copy(io.Discard, io.LimitReader(body, 1<<16))
+	return body.Close()
 }
 
 // requestURI returns the request-target used in the digest calculation.

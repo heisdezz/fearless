@@ -29,17 +29,32 @@ func (basicProvider) Prepare(_ context.Context, cfg *model.Auth, deps Deps) (Pre
 
 // digestProvider implements HTTP Digest authentication.
 //
-// The credentials are the same as Basic; the difference is that the header is
-// computed after a 401 challenge, which requires a transport wrapper. That dance
-// lives in digest.go (AUTH-DIGEST); this provider only records the config.
-type digestConfigProvider struct{}
+// Digest cannot set a header up front: the response depends on a nonce the
+// server has not sent yet. Prepare therefore returns a TransportProvider that
+// performs the 401 challenge/retry dance, which is the whole mechanism.
+type digestProvider struct{}
 
-func (digestConfigProvider) Mode() model.AuthMode { return model.AuthDigest }
+func (digestProvider) Mode() model.AuthMode { return model.AuthDigest }
 
-// Prepare records nothing: digest cannot be applied before the server supplies a
-// nonce. The transport provider reads the config from RequestContext instead.
-func (digestConfigProvider) Prepare(_ context.Context, _ *model.Auth, _ Deps) (Prepared, error) {
-	return Prepared{}, nil
+// Prepare supplies a transport that signs the request after a challenge.
+//
+// The credentials are interpolated here, before the transport runs, so a
+// `{{password}}` reference works. The rewind function rebuilds the request from
+// the pipeline's replayable body; when the caller supplied one, retries are
+// possible, and when it did not, the first (unauthenticated) response is returned
+// unchanged rather than failing — which is exactly what a server that rejects
+// Digest would produce anyway.
+func (digestProvider) Prepare(_ context.Context, cfg *model.Auth, deps Deps) (Prepared, error) {
+	user := interpolate(deps, model.DerefString(cfg.Username))
+	pass := interpolate(deps, model.DerefString(cfg.Password))
+
+	return Prepared{
+		Transport: &digestTransport{
+			user:   user,
+			pass:   pass,
+			rewind: deps.Rewind,
+		},
+	}, nil
 }
 
 // wsseProvider implements WSSE UsernameToken (used by some SOAP APIs).

@@ -27,10 +27,9 @@ func RegisterBase() {
 	Register(bearerProvider{})
 	Register(apiKeyProvider{})
 	Register(wsseProvider{})
-	// Digest registers its config-side provider here; the transport half lives in
-	// AUTH-DIGEST. Until that package lands, digest resolves but applies nothing,
-	// which is the same state as a 401 with no challenge.
-	Register(digestConfigProvider{})
+	// Digest's work happens in the transport, after the server's challenge; the
+	// provider supplies that transport. See digest.go.
+	Register(digestProvider{})
 }
 
 // ChainFor builds the auth inheritance chain for one request.

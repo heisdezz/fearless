@@ -66,15 +66,15 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 ## Phase 4
 
-| Package         | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                             |
-| --------------- | ---------- | ----------- | ----------------- | ----------------- | --------------------------------- |
-| `AUTH-DIGEST`   | InProgress | zed-agent-1 | 2026-11-11T02:55Z | 2026-11-11T02:55Z | Wire digestTransport into Prepare |
-| `AUTH-NTLM`     | Ready      | —           | —                 | —                 |                                   |
-| `AUTH-OAUTH1`   | Ready      | —           | —                 | —                 |                                   |
-| `AUTH-OAUTH2`   | Ready      | —           | —                 | —                 | Needs `PLATFORM`                  |
-| `AUTH-AWSV4`    | Ready      | —           | —                 | —                 |                                   |
-| `AUTH-EDGEGRID` | Ready      | —           | —                 | —                 |                                   |
-| `ENV-FILES`     | Ready      | —           | —                 | —                 |                                   |
+| Package         | State    | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                       |
+| --------------- | -------- | ----------- | ----------------- | ----------------- | ------------------------------------------- |
+| `AUTH-DIGEST`   | InReview | zed-agent-1 | 2026-11-11T02:55Z | 2026-11-11T03:05Z | Wired into Apply; end-to-end challenge test |
+| `AUTH-NTLM`     | Ready    | —           | —                 | —                 |                                             |
+| `AUTH-OAUTH1`   | Ready    | —           | —                 | —                 |                                             |
+| `AUTH-OAUTH2`   | Ready    | —           | —                 | —                 | Needs `PLATFORM`                            |
+| `AUTH-AWSV4`    | Ready    | —           | —                 | —                 |                                             |
+| `AUTH-EDGEGRID` | Ready    | —           | —                 | —                 |                                             |
+| `ENV-FILES`     | Ready    | —           | —                 | —                 |                                             |
 
 ## Phase 5
 

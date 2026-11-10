@@ -84,6 +84,13 @@ type Deps struct {
 	RandBytes func(n int) []byte
 	// Getenv reads a process environment variable.
 	Getenv func(string) string
+	// Rewind rebuilds the request for a retry after a challenge.
+	//
+	// Challenge-response schemes (digest, ntlm) consume the request body on the
+	// first attempt, so a retry needs a fresh one. The pipeline supplies this; when
+	// it is nil, providers that need it fall back to returning the original
+	// response unchanged rather than failing.
+	Rewind func() (*http.Request, error)
 }
 
 // Token is an obtained OAuth2 token.
