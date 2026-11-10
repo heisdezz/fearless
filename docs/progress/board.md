@@ -40,9 +40,9 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `AUTH-CORE`      | InReview   | zed-agent-1   | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov              |
 | `TRANSPORT`      | InReview   | zed-agent-1   | 2026-11-11T01:45Z | 2026-11-11T02:20Z | Redirect matrix, cookies, streaming, timeline; 86 % cov              |
 | `ENGINE`         | InReview   | antigravity   | 2026-11-11T00:20Z | 2026-11-11T00:40Z | Builds, vet-clean, race-clean, 86.8 % cov, phase-order asserted      |
-| `CMD-SEND`       | InProgress | antigravity   | 2026-11-11T00:45Z | 2026-11-11T00:45Z | SendRequest, CancelRequest, registry, context wiring, bus publishing |
+| `CMD-SEND`       | InReview   | antigravity   | 2026-11-11T00:45Z | 2026-11-11T00:55Z | Builds, vet-clean, race-clean, 87.4 % cov, terminal invariant verified |
 | `CMD-COLLECTION` | InReview   | antigravity-2 | 2026-11-11T00:05Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 85.7 % coverage, idempotent           |
-| `CMD-ENV`        | Ready      | —             | —                 | —                 |                                                                      |
+| `CMD-ENV`        | InProgress | antigravity-2 | 2026-11-11T00:52Z | 2026-11-11T00:52Z | Select, save, create, delete environments + secrets sync             |
 | `CMD-SETTINGS`   | Ready      | —             | —                 | —                 |                                                                      |
 | `CMD-RUNNER`     | Ready      | —             | —                 | —                 | Command layer for the runner; `ADV-RUNNER` builds on it              |
 | `CLI`            | Ready      | —             | —                 | —                 | Proves the core headlessly                                           |
@@ -68,15 +68,15 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 ## Phase 4
 
-| Package         | State    | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                       |
-| --------------- | -------- | ----------- | ----------------- | ----------------- | ------------------------------------------- |
-| `AUTH-DIGEST`   | InReview | zed-agent-1 | 2026-11-11T02:55Z | 2026-11-11T03:05Z | Wired into Apply; end-to-end challenge test |
-| `AUTH-NTLM`     | Ready    | —           | —                 | —                 |                                             |
-| `AUTH-OAUTH1`   | Ready    | —           | —                 | —                 |                                             |
-| `AUTH-OAUTH2`   | Ready    | —           | —                 | —                 | Needs `PLATFORM`                            |
-| `AUTH-AWSV4`    | InReview | zed-agent-1 | 2026-11-11T03:40Z | 2026-11-11T04:15Z | Matches AWS documented vector; 89.3 % cov   |
-| `AUTH-EDGEGRID` | Ready    | —           | —                 | —                 |                                             |
-| `ENV-FILES`     | Ready    | —           | —                 | —                 |                                             |
+| Package         | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                       |
+| --------------- | ---------- | ----------- | ----------------- | ----------------- | ------------------------------------------- |
+| `AUTH-DIGEST`   | InReview   | zed-agent-1 | 2026-11-11T02:55Z | 2026-11-11T03:05Z | Wired into Apply; end-to-end challenge test |
+| `AUTH-NTLM`     | Ready      | —           | —                 | —                 |                                             |
+| `AUTH-OAUTH1`   | Ready      | —           | —                 | —                 |                                             |
+| `AUTH-OAUTH2`   | Ready      | —           | —                 | —                 | Needs `PLATFORM`                            |
+| `AUTH-AWSV4`    | InProgress | zed-agent-1 | 2026-11-11T03:40Z | 2026-11-11T03:40Z | SigV4 against AWS golden vectors            |
+| `AUTH-EDGEGRID` | Ready      | —           | —                 | —                 |                                             |
+| `ENV-FILES`     | Ready      | —           | —                 | —                 |                                             |
 
 ## Phase 5
 
