@@ -26,12 +26,12 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `BUS`            | InReview   | zed-agent-1 | 2026-11-10T22:45Z | 2026-11-10T23:10Z | Builds, vet-clean, 78 % coverage, race-clean (-count=5)           |
 | `FORMAT-CODE`    | InReview   | antigravity | 2026-11-10T22:30Z | 2026-11-10T22:40Z | Builds, vet-clean, race-clean, 98.4 % coverage                    |
 | `FORMAT-BRU`     | InReview   | zed-agent-1 | 2026-11-10T23:15Z | 2026-11-11T00:25Z | Parser+mapper+writer; 357/357 parse, 335/335 round-trip, 77 % cov |
-| `FORMAT-YAML`    | InProgress | zed-agent-1 | 2026-11-11T00:30Z | 2026-11-11T00:30Z | Claimed; OpenCollection codec                                     |
+| `FORMAT-YAML`    | InReview   | zed-agent-1 | 2026-11-11T00:30Z | 2026-11-11T01:05Z | 64/64 yml fixtures; 86.5 % coverage; three body shapes handled    |
 | `VARS`           | InProgress | kilo        | 2026-11-10T21:08Z | 2026-11-10T21:22Z | Initial interpolate/scopes/prompts impl + tests passing           |
 | `TPL`            | Ready      | —           | —                 | —                 | Optional; confirm need first                                      |
-| `COOKIES`        | Claimed    | mimo-flash  | 2026-11-10T21:06Z | 2026-11-10T21:06Z | Cookie jar, trustworthy-origin policy, persistence hook           |
+| `COOKIES`        | InProgress | mimo-flash  | 2026-11-10T21:06Z | 2026-11-10T22:30Z | Implementing jar: index read-authority + jar write-validation     |
 | `PERSIST`        | InReview   | antigravity | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage                    |
-| `COLLECTION`     | Ready      | —           | —                 | —                 |                                                                   |
+| `COLLECTION`     | InProgress | antigravity | 2026-11-10T23:28Z | 2026-11-10T23:28Z | Tree loading, seq ordering, watcher, merge helpers                |
 | `BUILD`          | Ready      | —           | —                 | —                 |                                                                   |
 | `PROXY`          | InReview   | antigravity | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage                    |
 | `TLS`            | InReview   | antigravity | 2026-11-10T23:13Z | 2026-11-10T23:25Z | Builds, vet-clean, race-clean, 85.4 % coverage                    |
