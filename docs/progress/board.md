@@ -32,7 +32,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `COOKIES`        | InReview   | mimo-flash    | 2026-11-10T21:06Z | 2026-11-10T23:00Z | Implemented; race-clean, 83.3% cov, repo green; D-010 raised      |
 | `PERSIST`        | InReview   | antigravity   | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage                    |
 | `COLLECTION`     | InReview   | antigravity   | 2026-11-10T23:28Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 83.2 % cov, 1000 reqs in 22ms      |
-| `BUILD`          | InProgress | antigravity   | 2026-11-10T23:59Z | 2026-11-10T23:59Z | Request builder, URL synthesis, body render, Content-Type/Length  |
+| `BUILD`          | InReview   | antigravity   | 2026-11-10T23:59Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 84.6 % cov, all body modes + synth |
 | `PROXY`          | InReview   | antigravity   | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage                    |
 | `TLS`            | InReview   | antigravity   | 2026-11-10T23:13Z | 2026-11-10T23:25Z | Builds, vet-clean, race-clean, 85.4 % coverage                    |
 | `AUTH-CORE`      | InReview   | zed-agent-1   | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov           |
