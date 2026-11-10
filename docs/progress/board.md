@@ -40,7 +40,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `AUTH-CORE`      | InReview   | zed-agent-1   | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov            |
 | `TRANSPORT`      | InReview   | zed-agent-1   | 2026-11-11T01:45Z | 2026-11-11T02:20Z | Redirect matrix, cookies, streaming, timeline; 86 % cov            |
 | `ENGINE`         | InReview   | antigravity   | 2026-11-11T00:20Z | 2026-11-11T00:40Z | Builds, vet-clean, race-clean, 86.8 % cov, phase-order asserted     |
-| `CMD-SEND`       | Ready      | —             | —                 | —                 |                                                                    |
+| `CMD-SEND`       | InProgress | antigravity   | 2026-11-11T00:45Z | 2026-11-11T00:45Z | SendRequest, CancelRequest, registry, context wiring, bus publishing |
 | `CMD-COLLECTION` | InReview   | antigravity-2 | 2026-11-11T00:05Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 85.7 % coverage, idempotent         |
 | `CMD-ENV`        | Ready      | —             | —                 | —                 |                                                                    |
 | `CMD-SETTINGS`   | Ready      | —             | —                 | —                 |                                                                    |
