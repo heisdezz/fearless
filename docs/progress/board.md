@@ -26,7 +26,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `BUS`            | InReview   | zed-agent-1 | 2026-11-10T22:45Z | 2026-11-10T23:10Z | Builds, vet-clean, 78 % coverage, race-clean (-count=5)           |
 | `FORMAT-CODE`    | InReview   | antigravity | 2026-11-10T22:30Z | 2026-11-10T22:40Z | Builds, vet-clean, race-clean, 98.4 % coverage                    |
 | `FORMAT-BRU`     | InReview   | zed-agent-1 | 2026-11-10T23:15Z | 2026-11-11T00:25Z | Parser+mapper+writer; 357/357 parse, 335/335 round-trip, 77 % cov |
-| `FORMAT-YAML`    | Ready      | —           | —                 | —                 |                                                                   |
+| `FORMAT-YAML`    | InProgress | zed-agent-1 | 2026-11-11T00:30Z | 2026-11-11T00:30Z | Claimed; OpenCollection codec                                     |
 | `VARS`           | InProgress | kilo        | 2026-11-10T21:08Z | 2026-11-10T21:22Z | Initial interpolate/scopes/prompts impl + tests passing           |
 | `TPL`            | Ready      | —           | —                 | —                 | Optional; confirm need first                                      |
 | `COOKIES`        | Claimed    | mimo-flash  | 2026-11-10T21:06Z | 2026-11-10T21:06Z | Cookie jar, trustworthy-origin policy, persistence hook           |
@@ -34,7 +34,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `COLLECTION`     | Ready      | —           | —                 | —                 |                                                                   |
 | `BUILD`          | Ready      | —           | —                 | —                 |                                                                   |
 | `PROXY`          | InReview   | antigravity | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage                    |
-| `TLS`            | InProgress | antigravity | 2026-11-10T23:13Z | 2026-11-10T23:13Z | CA bundle override, client certs (PEM/PFX), precedence            |
+| `TLS`            | InReview   | antigravity | 2026-11-10T23:13Z | 2026-11-10T23:25Z | Builds, vet-clean, race-clean, 85.4 % coverage                    |
 | `AUTH-CORE`      | Ready      | —           | —                 | —                 |                                                                   |
 | `TRANSPORT`      | Ready      | —           | —                 | —                 |                                                                   |
 | `ENGINE`         | Ready      | —           | —                 | —                 |                                                                   |
