@@ -25,15 +25,15 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `EVENTS`         | Done       | zed-agent-1 | 2026-11-10T22:00Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 100 % coverage, race-clean  |
 | `BUS`            | InReview   | zed-agent-1 | 2026-11-10T22:45Z | 2026-11-10T23:10Z | Builds, vet-clean, 78 % coverage, race-clean (-count=5)   |
 | `FORMAT-CODE`    | InReview   | antigravity | 2026-11-10T22:30Z | 2026-11-10T22:40Z | Builds, vet-clean, race-clean, 98.4 % coverage            |
-| `FORMAT-BRU`     | Ready      | —           | —                 | —                 | Largest Phase-1 risk                                      |
+| `FORMAT-BRU`     | InProgress | zed-agent-1 | 2026-11-10T23:15Z | 2026-11-10T23:15Z | Claimed; parser + writer for the .bru dialect             |
 | `FORMAT-YAML`    | Ready      | —           | —                 | —                 |                                                           |
 | `VARS`           | InProgress | kilo        | 2026-11-10T21:08Z | 2026-11-10T21:08Z | Scopes, precedence, interpolation                         |
 | `TPL`            | Ready      | —           | —                 | —                 | Optional; confirm need first                              |
 | `COOKIES`        | Claimed    | mimo-flash  | 2026-11-10T21:06Z | 2026-11-10T21:06Z | Cookie jar, trustworthy-origin policy, persistence hook   |
-| `PERSIST`        | InProgress | antigravity | 2026-11-10T22:45Z | 2026-11-10T22:45Z | Spooling, cache lifecycle, eviction, atomic write         |
+| `PERSIST`        | InReview   | antigravity | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage            |
 | `COLLECTION`     | Ready      | —           | —                 | —                 |                                                           |
 | `BUILD`          | Ready      | —           | —                 | —                 |                                                           |
-| `PROXY`          | Ready      | —           | —                 | —                 |                                                           |
+| `PROXY`          | InProgress | kilo        | 2026-11-10T21:19Z | 2026-11-10T21:19Z | off/manual/system/PAC, SOCKS5, overrides                        |
 | `TLS`            | Ready      | —           | —                 | —                 |                                                           |
 | `AUTH-CORE`      | Ready      | —           | —                 | —                 |                                                           |
 | `TRANSPORT`      | Ready      | —           | —                 | —                 |                                                           |
