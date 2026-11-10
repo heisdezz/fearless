@@ -35,7 +35,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `BUILD`          | Ready      | —           | —                 | —                 |                                                                   |
 | `PROXY`          | InReview   | antigravity | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage                    |
 | `TLS`            | InReview   | antigravity | 2026-11-10T23:13Z | 2026-11-10T23:25Z | Builds, vet-clean, race-clean, 85.4 % coverage                    |
-| `AUTH-CORE`      | Ready      | —           | —                 | —                 |                                                                   |
+| `AUTH-CORE`      | InReview   | zed-agent-1 | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov           |
 | `TRANSPORT`      | Ready      | —           | —                 | —                 |                                                                   |
 | `ENGINE`         | Ready      | —           | —                 | —                 |                                                                   |
 | `CMD-SEND`       | Ready      | —           | —                 | —                 |                                                                   |

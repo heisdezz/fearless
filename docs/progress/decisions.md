@@ -120,3 +120,13 @@ Use this for anything that crosses a package boundary: new exported symbols, int
 - **Rationale:** `go-architecture.md` §3 already describes the actor as owning `WorkspaceState` and publishing immutable snapshots; a per-item mutator cannot express tab, collection or settings changes, and a new aggregate type would exist only to match a stale sentence in `interface-design.md`. `model.Item.Draft` remains the draft duality, unchanged.
 - **Action required:** `interface-design.md` §6 still shows `func(*model.Draft)`; treat this decision as authoritative until the doc is amended.
 - **Supersedes:** D-007 (original unresolved entry)
+
+## D-009 — WSSE interpolates before hashing (divergence from Bruno)
+
+- **Date:** 2026-11-11T01:35Z
+- **Raised by:** zed-agent-1 (implementing `AUTH-CORE`)
+- **Affects:** `AUTH-CORE`
+- **Decision:** The WSSE digest is computed from the **interpolated** password. Bruno computes it before interpolation, so a password written as `{{var}}` is hashed literally and the request fails.
+- **Rationale:** Bruno's behaviour is a defect, not a feature: no collection can depend on "the digest is wrong", and interpolating first is what the user plainly intends. `docs/logic/authentication.md` §5 already flags this and proposes the same fix.
+- **Action required:** None. `TestWSSEInterpolatesBeforeHashing` pins the new behaviour so it cannot regress silently.
+- **Supersedes:** —
