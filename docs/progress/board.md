@@ -33,7 +33,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `PERSIST`        | InReview   | antigravity | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage            |
 | `COLLECTION`     | Ready      | —           | —                 | —                 |                                                           |
 | `BUILD`          | Ready      | —           | —                 | —                 |                                                           |
-| `PROXY`          | InProgress | kilo        | 2026-11-10T21:19Z | 2026-11-10T21:19Z | off/manual/system/PAC, SOCKS5, overrides                        |
+| `PROXY`          | InReview   | antigravity | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage            |
 | `TLS`            | Ready      | —           | —                 | —                 |                                                           |
 | `AUTH-CORE`      | Ready      | —           | —                 | —                 |                                                           |
 | `TRANSPORT`      | Ready      | —           | —                 | —                 |                                                           |
