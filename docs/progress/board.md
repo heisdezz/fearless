@@ -12,38 +12,38 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 ## Phase 0
 
-| Package    | State      | Agent | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                                     |
-| ---------- | ---------- | ----- | ----------------- | ----------------- | --------------------------------------------------------------------------------------------------------- |
-| `INFRA`    | InReview   | kilo  | 2026-11-10T20:16Z | 2026-11-10T21:40Z | CI/lint/dep-guard/version added; dep-guard root paths fixed to internal/ (see B-002); repo now vets clean |
-| `FIXTURES` | InReview   | kilo | 2026-11-10T20:26Z | 2026-11-10T20:28Z | Corpus + manifests + testutil added |
+| Package    | State | Agent | Claimed (UTC)     | Updated (UTC)     | Notes                                         |
+| ---------- | ----- | ----- | ----------------- | ----------------- | --------------------------------------------- |
+| `INFRA`    | Done  | kilo  | 2026-11-10T20:16Z | 2026-11-10T22:30Z | Confirmed: CI, lint, dep-guard, version clean |
+| `FIXTURES` | Done  | kilo  | 2026-11-10T20:26Z | 2026-11-10T22:30Z | Confirmed: corpus, manifests, testutil pass   |
 
 ## Phase 1
 
-| Package          | State    | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                   |
-| ---------------- | -------- | ----------- | ----------------- | ----------------- | ------------------------------------------------------- |
-| `MODEL`          | InReview | zed-agent-1 | 2026-11-10T21:35Z | 2026-11-10T21:45Z | Builds, vet-clean, 72.6 % coverage, race-clean          |
-| `EVENTS`         | InReview | zed-agent-1 | 2026-11-10T22:00Z | 2026-11-10T22:20Z | Builds, vet-clean, 100 % coverage, race-clean           |
-| `BUS`            | Ready    | —           | —                 | —                 | After `EVENTS`                                          |
-| `FORMAT-CODE`    | Ready    | —           | —                 | —                 |                                                         |
-| `FORMAT-BRU`     | Ready    | —           | —                 | —                 | Largest Phase-1 risk                                    |
-| `FORMAT-YAML`    | Ready    | —           | —                 | —                 |                                                         |
-| `VARS`           | Ready    | —           | —                 | —                 |                                                         |
-| `TPL`            | Ready    | —           | —                 | —                 | Optional; confirm need first                            |
-| `COOKIES`        | Ready    | —           | —                 | —                 |                                                         |
-| `PERSIST`        | Ready    | —           | —                 | —                 |                                                         |
-| `COLLECTION`     | Ready    | —           | —                 | —                 |                                                         |
-| `BUILD`          | Ready    | —           | —                 | —                 |                                                         |
-| `PROXY`          | Ready    | —           | —                 | —                 |                                                         |
-| `TLS`            | Ready    | —           | —                 | —                 |                                                         |
-| `AUTH-CORE`      | Ready    | —           | —                 | —                 |                                                         |
-| `TRANSPORT`      | Ready    | —           | —                 | —                 |                                                         |
-| `ENGINE`         | Ready    | —           | —                 | —                 |                                                         |
-| `CMD-SEND`       | Ready    | —           | —                 | —                 |                                                         |
-| `CMD-COLLECTION` | Ready    | —           | —                 | —                 |                                                         |
-| `CMD-ENV`        | Ready    | —           | —                 | —                 |                                                         |
-| `CMD-SETTINGS`   | Ready    | —           | —                 | —                 |                                                         |
-| `CMD-RUNNER`     | Ready    | —           | —                 | —                 | Command layer for the runner; `ADV-RUNNER` builds on it |
-| `CLI`            | Ready    | —           | —                 | —                 | Proves the core headlessly                              |
+| Package          | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                     |
+| ---------------- | ---------- | ----------- | ----------------- | ----------------- | --------------------------------------------------------- |
+| `MODEL`          | Done       | zed-agent-1 | 2026-11-10T21:35Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 72.6 % coverage, race-clean |
+| `EVENTS`         | Done       | zed-agent-1 | 2026-11-10T22:00Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 100 % coverage, race-clean  |
+| `BUS`            | InProgress | zed-agent-1 | 2026-11-10T22:45Z | 2026-11-10T22:45Z | Claimed; D-007 settled                                    |
+| `FORMAT-CODE`    | InProgress | antigravity | 2026-11-10T22:30Z | 2026-11-10T22:30Z | Implementing Codec interface, registry, and detection     |
+| `FORMAT-BRU`     | Ready      | —           | —                 | —                 | Largest Phase-1 risk                                      |
+| `FORMAT-YAML`    | Ready      | —           | —                 | —                 |                                                           |
+| `VARS`           | Ready      | —           | —                 | —                 |                                                           |
+| `TPL`            | Ready      | —           | —                 | —                 | Optional; confirm need first                              |
+| `COOKIES`        | Ready      | —           | —                 | —                 |                                                           |
+| `PERSIST`        | Ready      | —           | —                 | —                 |                                                           |
+| `COLLECTION`     | Ready      | —           | —                 | —                 |                                                           |
+| `BUILD`          | Ready      | —           | —                 | —                 |                                                           |
+| `PROXY`          | Ready      | —           | —                 | —                 |                                                           |
+| `TLS`            | Ready      | —           | —                 | —                 |                                                           |
+| `AUTH-CORE`      | Ready      | —           | —                 | —                 |                                                           |
+| `TRANSPORT`      | Ready      | —           | —                 | —                 |                                                           |
+| `ENGINE`         | Ready      | —           | —                 | —                 |                                                           |
+| `CMD-SEND`       | Ready      | —           | —                 | —                 |                                                           |
+| `CMD-COLLECTION` | Ready      | —           | —                 | —                 |                                                           |
+| `CMD-ENV`        | Ready      | —           | —                 | —                 |                                                           |
+| `CMD-SETTINGS`   | Ready      | —           | —                 | —                 |                                                           |
+| `CMD-RUNNER`     | Ready      | —           | —                 | —                 | Command layer for the runner; `ADV-RUNNER` builds on it   |
+| `CLI`            | Ready      | —           | —                 | —                 | Proves the core headlessly                                |
 
 ## Phase 2
 
