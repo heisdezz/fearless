@@ -130,3 +130,24 @@ Use this for anything that crosses a package boundary: new exported symbols, int
 - **Rationale:** Bruno's behaviour is a defect, not a feature: no collection can depend on "the digest is wrong", and interpolating first is what the user plainly intends. `docs/logic/authentication.md` §5 already flags this and proposes the same fix.
 - **Action required:** None. `TestWSSEInterpolatesBeforeHashing` pins the new behaviour so it cannot regress silently.
 - **Supersedes:** —
+
+## D-010 — `model.RequestDefaults` needs the cookie toggles
+
+- **Date:** 2026-11-10T23:00Z
+- **Raised by:** `COOKIES` / mimo-flash
+- **Affects:** `MODEL`, `COOKIES`, `APP` (wiring), `UI-SETTINGS`
+- **Decision:** `model.RequestDefaults` should gain two fields: `SendCookies bool` (`json:"sendCookies"`) and `StoreCookies bool` (`json:"storeCookies"`), both set to `true` in the default settings (Bruno's default).
+- **Rationale:** `docs/ui/settings.md` lines 39–40 document the preferences `request.sendCookies` / `request.storeCookies` (Bruno `preferencesUtil.shouldSendCookies()` / `shouldStoreCookies()`), and `docs/logic/cookies.md` §7 requires both. `COOKIES` exposes `Jar.SetSendCookies` / `Jar.SetStoreCookies` (both default `true`) but has no settings fields to bind to; `settings.go` belongs to `MODEL`, which is `Done`.
+- **Action required:** The `MODEL` owner (or whoever reopens it) adds the two fields with `true` defaults; `APP` / `UI-SETTINGS` wires them to the jar setters at startup and on change. Until then the jar behaves as Bruno does by default (both enabled), so nothing is blocked.
+- **Supersedes:** —
+
+## D-010 — `vars:post-response` is evaluated natively for its declarative subset
+
+- **Date:** 2026-11-11T02:45Z
+- **Raised by:** zed-agent-1 (implementing `TPL`)
+- **Affects:** `TPL`, `SCRIPT-POST`, `ENGINE`
+- **Decision:** `internal/core/template` evaluates `vars:pre-request` and `vars:post-response` without goja, supporting the three forms found in Bruno's own collections: `$res.<path>`, `{{res.<path>}}` / `{{$dynamic}}`, and plain literals. Anything else is reported as unresolved.
+- **Rationale:** `packages.md` describes `TPL` as keeping these blocks "separate from JS scripting so `VARS` need not depend on the script engine". Inspecting the fixtures shows both forms in real use: `$res.body.transactionId` (an expression) and `{{res.id}}` / `{{$timestamp}}` (templates). The templates need no engine at all, and `$res.body.<path>` is a dotted path that `vars.Lookup` already resolves — so the common cases are handled natively.
+- **Consequence:** `docs/flows/scripting-flow.md` §1 describes both blocks as running through JS runtimes (`VarsRuntime`). That remains true for genuine expressions. `TPL` therefore supersedes nothing but covers the declarative subset, and `SCRIPT-POST` keeps responsibility for arbitrary JavaScript in these blocks.
+- **Action required:** `SCRIPT-POST` should call `template.PostResponse` first and fall back to the engine only for values reported unresolved, so variable blocks stay cheap in the common case.
+- **Supersedes:** —
