@@ -30,6 +30,7 @@ func RegisterBase() {
 	// Digest's work happens in the transport, after the server's challenge; the
 	// provider supplies that transport. See digest.go.
 	Register(digestProvider{})
+	Register(awsv4Provider{})
 }
 
 // ChainFor builds the auth inheritance chain for one request.

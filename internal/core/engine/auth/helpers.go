@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 )
@@ -92,3 +93,7 @@ func quoteHeaderValue(s string) string {
 
 // jsonMarshal is a thin alias so providers do not each import encoding/json.
 func jsonMarshal(v any) ([]byte, error) { return json.Marshal(v) }
+
+// errNoRequestForSigning reports a signer that needs the request but did not
+// receive one.
+var errNoRequestForSigning = errors.New("auth: signer needs the request, but none was supplied")

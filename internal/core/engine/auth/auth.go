@@ -91,6 +91,16 @@ type Deps struct {
 	// it is nil, providers that need it fall back to returning the original
 	// response unchanged rather than failing.
 	Rewind func() (*http.Request, error)
+	// Request is the request being prepared, for signers that cover the URL.
+	//
+	// SigV4 signs the method, path and query as well as headers, so it cannot work
+	// from configuration alone. Providers that do not need it ignore it.
+	Request *http.Request
+	// Body is the exact payload that will be sent.
+	//
+	// SigV4 hashes it, so it must be the final bytes after every other transform
+	// (compression, multipart encoding). A nil Body is treated as empty.
+	Body []byte
 }
 
 // Token is an obtained OAuth2 token.
