@@ -19,31 +19,31 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 ## Phase 1
 
-| Package          | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                          |
-| ---------------- | ---------- | ----------- | ----------------- | ----------------- | -------------------------------------------------------------- |
-| `MODEL`          | Done       | zed-agent-1 | 2026-11-10T21:35Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 72.6 % coverage, race-clean      |
-| `EVENTS`         | Done       | zed-agent-1 | 2026-11-10T22:00Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 100 % coverage, race-clean       |
-| `BUS`            | InReview   | zed-agent-1 | 2026-11-10T22:45Z | 2026-11-10T23:10Z | Builds, vet-clean, 78 % coverage, race-clean (-count=5)        |
-| `FORMAT-CODE`    | InReview   | antigravity | 2026-11-10T22:30Z | 2026-11-10T22:40Z | Builds, vet-clean, race-clean, 98.4 % coverage                 |
-| `FORMAT-BRU`     | InReview   | zed-agent-1 | 2026-11-10T23:15Z | 2026-11-10T23:55Z | Lexer+parser+mapper; 357/357 upstream v2 files; writer pending |
-| `FORMAT-YAML`    | Ready      | —           | —                 | —                 |                                                                |
-| `VARS`           | InProgress | kilo        | 2026-11-10T21:08Z | 2026-11-10T21:08Z | Scopes, precedence, interpolation                              |
-| `TPL`            | Ready      | —           | —                 | —                 | Optional; confirm need first                                   |
-| `COOKIES`        | Claimed    | mimo-flash  | 2026-11-10T21:06Z | 2026-11-10T21:06Z | Cookie jar, trustworthy-origin policy, persistence hook        |
-| `PERSIST`        | InReview   | antigravity | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage                 |
-| `COLLECTION`     | Ready      | —           | —                 | —                 |                                                                |
-| `BUILD`          | Ready      | —           | —                 | —                 |                                                                |
-| `PROXY`          | InReview   | antigravity | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage                 |
-| `TLS`            | Ready      | —           | —                 | —                 |                                                                |
-| `AUTH-CORE`      | Ready      | —           | —                 | —                 |                                                                |
-| `TRANSPORT`      | Ready      | —           | —                 | —                 |                                                                |
-| `ENGINE`         | Ready      | —           | —                 | —                 |                                                                |
-| `CMD-SEND`       | Ready      | —           | —                 | —                 |                                                                |
-| `CMD-COLLECTION` | Ready      | —           | —                 | —                 |                                                                |
-| `CMD-ENV`        | Ready      | —           | —                 | —                 |                                                                |
-| `CMD-SETTINGS`   | Ready      | —           | —                 | —                 |                                                                |
-| `CMD-RUNNER`     | Ready      | —           | —                 | —                 | Command layer for the runner; `ADV-RUNNER` builds on it        |
-| `CLI`            | Ready      | —           | —                 | —                 | Proves the core headlessly                                     |
+| Package          | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                     |
+| ---------------- | ---------- | ----------- | ----------------- | ----------------- | --------------------------------------------------------- |
+| `MODEL`          | Done       | zed-agent-1 | 2026-11-10T21:35Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 72.6 % coverage, race-clean |
+| `EVENTS`         | Done       | zed-agent-1 | 2026-11-10T22:00Z | 2026-11-10T22:30Z | Confirmed: builds, vet-clean, 100 % coverage, race-clean  |
+| `BUS`            | InReview   | zed-agent-1 | 2026-11-10T22:45Z | 2026-11-10T23:10Z | Builds, vet-clean, 78 % coverage, race-clean (-count=5)   |
+| `FORMAT-CODE`    | InReview   | antigravity | 2026-11-10T22:30Z | 2026-11-10T22:40Z | Builds, vet-clean, race-clean, 98.4 % coverage            |
+| `FORMAT-BRU`     | InProgress | zed-agent-1 | 2026-11-10T23:15Z | 2026-11-11T00:05Z | Writer in progress; parser 357/357 green                  |
+| `FORMAT-YAML`    | Ready      | —           | —                 | —                 |                                                           |
+| `VARS`           | InProgress | kilo        | 2026-11-10T21:08Z | 2026-11-10T21:22Z | Initial interpolate/scopes/prompts impl + tests passing         |
+| `TPL`            | Ready      | —           | —                 | —                 | Optional; confirm need first                              |
+| `COOKIES`        | Claimed    | mimo-flash  | 2026-11-10T21:06Z | 2026-11-10T21:06Z | Cookie jar, trustworthy-origin policy, persistence hook   |
+| `PERSIST`        | InReview   | antigravity | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage            |
+| `COLLECTION`     | Ready      | —           | —                 | —                 |                                                           |
+| `BUILD`          | Ready      | —           | —                 | —                 |                                                           |
+| `PROXY`          | InReview   | antigravity | 2026-11-10T23:30Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 82.0 % coverage            |
+| `TLS`            | Ready      | —           | —                 | —                 |                                                           |
+| `AUTH-CORE`      | Ready      | —           | —                 | —                 |                                                           |
+| `TRANSPORT`      | Ready      | —           | —                 | —                 |                                                           |
+| `ENGINE`         | Ready      | —           | —                 | —                 |                                                           |
+| `CMD-SEND`       | Ready      | —           | —                 | —                 |                                                           |
+| `CMD-COLLECTION` | Ready      | —           | —                 | —                 |                                                           |
+| `CMD-ENV`        | Ready      | —           | —                 | —                 |                                                           |
+| `CMD-SETTINGS`   | Ready      | —           | —                 | —                 |                                                           |
+| `CMD-RUNNER`     | Ready      | —           | —                 | —                 | Command layer for the runner; `ADV-RUNNER` builds on it   |
+| `CLI`            | Ready      | —           | —                 | —                 | Proves the core headlessly                                |
 
 ## Phase 2
 
