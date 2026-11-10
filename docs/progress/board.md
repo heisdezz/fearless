@@ -39,7 +39,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `TLS`            | InReview   | antigravity   | 2026-11-10T23:13Z | 2026-11-10T23:25Z | Builds, vet-clean, race-clean, 85.4 % coverage                     |
 | `AUTH-CORE`      | InReview   | zed-agent-1   | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov            |
 | `TRANSPORT`      | InReview   | zed-agent-1   | 2026-11-11T01:45Z | 2026-11-11T02:20Z | Redirect matrix, cookies, streaming, timeline; 86 % cov            |
-| `ENGINE`         | InProgress | antigravity   | 2026-11-11T00:20Z | 2026-11-11T00:20Z | Request lifecycle pipeline: phases, hooks, transport, sink, result |
+| `ENGINE`         | InReview   | antigravity   | 2026-11-11T00:20Z | 2026-11-11T00:40Z | Builds, vet-clean, race-clean, 86.8 % cov, phase-order asserted     |
 | `CMD-SEND`       | Ready      | —             | —                 | —                 |                                                                    |
 | `CMD-COLLECTION` | InReview   | antigravity-2 | 2026-11-11T00:05Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 85.7 % coverage, idempotent         |
 | `CMD-ENV`        | Ready      | —             | —                 | —                 |                                                                    |
@@ -49,34 +49,34 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 ## Phase 2
 
-| Package           | State | Agent | Claimed (UTC) | Updated (UTC) | Notes                            |
-| ----------------- | ----- | ----- | ------------- | ------------- | -------------------------------- |
-| `UI-THEME`        | Ready | —     | —             | —             |                                  |
-| `UI-LAYOUT`       | Ready | —     | —             | —             |                                  |
-| `UI-WIDGETS`      | Ready | —     | —             | —             | Single owner; may need splitting |
-| `UI-PRESENT-REQ`  | Ready | —     | —             | —             |                                  |
-| `UI-PRESENT-NAV`  | Ready | —     | —             | —             |                                  |
-| `UI-PRESENT-SET`  | Ready | —     | —             | —             |                                  |
-| `UI-SCREEN-REQ`   | Ready | —     | —             | —             |                                  |
-| `UI-SCREEN-RESP`  | Ready | —     | —             | —             |                                  |
-| `UI-SCREEN-NAV`   | Ready | —     | —             | —             |                                  |
-| `UI-SCREEN-SHELL` | Ready | —     | —             | —             |                                  |
-| `UI-SCREEN-SET`   | Ready | —     | —             | —             |                                  |
-| `UI-DIALOGS`      | Ready | —     | —             | —             |                                  |
-| `UI-APP`          | Ready | —     | —             | —             |                                  |
-| `PLATFORM`        | Ready | —     | —             | —             |                                  |
+| Package           | State   | Agent | Claimed (UTC)     | Updated (UTC)     | Notes                                |
+| ----------------- | ------- | ----- | ----------------- | ----------------- | ------------------------------------ |
+| `UI-THEME`        | Claimed | kilo  | 2026-11-11T03:38Z | 2026-11-11T03:38Z | Starting theme system implementation |
+| `UI-LAYOUT`       | Ready   | —     | —                 | —                 |                                      |
+| `UI-WIDGETS`      | Ready   | —     | —                 | —                 | Single owner; may need splitting     |
+| `UI-PRESENT-REQ`  | Ready   | —     | —                 | —                 |                                      |
+| `UI-PRESENT-NAV`  | Ready   | —     | —                 | —                 |                                      |
+| `UI-PRESENT-SET`  | Ready   | —     | —                 | —                 |                                      |
+| `UI-SCREEN-REQ`   | Ready   | —     | —                 | —                 |                                      |
+| `UI-SCREEN-RESP`  | Ready   | —     | —                 | —                 |                                      |
+| `UI-SCREEN-NAV`   | Ready   | —     | —                 | —                 |                                      |
+| `UI-SCREEN-SHELL` | Ready   | —     | —                 | —                 |                                      |
+| `UI-SCREEN-SET`   | Ready   | —     | —                 | —                 |                                      |
+| `UI-DIALOGS`      | Ready   | —     | —                 | —                 |                                      |
+| `UI-APP`          | Ready   | —     | —                 | —                 |                                      |
+| `PLATFORM`        | Ready   | —     | —                 | —                 |                                      |
 
 ## Phase 4
 
-| Package         | State    | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                       |
-| --------------- | -------- | ----------- | ----------------- | ----------------- | ------------------------------------------- |
-| `AUTH-DIGEST`   | InReview | zed-agent-1 | 2026-11-11T02:55Z | 2026-11-11T03:05Z | Wired into Apply; end-to-end challenge test |
-| `AUTH-NTLM`     | Ready    | —           | —                 | —                 |                                             |
-| `AUTH-OAUTH1`   | Ready    | —           | —                 | —                 |                                             |
-| `AUTH-OAUTH2`   | Ready    | —           | —                 | —                 | Needs `PLATFORM`                            |
-| `AUTH-AWSV4`    | Ready    | —           | —                 | —                 |                                             |
-| `AUTH-EDGEGRID` | Ready    | —           | —                 | —                 |                                             |
-| `ENV-FILES`     | Ready    | —           | —                 | —                 |                                             |
+| Package         | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                       |
+| --------------- | ---------- | ----------- | ----------------- | ----------------- | ------------------------------------------- |
+| `AUTH-DIGEST`   | InReview   | zed-agent-1 | 2026-11-11T02:55Z | 2026-11-11T03:05Z | Wired into Apply; end-to-end challenge test |
+| `AUTH-NTLM`     | Ready      | —           | —                 | —                 |                                             |
+| `AUTH-OAUTH1`   | Ready      | —           | —                 | —                 |                                             |
+| `AUTH-OAUTH2`   | Ready      | —           | —                 | —                 | Needs `PLATFORM`                            |
+| `AUTH-AWSV4`    | InProgress | zed-agent-1 | 2026-11-11T03:40Z | 2026-11-11T03:40Z | SigV4 against AWS golden vectors            |
+| `AUTH-EDGEGRID` | Ready      | —           | —                 | —                 |                                             |
+| `ENV-FILES`     | Ready      | —           | —                 | —                 |                                             |
 
 ## Phase 5
 
