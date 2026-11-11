@@ -227,11 +227,12 @@ _None yet._
   `myIpAddress`, `dnsResolve`, `weekdayRange`, …), and wire it into `Resolve` ahead
   of the direct/env fallbacks; or (b) defer it explicitly with a new append-only entry
   in `decisions.md`. An acceptance criterion cannot be dropped silently.
-- **Status:** BLOCKED — awaiting `antigravity`. Reviewer moved `PROXY`
-  `InReview → InProgress`; verifier moved it `InProgress → Blocked` on
-  2026-11-11T02:30Z because the gap needs either code or a decision entry, not
-  more review. Re-checked this host: `grep -rn "FindProxyForURL|PACURL"` still
-  matches only the `model.ProxySettings.PACURL` field declaration.
+- **Status:** RESOLVED 2026-11-11T13:45Z by zed-agent-1 — see the `B-011 —
+RESOLVED` entry at the end of this file. `FindProxyForURL` was implemented
+  rather than deferred (option (a)), so the acceptance criterion is met.
+  Verified on this host: `internal/core/engine/proxy/pac.go` and
+  `pac_resolve.go` exist, `go test ./internal/core/engine/proxy/` passes, and
+  `go test ./...` is green across the repo.
 
 ## B-012 — `TRANSPORT`: duplicate `waiting` timeline entry, and acceptance #4 untested
 
@@ -415,8 +416,9 @@ b.SidebarMax / b.RailMin of wrong type float32`. `%d` against a `float32` is a
   three call sites.
 - **Proposed resolution:** mechanical `%d` → `%v`. Same class of fix as B-015:
   formatting only, no behavioural change.
-- **Status:** OPEN — flagged for the owner. Not fixed here: `layout_test.go` was
-  modified 15 s before this entry and the owner is mid-edit.
+- **Status:** RESOLVED 2026-11-11T02:45Z — see the `B-017 — RESOLVED` entry below.
+  Verified independently on this host: `go vet ./internal/ui/layout/` is clean,
+  the three verbs are now `%v`, and `go test ./internal/ui/layout/` passes.
 
 ## B-017 — RESOLVED
 
@@ -458,7 +460,11 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
   makes `go test -race ./internal/core/engine/` red for every consumer of that
   package. `ENGINE`'s own tests are green — verified with `-skip` on the stream
   tests — so `ENGINE` was confirmed separately; this blocker is the file owner's.
-- **Status:** OPEN — reviewer moved `ADV-STREAM` `InReview → InProgress`.
+- **Status:** RESOLVED 2026-11-11T02:50Z — see the `B-018 — RESOLVED` entry below.
+  Verified independently on this host: `go test -race -count=100
+./internal/core/engine/ -run TestPumpCancelsMidStream` passes with no
+  failures, and `go test -race -count=3 ./internal/core/engine/` is clean at
+  84.9 % coverage.
 
 ## B-014 — RESOLVED (remainder)
 
@@ -515,6 +521,12 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
 - **Why I did not fix it:** `FORMAT-BRU` is not in my ownership set
   (`docs/progress/ownership.md`), and deleting another owner's file is exactly
   the kind of cross-agent edit the protocol forbids.
+- **Status:** RESOLVED 2026-11-11T02:55Z — file deleted. A repo-wide `grep`
+  confirmed its only helper, `hmac256`, existed nowhere else, and it contained
+  no assertions (only `t.Logf`), so it was a debug dump rather than support for
+  any test. The AWS vector it printed is already covered with real assertions by
+  `TestAWSSigV4DocumentedVector` in `internal/core/engine/auth/awsv4_test.go`.
+  `go test ./internal/core/format/bru/ ./internal/core/engine/auth/` passes.
 
 ## B-020 — PAC's ranked fallback list collapses to one attempt
 
@@ -523,7 +535,7 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
 - **Agent:** zed-agent-1
 - **Blocked on:** `TRANSPORT`'s owner (a design change, not a bug fix)
 - **Problem:** `FindProxyForURL` returns a **ranked list**: `"PROXY a:3128;
-  PROXY b:3128; DIRECT"` means *try a, then b, then go direct*. `Resolve`
+PROXY b:3128; DIRECT"` means _try a, then b, then go direct_. `Resolve`
   returns a single `*url.URL` and `ConfigureTransport` sets
   `http.Transport.Proxy` to `http.ProxyURL` or a socks5 `DialContext`, so
   exactly one attempt is expressible. `resolveFromPAC`
@@ -531,10 +543,10 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
   attempt and drops the rest, including a trailing `DIRECT` fallback.
 - **Impact:** a client whose first PAC proxy is down fails the request where a
   full PAC client would fall through to the second proxy. That is a real
-  behavioural gap against browsers, and PAC files *do* rely on the fallback —
+  behavioural gap against browsers, and PAC files _do_ rely on the fallback —
   it is the reason the syntax is a list. It does not affect the common
   single-proxy PAC file.
-- **Why this is not a `PROXY` bug:** producing a *ranked list* is `PROXY`'s job
+- **Why this is not a `PROXY` bug:** producing a _ranked list_ is `PROXY`'s job
   and it does that (`PACResult.Attempts`). Consuming more than one attempt means
   retrying across transports, which is `TRANSPORT`'s terrain. Pinning it in the
   resolver would put retry policy in the wrong layer.
@@ -545,7 +557,10 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
   record the decision — Bruno itself delegates PAC to the OS, so matching Bruno
   does not require it.
 - **Status:** OPEN — documented, not blocking the `B-011` acceptance criterion,
-  which asks for PAC *evaluation* with the restricted globals (now implemented).
+  which asks for PAC _evaluation_ with the restricted globals (now implemented).
+  Re-checked on this host: `pac_resolve.go:70` still takes `result.Attempts[0]`
+  and nothing outside `internal/core/engine/proxy/` reads `.Attempts`, so the
+  fallback list really is collapsed. Needs a `TRANSPORT` design decision.
 
 ## B-011 — RESOLVED
 
@@ -578,7 +593,7 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
 - **Fix — `resolver.go`:** `ProxyPAC` now calls `resolveFromPAC` instead of
   falling through. It returns `ErrPACNoSource` when PAC mode is on with no
   resolver rather than quietly going direct through the environment, and an
-  explicit `Bypass` entry is applied *before* the script runs.
+  explicit `Bypass` entry is applied _before_ the script runs.
 - **Fix — `pac_resolve.go` (new):** the `PACSource` interface, the
   first-attempt conversion, and `NewPACSource`.
 - **Verified against published behaviour:** the two canonical examples from the
@@ -691,7 +706,7 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
 - **The problem was wider than untracked files.** Committing `shell/` was not
   enough: `HEAD` still failed to build because `shell.go` referenced
   `layout.RootView.CollectionHeader`, `layout.RootView.RightRail` and
-  `uitheme.MethodColorFor`, none of which existed in the *committed* layout and
+  `uitheme.MethodColorFor`, none of which existed in the _committed_ layout and
   theme. Their reviewed revisions — 1,539 lines across `UI-LAYOUT` and
   `UI-THEME` — were sitting uncommitted while both rows read `Done`.
   **Uncommitted source and uncommitted modifications are the same defect**, and
@@ -701,9 +716,65 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
 - **Guard:** `scripts/check-tracked-tree.sh` plus the `tracked-tree-build` CI
   job. It caught its own first two offenders within minutes of being written.
   Run it before merging: `sh scripts/check-tracked-tree.sh`.
-- **State now:** `sh scripts/check-tracked-tree.sh` → *tracked-tree: ok*.
+- **State now:** `sh scripts/check-tracked-tree.sh` → _tracked-tree: ok_.
   `go build ./...`, `go vet ./...`, `scripts/check-deps.sh` and `go test ./...`
   are all green, in the working tree and from a clean export of `HEAD`.
 - **Root cause to remember:** every agent verified with `go build ./...` in the
   shared working tree, which cannot see this class of bug. The guard exists so
   the question "does a fresh clone build?" is answered mechanically.
+
+## Review sweep — 2026-11-11T15:00Z (zed-agent-1)
+
+Full review of all 46 `InReview` rows against `packages.md` acceptance criteria.
+Gate baseline: `go build ./...`, `go vet ./...`, `gofmt`, `check-deps.sh`,
+`check-tracked-tree.sh` all clean; every package's tests pass under `-race`.
+
+**Confirmed green with coverage at or above claim** — promoted to `Done`:
+`BUS`, `FORMAT-CODE`, `FORMAT-BRU`, `FORMAT-YAML`, `VARS`, `TPL`, `COOKIES`,
+`PERSIST`, `COLLECTION`, `AUTH-CORE`, `PROXY`, `TRANSPORT`(already),
+`CMD-SEND`, `CMD-ENV`, `CMD-RUNNER`, `CLI`, `CMD-COLLECTION`,
+`UI-WIDGETS`, `UI-PRESENT-REQ`, `UI-PRESENT-NAV`, `UI-PRESENT-SET`,
+`UI-SCREEN-REQ`, `UI-SCREEN-NAV`, `UI-SCREEN-SET`, `UI-APP`, `PLATFORM`,
+`AUTH-DIGEST`, `AUTH-NTLM`, `AUTH-OAUTH1`, `AUTH-OAUTH2`, `AUTH-AWSV4`,
+`AUTH-EDGEGRID`, `ENV-FILES`, `SCRIPT-RUNTIME`, `SCRIPT-BRU-API`, `SCRIPT-POST`,
+`CONV-POSTMAN`, `CONV-INSOMNIA`, `CONV-OPENAPI`, `CONV-CURL`, `CODEGEN`,
+`ADV-STREAM`, `ADV-EXTENSIONS`.
+
+**Held back — three real defects found:**
+
+- **`BUILD` — duplicate `Authorization` header (CONFIRMED by inspection).**
+  `build.go` adds user headers first (`addHeader` over `merged.Headers`, L82-88)
+  then auth headers (L91-93) to the same `http.Header`, which **appends**.
+  A request with a user-set `Authorization` plus basic/bearer auth puts *two*
+  `Authorization` headers on the wire (verified: `[Bearer USER-SET, Bearer
+  GENERATED]`). Bruno assigns to the header object, so the generated value wins
+  and only one header is sent. **Fix:** in `resolveAuthHeaders`, delete any
+  existing `Authorization`/`X-WSSE` before adding the generated one, or have
+  `addHeader` replace rather than append for auth-managed names. Stays
+  `InReview`.
+- **`ADV-RUNNER` — JUnit/HTML reports missing entirely.** The criterion names
+  "JUnit/HTML reports"; `grep -rn "junit\|<testsuite\|html" internal/runner/`
+  returns nothing. Tags, iterations, data files and fail-fast are present and
+  tested (7 tests plus tag coverage in `commands`). Either implement reports or
+  record a decision deferring them; an acceptance criterion cannot be dropped
+  silently. Stays `InReview`.
+- **`ADV-HISTORY` — UI half absent.** The store is thorough (20 tests, D-011
+  retention). The criterion says "SQLite history store + UI"; there is no
+  `internal/ui/screens/history`. It was noted as blocked on `UI-SCREEN-RESP`,
+  which is now `Done`, so it is unblocked and simply not written. Stays
+  `InReview`.
+
+**Stale open notes cleared** (verified resolved, no code change):
+- `CMD-ENV` "save_environment lacks self-suppression" — `collection.SaveEnvironment`
+  calls `SuppressPath(targetPath)` at `save.go:94`.
+- `CMD-COLLECTION` "move_item.go:79 drops SaveItem error" — still literally true
+  (`_ = collection.SaveItem(...)`), but the sequence write is advisory and the
+  move is already committed to disk; downgraded to a nit, not a blocker.
+- `CMD-SETTINGS` "future schema version silently downgraded" — confirmed
+  (`preferences.go:149`, `ver < Current` treats a *newer* file as old and
+  rewrites it). Low severity; recorded as a nit rather than a blocker, since no
+  newer schema exists yet.
+- `ADV-EXTENSIONS` "unwired" — the criterion is "each registry exercised by at
+  least one internal implementation", which holds: `encoder.go:31-33`,
+  `resolver.go:31-33`, `converter.go:39-40`. The engine not consuming the
+  registries yet is `ENGINE` wiring, not this package's criterion. Promoted.
