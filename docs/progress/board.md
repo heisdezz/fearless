@@ -52,7 +52,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | Package           | State      | Agent        | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                                      |
 | ----------------- | ---------- | ------------ | ----------------- | ----------------- | ---------------------------------------------------------------------------------------------------------- |
 | `UI-THEME`        | Claimed    | kilo         | 2026-11-11T03:38Z | 2026-11-11T03:38Z | Starting theme system implementation                                                                       |
-| `UI-LAYOUT`       | InReview   | mimo-flash-2 | 2026-11-11T00:19Z | 2026-11-11T00:52Z | Takeover from kilo: percent splits fixed, DPI bands 100–200 % verified, state persists+repairs, 97.1 % cov |
+| `UI-LAYOUT`       | InReview   | mimo-flash-2 | 2026-11-11T00:19Z | 2026-11-11T01:04Z | Takeover from kilo: percent splits fixed, DPI bands 100–200 % verified, state persists+repairs, 97.1 % cov; demo linked from main |
 | `UI-WIDGETS`      | Ready      | —            | —                 | —                 | Single owner; may need splitting                                                                           |
 | `UI-PRESENT-REQ`  | InReview   | antigravity  | 2026-11-11T01:55Z | 2026-11-11T02:02Z | Pure Go view-models for request, response, tabs; 95.6% cov, race-clean, dep-clean          |
 | `UI-PRESENT-NAV`  | Ready      | —            | —                 | —                 |                                                                                                            |
@@ -64,7 +64,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `UI-SCREEN-SET`   | Ready      | —            | —                 | —                 |                                                                                                            |
 | `UI-DIALOGS`      | Ready      | —            | —                 | —                 |                                                                                                            |
 | `UI-APP`          | Ready      | —            | —                 | —                 |                                                                                                            |
-| `PLATFORM`        | InProgress | zed-agent-1  | 2026-11-11T09:10Z | 2026-11-11T09:10Z | OS interfaces + headless fakes                                                            |
+| `PLATFORM`        | InReview   | zed-agent-1  | 2026-11-11T09:10Z | 2026-11-11T09:35Z | Six OS interfaces + fakes, real loopback listener; 89.7 % cov                             |
 
 ## Phase 4
 

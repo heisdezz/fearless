@@ -161,3 +161,22 @@ _None yet._
 - **Proposed resolution:** add `./internal/history/...` to the `roots` array.
   One line, no behavioural change.
 - **Status:** OPEN
+
+## B-010 — `internal/platform` is not a dependency-policy root either
+
+- **Date:** 2026-11-11T09:30Z
+- **Package:** `PLATFORM` (needs `INFRA`'s `scripts/check-deps.sh`)
+- **Agent:** zed-agent-1 (reporter)
+- **Blocked on:** `kilo` (`INFRA` owner)
+- **Problem:** same gap as B-009. `internal/platform` is the package whose whole
+  purpose is to keep the GUI toolkit _out_ of the layers below it — the OS
+  implementations wrap MyGo behind interfaces. If a future edit imports `mygo`
+  directly into `internal/platform` itself (rather than into a subpackage that
+  supplies the implementation), the layering reason for the package disappears
+  and nothing would catch it.
+- **Current state:** clean. `go list -deps ./internal/platform/` has no MyGo,
+  Gio or Fyne import; the real implementations are expected in
+  `internal/ui/` or behind a build tag, not here.
+- **Proposed resolution:** add `./internal/platform/...` to the `roots` array,
+  alongside `./internal/history/...` from B-009. Both are one-line additions.
+- **Status:** OPEN
