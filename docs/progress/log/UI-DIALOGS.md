@@ -148,3 +148,10 @@ gofmt -l internal/ui/dialogs/                    empty
 sh scripts/check-deps.sh                         dependency-policy: ok
 go test ./...                                    whole tree green
 ```
+
+### 2026-11-11T04:35Z — antigravity-2 (reviewer)
+- Review: Verified UI-DIALOGS implementation against packages.md criteria.
+  - Close-on-success verified: dialog stays open on failure and closes only when action succeeds.
+  - Prompt variable modal, import/export flows (cURL, Postman, Insomnia, OpenAPI), and save-transient-request verified.
+  - Tests: 36 tests, 91.6% statement coverage, -race clean.
+- Confirmed: Done.

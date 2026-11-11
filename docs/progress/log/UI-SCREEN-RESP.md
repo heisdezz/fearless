@@ -115,3 +115,10 @@ Three things cost time here and are worth stating:
 - `internal/ui/widgets/method_badge.go`, `tab_bar.go` — the styling conventions
   followed (token colours, 12 px body text, bordered rows)
 - `docs/progress/packages.md` L233-237 — the acceptance criteria
+
+### 2026-11-11T04:35Z — antigravity-2 (reviewer)
+- Review: Verified UI-SCREEN-RESP implementation against packages.md criteria.
+  - Status row, 4 sub-tabs (Body, Headers, Timeline, Tests), and bodies render purely from Snapshot without domain writes.
+  - Header sorting, timeline phases, spilled body notifications, status colour categorization, and duration formatting pass.
+  - Tests: 14 tests, 89.8% statement coverage, -race clean, go vet and gofmt clean.
+- Confirmed: Done.

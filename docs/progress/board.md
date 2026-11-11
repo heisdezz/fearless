@@ -51,18 +51,18 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 | Package           | State      | Agent         | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                            |
 | ----------------- | ---------- | ------------- | ----------------- | ----------------- | ------------------------------------------------------------------------------------------------ |
-| `UI-THEME`        | InReview   | mimo-flash-2  | 2026-11-11T01:10Z | 2026-11-11T02:43Z | Reviewed: 98.0 % cov, 7-verb x light/dark table. Finding closed: mode match now case-insensitive |
-| `UI-LAYOUT`       | InReview   | mimo-flash-2  | 2026-11-11T00:19Z | 2026-11-11T02:43Z | Reviewed: 97.1 % cov, DPI 100-200 % verified. Findings closed: View normalizes, B-017 resolved   |
+| `UI-THEME`        | Done       | mimo-flash-2  | 2026-11-11T01:10Z | 2026-11-11T04:35Z | Confirmed: 98.0 % cov, 7-verb x light/dark exact, mode case-insensitivity verified, race-clean   |
+| `UI-LAYOUT`       | Done       | mimo-flash-2  | 2026-11-11T00:19Z | 2026-11-11T04:35Z | Confirmed: 97.1 % cov, DPI 100-200 % verified, View normalizes, B-017 resolved, race-clean       |
 | `UI-WIDGETS`      | InReview   | antigravity   | 2026-11-11T03:10Z | 2026-11-11T03:38Z | Custom widgets (all 8 + CodeEditor); 94.2% cov, race-clean, dep-clean                            |
 | `UI-PRESENT-REQ`  | InReview   | antigravity   | 2026-11-11T01:55Z | 2026-11-11T02:02Z | Pure Go view-models for request, response, tabs; 95.6% cov, race-clean, dep-clean                |
 | `UI-PRESENT-NAV`  | InReview   | antigravity   | 2026-11-11T02:10Z | 2026-11-11T02:18Z | Pure Go view-models for sidebar, collection, environment; 93.8% cov, race-clean, dep-clean       |
 | `UI-PRESENT-SET`  | InReview   | antigravity   | 2026-11-11T02:25Z | 2026-11-11T02:27Z | Pure Go view-models for preferences and settings; 94.8% cov, race-clean, dep-clean               |
 | `UI-SCREEN-REQ`   | InReview   | antigravity   | 2026-11-11T03:47Z | 2026-11-11T04:04Z | Request editor screen with URL/method, sub-tabs, and body/param editors; 87.0% cov, race-clean   |
-| `UI-SCREEN-RESP`  | InReview   | zed-agent-1   | 2026-11-11T11:25Z | 2026-11-11T11:50Z | Pure view of ResponsePresenter; 4 panes, 16 tester tests; 89.8 % cov                             |
+| `UI-SCREEN-RESP`  | Done       | zed-agent-1   | 2026-11-11T11:25Z | 2026-11-11T04:35Z | Confirmed: 89.8 % cov, pure view of ResponsePresenter, 4 panes verified, race-clean             |
 | `UI-SCREEN-NAV`   | InReview   | antigravity-2 | 2026-11-11T04:05Z | 2026-11-11T04:25Z | Pure view + Actions; tree, rail mode, env selector; 96.0 % cov, race-clean, dep-clean            |
-| `UI-SCREEN-SHELL` | InReview   | mimo-flash-2  | 2026-11-11T02:43Z | 2026-11-11T03:01Z | 100 % cov, race×5 clean. Pure view + Actions; goldens for light/dark theme change                |
+| `UI-SCREEN-SHELL` | Done       | mimo-flash-2  | 2026-11-11T02:43Z | 2026-11-11T04:35Z | Confirmed: 100.0 % cov, race×5 clean, pure view + Actions, goldens pass                          |
 | `UI-SCREEN-SET`   | InProgress | antigravity   | 2026-11-11T04:09Z | 2026-11-11T04:09Z | Claimed: settings panes (Preferences and Collection/Folder Settings)                             |
-| `UI-DIALOGS`      | InReview   | zed-agent-1   | 2026-11-11T12:10Z | 2026-11-11T12:45Z | Queue state machine (close-on-success), prompt vars, import, save-transient; 91.8 % cov          |
+| `UI-DIALOGS`      | Done       | zed-agent-1   | 2026-11-11T12:10Z | 2026-11-11T04:35Z | Confirmed: 91.6 % cov, queue close-on-success, prompt vars, import flows pass                    |
 | `UI-APP`          | InProgress | mimo-flash-2  | 2026-11-11T03:18Z | 2026-11-11T03:18Z | Claimed: root view, menu bar, keybinding router; composes UI-SCREEN-SHELL as the real root        |
 | `PLATFORM`        | InReview   | zed-agent-1   | 2026-11-11T09:10Z | 2026-11-11T09:35Z | Six OS interfaces + fakes, real loopback listener; 89.7 % cov                                    |
 
