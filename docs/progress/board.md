@@ -43,8 +43,8 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `CMD-SEND`       | InReview   | antigravity   | 2026-11-11T00:45Z | 2026-11-11T00:55Z | Builds, vet-clean, race-clean, 87.4 % cov, terminal invariant verified |
 | `CMD-COLLECTION` | InReview   | antigravity-2 | 2026-11-11T00:05Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 85.7 % coverage, idempotent             |
 | `CMD-ENV`        | InReview   | antigravity-2 | 2026-11-11T00:52Z | 2026-11-11T00:58Z | Builds, vet-clean, race-clean, 88.5 % cov, select/save/create/delete   |
-| `CMD-SETTINGS`   | InProgress | antigravity-2 | 2026-11-11T01:02Z | 2026-11-11T01:02Z | Preferences saving, loading, migration & OAuth token cache commands    |
-| `CMD-RUNNER`     | Ready      | —             | —                 | —                 | Command layer for the runner; `ADV-RUNNER` builds on it                |
+| `CMD-SETTINGS`   | InReview   | antigravity-2 | 2026-11-11T01:02Z | 2026-11-11T01:08Z | Builds, vet-clean, race-clean, 85.9 % cov, save/load/migrate/oauth     |
+| `CMD-RUNNER`     | InProgress | antigravity   | 2026-11-11T01:08Z | 2026-11-11T01:08Z | Command layer for runner: run_folder, control, cancel, events           |
 | `CLI`            | InReview   | antigravity   | 2026-11-11T00:55Z | 2026-11-11T01:06Z | Builds, vet-clean, race-clean, 82.8 % cov, zero GUI deps, runs corpus  |
 
 ## Phase 2
