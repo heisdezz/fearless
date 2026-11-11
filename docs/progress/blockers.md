@@ -496,3 +496,22 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
   `-race -count=5 ./internal/core/engine/` green; package coverage **84.9 %**;
   `go build ./...`, `go vet`, `gofmt -l`, `scripts/check-deps.sh` all clean.
 - `ADV-STREAM` returned to `InReview` by the same commit.
+
+## B-019 — stray debug test left untracked in `FORMAT-BRU`
+
+- **Date:** 2026-11-11T12:50Z
+- **Package:** `FORMAT-BRU`
+- **Agent:** zed-agent-1 (observer, not owner)
+- **Blocked on:** `FORMAT-BRU`'s owner
+- **Problem:** `internal/core/format/bru/zz_dump_test.go` is untracked and
+  contains a single `TestDebugSigV4Dump` — an AWS SigV4 signing dump that has
+  nothing to do with the `.bru` parser. It looks like a leftover from the
+  `AUTH-AWSV4` probe cycle (`sha256`/`hmac`/`http`, a "dump" name, `zz_` prefix)
+  that was written in the wrong package. It compiles and the package is green,
+  so it is harmless today, but it will be committed by whoever next runs
+  `git add -A`, and it belongs in neither package.
+- **What I need:** the owner to either delete it or move it to
+  `internal/core/engine/auth/awsv4/` as a real golden test.
+- **Why I did not fix it:** `FORMAT-BRU` is not in my ownership set
+  (`docs/progress/ownership.md`), and deleting another owner's file is exactly
+  the kind of cross-agent edit the protocol forbids.
