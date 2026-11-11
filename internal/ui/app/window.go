@@ -56,6 +56,12 @@ func (a *App) CreateWindow(opts ...mygo.WindowOptions) *mygo.Window {
 	return win
 }
 
+// Open creates a default App instance and initializes the main application window.
+func Open() {
+	a := New()
+	a.CreateWindow()
+}
+
 // Run schedules CreateWindow in App.WhenReady and hands control to mygo.App.Run().
 func (a *App) Run() error {
 	mygo.App.WhenReady(func() {

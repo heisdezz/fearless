@@ -5,5 +5,8 @@ bruno
 # Built CLI binary
 /fearless-cli
 
+# Built GUI binary from the repository root (go build . with a main package above)
+/fearless
+
 # Coverage output
 *.out
