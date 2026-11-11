@@ -2,6 +2,7 @@ package tls
 
 import (
 	"crypto/tls"
+	"path/filepath"
 )
 
 // Resolve constructs a crypto/tls.Config according to the specified options,
@@ -28,7 +29,14 @@ func Resolve(opts BuildOptions) (*ResolutionResult, error) {
 		// Verification disabled: CA loading is skipped entirely
 		tlsConfig.InsecureSkipVerify = true
 	} else {
-		pool, counts, err := LoadCACertPool(opts.CA)
+		caCfg := opts.CA
+		if caCfg.CustomFilePath != "" && !filepath.IsAbs(caCfg.CustomFilePath) && opts.CollectionPath != "" {
+			caCfg.CustomFilePath = filepath.Join(opts.CollectionPath, caCfg.CustomFilePath)
+		}
+		if caCfg.ExtraFilePath != "" && !filepath.IsAbs(caCfg.ExtraFilePath) && opts.CollectionPath != "" {
+			caCfg.ExtraFilePath = filepath.Join(opts.CollectionPath, caCfg.ExtraFilePath)
+		}
+		pool, counts, err := LoadCACertPool(caCfg)
 		if err != nil {
 			return nil, err
 		}

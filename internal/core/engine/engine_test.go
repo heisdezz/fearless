@@ -17,8 +17,19 @@ import (
 	"sync"
 	"testing"
 
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
+	"net"
+	"path/filepath"
+
 	"fearless/internal/core/engine"
 	"fearless/internal/core/engine/auth"
+	enginetls "fearless/internal/core/engine/tls"
 	"fearless/internal/core/events"
 	"fearless/internal/core/model"
 	"fearless/internal/core/vars"
@@ -725,4 +736,174 @@ func TestScriptOutputLogging(t *testing.T) {
 	if len(sink.ScriptLogs) < 3 {
 		t.Errorf("expected at least 3 script error logs, got %d", len(sink.ScriptLogs))
 	}
+}
+
+func generateTestCAAndServer(t *testing.T) (string, tls.Certificate) {
+	t.Helper()
+
+	// 1. Generate CA private key & cert
+	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("rsa.GenerateKey: %v", err)
+	}
+
+	caTmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			CommonName: "Fearless Test Engine CA",
+		},
+		NotBefore:             time.Now().Add(-1 * time.Hour),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		IsCA:                  true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+	}
+
+	caDER, err := x509.CreateCertificate(rand.Reader, caTmpl, caTmpl, &caKey.PublicKey, caKey)
+	if err != nil {
+		t.Fatalf("CreateCertificate CA: %v", err)
+	}
+
+	caCertPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caDER})
+	dir := t.TempDir()
+	caPEMPath := filepath.Join(dir, "ca-bundle.pem")
+	if err := os.WriteFile(caPEMPath, caCertPEM, 0o644); err != nil {
+		t.Fatalf("write ca-bundle.pem: %v", err)
+	}
+
+	// 2. Generate Server private key & cert signed by CA
+	serverKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("rsa.GenerateKey server: %v", err)
+	}
+
+	serverTmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(2),
+		Subject: pkix.Name{
+			CommonName: "localhost",
+		},
+		IPAddresses: []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("::1")},
+		DNSNames:    []string{"localhost"},
+		NotBefore:   time.Now().Add(-1 * time.Hour),
+		NotAfter:    time.Now().Add(24 * time.Hour),
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	}
+
+	serverDER, err := x509.CreateCertificate(rand.Reader, serverTmpl, caTmpl, &serverKey.PublicKey, caKey)
+	if err != nil {
+		t.Fatalf("CreateCertificate server: %v", err)
+	}
+
+	serverCertPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: serverDER})
+	serverKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(serverKey)})
+
+	serverTLSCert, err := tls.X509KeyPair(serverCertPEM, serverKeyPEM)
+	if err != nil {
+		t.Fatalf("X509KeyPair: %v", err)
+	}
+
+	return caPEMPath, serverTLSCert
+}
+
+func TestCollectionCABundleVerifiesServer(t *testing.T) {
+	caPEMPath, serverTLSCert := generateTestCAAndServer(t)
+
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("tls-handshake-ok"))
+	}))
+	server.TLS = &tls.Config{
+		Certificates: []tls.Certificate{serverTLSCert},
+	}
+	server.StartTLS()
+	defer server.Close()
+
+	eng := engine.New()
+
+	// 1. Without custom CA and with verification enabled, connection must fail
+	t.Run("FailsWithoutCustomCA", func(t *testing.T) {
+		verify := true
+		res, err := eng.Do(context.Background(), engine.Input{
+			Item: &model.Item{
+				Request: &model.Request{
+					Method: "GET",
+					URL:    server.URL,
+				},
+			},
+			TLS: enginetls.BuildOptions{
+				VerifyServerCertificates: &verify,
+			},
+		})
+		if err == nil && (res == nil || res.Err == "") {
+			t.Errorf("expected TLS handshake failure without CA bundle, but succeeded: %+v", res)
+		}
+	})
+
+	// 2. With custom CA bundle, connection succeeds and response is returned
+	t.Run("SucceedsWithCustomCABundle", func(t *testing.T) {
+		verify := true
+		res, err := eng.Do(context.Background(), engine.Input{
+			Item: &model.Item{
+				Request: &model.Request{
+					Method: "GET",
+					URL:    server.URL,
+				},
+			},
+			TLS: enginetls.BuildOptions{
+				VerifyServerCertificates: &verify,
+				CA: enginetls.CAConfig{
+					CustomFilePath: caPEMPath,
+				},
+			},
+		})
+		if err != nil {
+			t.Fatalf("Do returned error: %v", err)
+		}
+		if res == nil {
+			t.Fatalf("expected non-nil result")
+		}
+		if res.Err != "" {
+			t.Fatalf("expected clean TLS connection with CA bundle, got res.Err: %s", res.Err)
+		}
+		if res.Status != http.StatusOK {
+			t.Errorf("status = %d; want 200", res.Status)
+		}
+		if string(res.Body.Inline) != "tls-handshake-ok" {
+			t.Errorf("body = %q; want tls-handshake-ok", string(res.Body.Inline))
+		}
+	})
+
+	// 3. Relative CA path resolved against CollectionPath
+	t.Run("SucceedsWithRelativeCAPathInCollection", func(t *testing.T) {
+		caDir := filepath.Dir(caPEMPath)
+		caBase := filepath.Base(caPEMPath)
+		verify := true
+
+		res, err := eng.Do(context.Background(), engine.Input{
+			Item: &model.Item{
+				Request: &model.Request{
+					Method: "GET",
+					URL:    server.URL,
+				},
+			},
+			CollectionPath: caDir,
+			TLS: enginetls.BuildOptions{
+				VerifyServerCertificates: &verify,
+				CA: enginetls.CAConfig{
+					CustomFilePath: caBase,
+				},
+			},
+		})
+		if err != nil {
+			t.Fatalf("Do returned error: %v", err)
+		}
+		if res == nil || res.Err != "" {
+			t.Fatalf("expected clean connection with relative CA path, got: %+v (err: %v)", res, err)
+		}
+		if res.Status != http.StatusOK {
+			t.Errorf("status = %d; want 200", res.Status)
+		}
+	})
 }

@@ -12,13 +12,14 @@ import (
 var odataSegmentRe = regexp.MustCompile(`^[A-Za-z0-9_.-]+\([^)]*\)$`)
 
 // SynthesizeURL builds, substitutes path parameters into, and normalizes a target URL.
+// Query parameters preserve declaration order and duplicates (per acceptance criteria).
 func SynthesizeURL(rawURL string, pathParams []model.Param, queryParams []model.Param, encodeURL bool) (*url.URL, string, error) {
 	rawURL = strings.TrimSpace(rawURL)
 	if rawURL == "" {
 		return nil, "", fmt.Errorf("URL cannot be empty")
 	}
 
-	// 1. Ensure scheme (default to http:// if missing)
+	// 1. Ensure scheme (default to http:// if missing and not leading with {{)
 	if !strings.Contains(rawURL, "://") && !strings.HasPrefix(rawURL, "{{") {
 		rawURL = "http://" + rawURL
 	}
@@ -91,8 +92,7 @@ func SynthesizeURL(rawURL string, pathParams []model.Param, queryParams []model.
 	// Reassemble path
 	assembledURL := prefix + pathPart
 
-	// 4. Append / merge query parameters
-	// If queryParams slice contains live query params not present in rawQuery, add them
+	// 4. Append query parameters while strictly preserving order and duplicate entries
 	var queryParts []string
 	if rawQuery != "" {
 		queryParts = append(queryParts, rawQuery)
@@ -104,11 +104,7 @@ func SynthesizeURL(rawURL string, pathParams []model.Param, queryParams []model.
 			if name != "" {
 				val := p.ValueOrEmpty()
 				queryEntry := url.QueryEscape(name) + "=" + url.QueryEscape(val)
-				// Check if already in rawQuery to prevent duplication
-				if !strings.Contains(rawQuery, url.QueryEscape(name)+"=") &&
-					!strings.Contains(rawQuery, name+"=") {
-					queryParts = append(queryParts, queryEntry)
-				}
+				queryParts = append(queryParts, queryEntry)
 			}
 		}
 	}
@@ -126,12 +122,13 @@ func SynthesizeURL(rawURL string, pathParams []model.Param, queryParams []model.
 		return nil, assembledURL, fmt.Errorf("Invalid URL format: %w", err)
 	}
 
-	if parsedURL.Scheme == "" || parsedURL.Host == "" {
+	// If missing scheme or host and not a template variable, reject
+	if (parsedURL.Scheme == "" || parsedURL.Host == "") && !strings.Contains(assembledURL, "{{") {
 		return nil, assembledURL, fmt.Errorf("Invalid URL format: missing scheme or host in %q", assembledURL)
 	}
 
 	// 6. Optional URL encoding
-	if encodeURL {
+	if encodeURL && parsedURL != nil {
 		parsedURL.RawPath = parsedURL.EscapedPath()
 	}
 

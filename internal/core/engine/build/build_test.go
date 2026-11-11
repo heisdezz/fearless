@@ -51,25 +51,31 @@ func TestStripComments(t *testing.T) {
 func TestSynthesizeURL(t *testing.T) {
 	pathParams := []model.Param{
 		{
-			Type:    model.ParamPath,
-			Name:    stringPtr("userId"),
-			Value:   stringPtr("42"),
-			Enabled: true,
+			Type: model.ParamPath,
+			KeyValue: model.KeyValue{
+				Name:    stringPtr("userId"),
+				Value:   stringPtr("42"),
+				Enabled: true,
+			},
 		},
 		{
-			Type:    model.ParamPath,
-			Name:    stringPtr("orderId"),
-			Value:   stringPtr("1001"),
-			Enabled: true,
+			Type: model.ParamPath,
+			KeyValue: model.KeyValue{
+				Name:    stringPtr("orderId"),
+				Value:   stringPtr("1001"),
+				Enabled: true,
+			},
 		},
 	}
 
 	queryParams := []model.Param{
 		{
-			Type:    model.ParamQuery,
-			Name:    stringPtr("filter"),
-			Value:   stringPtr("active"),
-			Enabled: true,
+			Type: model.ParamQuery,
+			KeyValue: model.KeyValue{
+				Name:    stringPtr("filter"),
+				Value:   stringPtr("active"),
+				Enabled: true,
+			},
 		},
 	}
 
@@ -743,5 +749,227 @@ func TestHTTPRequestObject(t *testing.T) {
 	}
 	if string(bodyRead) != string(res.Body) {
 		t.Errorf("body mismatch: %s vs %s", string(bodyRead), string(res.Body))
+	}
+}
+
+func TestHeaderDeletionUQ_B1(t *testing.T) {
+	ctx := context.Background()
+
+	parentFolder := &model.Item{
+		UID:  "folder-del",
+		Type: model.ItemFolder,
+		Headers: []model.KeyValue{
+			{
+				Name:    stringPtr("X-Keep"),
+				Value:   stringPtr("keep-me"),
+				Enabled: true,
+			},
+			{
+				Name:    stringPtr("X-To-Delete"),
+				Value:   stringPtr("delete-me"),
+				Enabled: true,
+			},
+		},
+	}
+
+	reqItem := &model.Item{
+		UID:  "req-del",
+		Type: model.ItemHTTPRequest,
+		Request: &model.Request{
+			Method: "GET",
+			URL:    "https://api.example.com/test",
+			Headers: []model.KeyValue{
+				{
+					Name:    stringPtr("X-To-Delete"),
+					Value:   stringPtr(""), // Explicit empty value deletes per UQ-B1
+					Enabled: true,
+				},
+			},
+		},
+	}
+	parentFolder.Children = []*model.Item{reqItem}
+	col := &model.Collection{
+		UID:   "col-del",
+		Items: []*model.Item{parentFolder},
+	}
+
+	res, err := build.Build(ctx, build.BuildInput{
+		Item:       reqItem,
+		Collection: col,
+	})
+	if err != nil {
+		t.Fatalf("Build failed: %v", err)
+	}
+
+	if res.Headers.Get("X-Keep") != "keep-me" {
+		t.Errorf("X-Keep header should be retained: %s", res.Headers.Get("X-Keep"))
+	}
+	if got := res.Headers.Get("X-To-Delete"); got != "" {
+		t.Errorf("X-To-Delete should have been deleted by child empty string, got %q", got)
+	}
+}
+
+func TestCollectionRootInheritance(t *testing.T) {
+	ctx := context.Background()
+
+	col := &model.Collection{
+		UID:  "col-root",
+		Name: "Root Collection",
+		Config: model.CollectionConfig{
+			Headers: []model.KeyValue{
+				{
+					Name:    stringPtr("X-Col-Header"),
+					Value:   stringPtr("col-val"),
+					Enabled: true,
+				},
+			},
+			Auth: &model.Auth{
+				Mode:  model.AuthBearer,
+				Token: stringPtr("col-bearer-token"),
+			},
+		},
+	}
+
+	reqItem := &model.Item{
+		UID:  "req-inherit-col",
+		Type: model.ItemHTTPRequest,
+		Request: &model.Request{
+			Method: "GET",
+			URL:    "https://api.example.com/check",
+			Auth: &model.Auth{
+				Mode: model.AuthInherit,
+			},
+		},
+	}
+	col.Items = []*model.Item{reqItem}
+
+	res, err := build.Build(ctx, build.BuildInput{
+		Item:       reqItem,
+		Collection: col,
+	})
+	if err != nil {
+		t.Fatalf("Build failed: %v", err)
+	}
+
+	if res.Headers.Get("X-Col-Header") != "col-val" {
+		t.Errorf("Collection root header not inherited: %s", res.Headers.Get("X-Col-Header"))
+	}
+	if res.Headers.Get("Authorization") != "Bearer col-bearer-token" {
+		t.Errorf("Collection root auth not inherited: %s", res.Headers.Get("Authorization"))
+	}
+}
+
+func TestQueryParamsPreserveDuplicatesAndOrder(t *testing.T) {
+	ctx := context.Background()
+
+	item := &model.Item{
+		Request: &model.Request{
+			Method: "GET",
+			URL:    "https://api.example.com/items?base=0",
+			Params: []model.Param{
+				{
+					Type: model.ParamQuery,
+					KeyValue: model.KeyValue{
+						Name:    stringPtr("tag"),
+						Value:   stringPtr("alpha"),
+						Enabled: true,
+					},
+				},
+				{
+					Type: model.ParamQuery,
+					KeyValue: model.KeyValue{
+						Name:    stringPtr("tag"),
+						Value:   stringPtr("beta"),
+						Enabled: true,
+					},
+				},
+				{
+					Type: model.ParamQuery,
+					KeyValue: model.KeyValue{
+						Name:    stringPtr("sort"),
+						Value:   stringPtr("desc"),
+						Enabled: true,
+					},
+				},
+			},
+		},
+	}
+
+	res, err := build.Build(ctx, build.BuildInput{Item: item})
+	if err != nil {
+		t.Fatalf("Build failed: %v", err)
+	}
+
+	expectedQuery := "base=0&tag=alpha&tag=beta&sort=desc"
+	if res.URL.RawQuery != expectedQuery {
+		t.Errorf("Query mismatch:\n got:  %s\n want: %s", res.URL.RawQuery, expectedQuery)
+	}
+}
+
+func TestFormURLEncodedOrderPreserved(t *testing.T) {
+	ctx := context.Background()
+
+	item := &model.Item{
+		Request: &model.Request{
+			Method: "POST",
+			URL:    "https://api.example.com/submit",
+			Body: &model.Body{
+				Mode: model.BodyFormURLEncoded,
+				FormURLEncoded: []model.KeyValue{
+					{
+						Name:    stringPtr("z_last"),
+						Value:   stringPtr("3"),
+						Enabled: true,
+					},
+					{
+						Name:    stringPtr("a_first"),
+						Value:   stringPtr("1"),
+						Enabled: true,
+					},
+					{
+						Name:    stringPtr("m_mid"),
+						Value:   stringPtr("2"),
+						Enabled: true,
+					},
+				},
+			},
+		},
+	}
+
+	res, err := build.Build(ctx, build.BuildInput{Item: item})
+	if err != nil {
+		t.Fatalf("Build failed: %v", err)
+	}
+
+	expectedBody := "z_last=3&a_first=1&m_mid=2"
+	if string(res.Body) != expectedBody {
+		t.Errorf("FormURLEncoded order was sorted or destroyed:\n got:  %s\n want: %s", string(res.Body), expectedBody)
+	}
+}
+
+func TestHostHeaderSetsHTTPRequestHost(t *testing.T) {
+	ctx := context.Background()
+
+	item := &model.Item{
+		Request: &model.Request{
+			Method: "GET",
+			URL:    "https://127.0.0.1:8080/v1",
+			Headers: []model.KeyValue{
+				{
+					Name:    stringPtr("Host"),
+					Value:   stringPtr("custom.virtualhost.org"),
+					Enabled: true,
+				},
+			},
+		},
+	}
+
+	res, err := build.Build(ctx, build.BuildInput{Item: item})
+	if err != nil {
+		t.Fatalf("Build failed: %v", err)
+	}
+
+	if res.HTTPRequest.Host != "custom.virtualhost.org" {
+		t.Errorf("HTTPRequest.Host = %q, want custom.virtualhost.org", res.HTTPRequest.Host)
 	}
 }

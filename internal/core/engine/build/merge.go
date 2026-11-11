@@ -34,6 +34,7 @@ func MergeRequest(col *model.Collection, item *model.Item) MergedRequest {
 	// 1. Merge Headers
 	// Order: collection -> ancestor folders -> request
 	// Case-insensitive header matching (later wins), preserving duplicates with different casing or same name
+	// UQ-B1: An explicit empty value ("") in a child deletes the inherited header.
 	var mergedHeaders []model.KeyValue
 	headerIndex := make(map[string]int)
 
@@ -46,11 +47,35 @@ func MergeRequest(col *model.Collection, item *model.Item) MergedRequest {
 			return
 		}
 		key := strings.ToLower(name)
-		if idx, exists := headerIndex[key]; exists {
+		val := kv.ValueOrEmpty()
+
+		idx, exists := headerIndex[key]
+		if val == "" {
+			// UQ-B1: Explicit empty value deletes the inherited header
+			if exists {
+				mergedHeaders = append(mergedHeaders[:idx], mergedHeaders[idx+1:]...)
+				delete(headerIndex, key)
+				// Re-index remaining headers
+				for i := idx; i < len(mergedHeaders); i++ {
+					k := strings.ToLower(strings.TrimSpace(mergedHeaders[i].NameOrEmpty()))
+					headerIndex[k] = i
+				}
+			}
+			return
+		}
+
+		if exists {
 			mergedHeaders[idx] = kv
 		} else {
 			headerIndex[key] = len(mergedHeaders)
 			mergedHeaders = append(mergedHeaders, kv)
+		}
+	}
+
+	// Collection root headers
+	if col != nil {
+		for _, h := range col.Config.Headers {
+			appendOrUpdateHeader(h)
 		}
 	}
 
@@ -69,6 +94,10 @@ func MergeRequest(col *model.Collection, item *model.Item) MergedRequest {
 	// 2. Merge Auth
 	// Precedence: Collection -> ancestor folders -> request
 	var effectiveAuth *model.Auth
+	if col != nil && col.Config.Auth != nil && col.Config.Auth.Mode != "" && col.Config.Auth.Mode != model.AuthInherit {
+		effectiveAuth = col.Config.Auth
+	}
+
 	for _, folder := range ancestors {
 		if folder.Auth != nil && folder.Auth.Mode != "" && folder.Auth.Mode != model.AuthInherit {
 			effectiveAuth = folder.Auth

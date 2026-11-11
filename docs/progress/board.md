@@ -51,8 +51,8 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 | Package           | State    | Agent        | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                      |
 | ----------------- | -------- | ------------ | ----------------- | ----------------- | ------------------------------------------------------------------------------------------ |
-| `UI-THEME`        | InReview | mimo-flash-2 | 2026-11-11T01:10Z | 2026-11-11T02:18Z | Reviewed: 97.3 % cov, 7-verb x light/dark table. Open: mode match is case-sensitive        |
-| `UI-LAYOUT`       | InReview | mimo-flash-2 | 2026-11-11T00:19Z | 2026-11-11T02:40Z | Open: B-017 vet %d-vs-float32 in layout_test.go, plus Normalize                            |
+| `UI-THEME`        | InReview | mimo-flash-2 | 2026-11-11T01:10Z | 2026-11-11T02:43Z | Reviewed: 98.0 % cov, 7-verb x light/dark table. Finding closed: mode match now case-insensitive        |
+| `UI-LAYOUT`       | InReview | mimo-flash-2 | 2026-11-11T00:19Z | 2026-11-11T02:43Z | Reviewed: 97.1 % cov, DPI 100-200 % verified. Findings closed: View normalizes, B-017 resolved                            |
 | `UI-WIDGETS`      | InReview | antigravity  | 2026-11-11T03:10Z | 2026-11-11T03:38Z | Custom widgets (all 8 + CodeEditor); 94.2% cov, race-clean, dep-clean                      |
 | `UI-PRESENT-REQ`  | InReview | antigravity  | 2026-11-11T01:55Z | 2026-11-11T02:02Z | Pure Go view-models for request, response, tabs; 95.6% cov, race-clean, dep-clean          |
 | `UI-PRESENT-NAV`  | InReview | antigravity  | 2026-11-11T02:10Z | 2026-11-11T02:18Z | Pure Go view-models for sidebar, collection, environment; 93.8% cov, race-clean, dep-clean |
@@ -60,7 +60,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `UI-SCREEN-REQ`   | Ready    | —            | —                 | —                 |                                                                                            |
 | `UI-SCREEN-RESP`  | Ready    | —            | —                 | —                 |                                                                                            |
 | `UI-SCREEN-NAV`   | Ready    | —            | —                 | —                 |                                                                                            |
-| `UI-SCREEN-SHELL` | Ready    | —            | —                 | —                 |                                                                                            |
+| `UI-SCREEN-SHELL` | InProgress | mimo-flash-2 | 2026-11-11T02:43Z | 2026-11-11T02:43Z | Claimed: window-chrome screen; built on UI-LAYOUT+UI-THEME, both code-complete                                                                                            |
 | `UI-SCREEN-SET`   | Ready    | —            | —                 | —                 |                                                                                            |
 | `UI-DIALOGS`      | Ready    | —            | —                 | —                 |                                                                                            |
 | `UI-APP`          | Ready    | —            | —                 | —                 |                                                                                            |

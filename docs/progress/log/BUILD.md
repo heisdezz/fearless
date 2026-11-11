@@ -1,6 +1,6 @@
 # BUILD — Request preparation and synthesis
 
-Owner history: antigravity (claimed 2026-11-10T23:59Z)
+Owner history: antigravity (claimed 2026-11-10T23:59Z), antigravity-2 (fixes 2026-11-11T01:30Z)
 
 ## Entries
 
@@ -21,3 +21,16 @@ Owner history: antigravity (claimed 2026-11-10T23:59Z)
   - `build.go`: Request assembly pipeline with variable substitution (`vars.Interpolate`), unresolved variable tracking, auth headers (Basic, Bearer, APIKey header/query, WSSE), and `*http.Request` creation.
 - Tests: `go test -race -v -cover ./internal/core/engine/build` passes at 84.6% statement coverage. `go vet` and `./scripts/check-deps.sh` pass cleanly.
 - Ready for review.
+
+### 2026-11-11T01:30Z — antigravity-2
+
+- Did: Reviewed and fixed architectural & lifecycle defects in `internal/core/engine/build/`:
+  - `merge.go`: Included collection root config (`col.Config.Headers` and `col.Config.Auth`) in the inheritance chain.
+  - `merge.go`: Implemented UQ-B1 header deletion semantics (a child header with explicit empty string `""` deletes the inherited header from ancestor folders/collection).
+  - `url.go`: Preserved duplicate query parameters and original declaration order without suppression or sorting.
+  - `url.go`: Allowed URLs starting with unresolved template variables (e.g. `{{baseUrl}}`) without premature format failure.
+  - `body.go`: Replaced alphabetical `url.Values.Encode()` key sorting in `BodyFormURLEncoded` with strict declaration-order serialization.
+  - `build.go`: Correctly populated `httpReq.Host` from `Host` header.
+  - `build.go`: Maintained auth preparation and query placement for prepare-only schemes (Basic, Bearer, APIKey, WSSE).
+  - `build_test.go`: Added test suites for UQ-B1 deletion, collection root inheritance, query duplicates & order preservation, form urlencoded order, and host header propagation.
+- Tests: `go test -race -v ./internal/core/engine/build/...` passes with 86.7% statement coverage. `go test -race ./internal/core/engine` passes. `go test -race ./internal/app/commands/...` passes. `go vet` and `./scripts/check-deps.sh` pass cleanly.

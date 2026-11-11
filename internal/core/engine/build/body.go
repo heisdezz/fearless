@@ -105,15 +105,16 @@ func RenderBody(
 		contentType = "application/json"
 
 	case model.BodyFormURLEncoded:
-		values := url.Values{}
+		// Preserve exact entry declaration order without sorting keys
+		var pairs []string
 		for _, kv := range body.FormURLEncoded {
 			if kv.Live() {
 				name := vars.Interpolate(kv.NameOrEmpty(), scopeVars, interpOpts)
 				val := vars.Interpolate(kv.ValueOrEmpty(), scopeVars, interpOpts)
-				values.Add(name, val)
+				pairs = append(pairs, url.QueryEscape(name)+"="+url.QueryEscape(val))
 			}
 		}
-		data = []byte(values.Encode())
+		data = []byte(strings.Join(pairs, "&"))
 		contentType = "application/x-www-form-urlencoded"
 
 	case model.BodyMultipartForm:

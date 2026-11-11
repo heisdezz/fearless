@@ -12,6 +12,7 @@ import (
 
 	"fearless/internal/core/engine/auth"
 	"fearless/internal/core/engine/build"
+	enginetls "fearless/internal/core/engine/tls"
 	"fearless/internal/core/engine/transport"
 	"fearless/internal/core/model"
 	"fearless/internal/core/template"
@@ -160,7 +161,56 @@ func runPipeline(ctx context.Context, in Input) (*model.Result, error) {
 		built.Headers.Set("User-Agent", ua)
 	}
 
-	// 5. Transmission (emit Queued snapshot, execute via transport)
+	// 5. TLS Resolution (CA bundles, client certificates, verification precedence)
+	tlsOpts := in.TLS
+	if tlsOpts.TargetURL == "" && built.HTTPRequest != nil && built.HTTPRequest.URL != nil {
+		tlsOpts.TargetURL = built.HTTPRequest.URL.String()
+	}
+	if tlsOpts.CollectionPath == "" {
+		tlsOpts.CollectionPath = in.CollectionPath
+	}
+
+	// 5.1 Verification precedence: Request > Collection > Preferences > default true
+	var colVerify *bool
+	if in.Collection != nil && in.Collection.Config.Security != nil {
+		colVerify = in.Collection.Config.Security.VerifyTLS
+	}
+	var prefVerify *bool
+	if in.GlobalPreferences.TLS.VerifyServerCertificates {
+		v := true
+		prefVerify = &v
+	} else if in.GlobalPreferences.Request.TimeoutMs > 0 || in.GlobalPreferences.TLS.CACertFile != "" {
+		v := in.GlobalPreferences.TLS.VerifyServerCertificates
+		prefVerify = &v
+	}
+
+	effectiveVerify := enginetls.ResolveVerifyTLS(tlsOpts.VerifyServerCertificates, colVerify, prefVerify)
+	tlsOpts.VerifyServerCertificates = &effectiveVerify
+
+	// 5.2 Client certificates: Collection takes precedence over Global
+	if tlsOpts.CollectionCerts == nil && in.Collection != nil && in.Collection.Config.Security != nil && in.Collection.Config.Security.ClientCertificates != nil {
+		tlsOpts.CollectionCerts = enginetls.FromModelClientCertificates(in.Collection.Config.Security.ClientCertificates)
+	}
+	if tlsOpts.GlobalCerts == nil && in.GlobalPreferences.TLS.ClientCertificates != nil {
+		tlsOpts.GlobalCerts = enginetls.FromModelClientCertificates(in.GlobalPreferences.TLS.ClientCertificates)
+	}
+
+	// 5.3 CA configuration from preferences if not explicitly set
+	if tlsOpts.CA.CustomFilePath == "" && in.GlobalPreferences.TLS.CACertFile != "" {
+		tlsOpts.CA.CustomFilePath = in.GlobalPreferences.TLS.CACertFile
+	}
+
+	tlsRes, err := enginetls.Resolve(tlsOpts)
+	if err != nil {
+		return ensureOne(nil, err)
+	}
+
+	var wrapTransport func(http.RoundTripper) http.RoundTripper
+	if authPrep.Transport != nil {
+		wrapTransport = authPrep.Transport.Wrap
+	}
+
+	// 6. Transmission (emit Queued snapshot, execute via transport)
 	sent := sentSnapshot(built)
 	in.Sink.Queued(sent)
 
@@ -170,7 +220,9 @@ func runPipeline(ctx context.Context, in Input) (*model.Result, error) {
 		TimeoutMs:          timeoutMs,
 		ForwardAuthHeader:  forwardAuth,
 		Proxy:              in.ProxyURL,
-		TLS:                in.TLS,
+		TLS:                tlsOpts,
+		TLSConfig:          tlsRes.TLSConfig,
+		WrapTransport:      wrapTransport,
 		Jar:                in.Jar,
 		Spooler:            in.Spooler,
 		Sink:               &transportSinkBridge{sink: in.Sink},

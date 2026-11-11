@@ -40,3 +40,12 @@ Owner history: antigravity (claimed 2026-11-11T00:20Z)
   - `engine_test.go`: Comprehensive test suite verifying phase ordering with recording fakes, single-result-or-error guarantee, variable scoping, timeline/chunk delivery to sink, and absence of GUI/image dependencies.
 - Tests: `go test -race -v -cover ./internal/core/engine` passes at 86.8% coverage. `go vet`, `gofmt`, and `./scripts/check-deps.sh` pass cleanly.
 - Ready for review.
+
+### 2026-11-11T02:35Z — antigravity-2
+
+- Did: Resolved blocker B-013 by wiring TLS configuration end-to-end between ENGINE, TLS, and TRANSPORT:
+  - `transport.Options`: Added `TLSConfig *tls.Config` and `WrapTransport func(http.RoundTripper) http.RoundTripper`.
+  - `transport/client.go`: Updated `buildTLSConfig` to clone and use `opts.TLSConfig` when present, and wrapped the client transport with `opts.WrapTransport`.
+  - `pipeline.go`: Wired `enginetls.Resolve` before transmission, calculating verification precedence (Request > Collection > Global Preferences > default true), collection/global client certificates, and CA bundles.
+  - `engine_test.go`: Added end-to-end test `TestCollectionCABundleVerifiesServer` verifying that custom CA bundles verify local TLS servers and relative CA paths resolve correctly.
+- Tests: `go test -race -v -cover ./internal/core/engine` passes at 81.8% statement coverage. `go vet` and `./scripts/check-deps.sh` pass cleanly.

@@ -138,12 +138,16 @@ func Build(ctx context.Context, in BuildInput) (*BuiltRequest, error) {
 			}
 			kName := vars.Interpolate(rawKey, scopeVars, interpOpts)
 			kVal := vars.Interpolate(rawVal, scopeVars, interpOpts)
-			interpolatedQueryParams = append(interpolatedQueryParams, model.Param{
-				Type:    model.ParamQuery,
-				Name:    &kName,
-				Value:   &kVal,
-				Enabled: true,
-			})
+			if kName != "" {
+				interpolatedQueryParams = append(interpolatedQueryParams, model.Param{
+					Type: model.ParamQuery,
+					KeyValue: model.KeyValue{
+						Name:    &kName,
+						Value:   &kVal,
+						Enabled: true,
+					},
+				})
+			}
 		}
 	}
 
@@ -200,6 +204,9 @@ func Build(ctx context.Context, in BuildInput) (*BuiltRequest, error) {
 	}
 
 	httpReq.Header = headers.Clone()
+	if hostVal := headers.Get("Host"); hostVal != "" {
+		httpReq.Host = hostVal
+	}
 	httpReq.ContentLength = contentLength
 
 	return &BuiltRequest{
@@ -250,7 +257,7 @@ func resolveAuthHeaders(auth *model.Auth, scopeVars map[string]any, interpOpts v
 
 	case model.AuthAPIKey:
 		placement := string(auth.Placement)
-		if placement == "" || strings.EqualFold(placement, "header") {
+		if placement == "" || strings.EqualFold(placement, "header") || auth.Placement == model.APIKeyHeader {
 			name := vars.Interpolate(strOrEmpty(auth.Key), scopeVars, interpOpts)
 			val := vars.Interpolate(strOrEmpty(auth.Value), scopeVars, interpOpts)
 			if name != "" {
