@@ -61,7 +61,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `UI-SCREEN-RESP`  | InReview   | zed-agent-1   | 2026-11-11T11:25Z | 2026-11-11T11:50Z | Pure view of ResponsePresenter; 4 panes, 16 tester tests; 89.8 % cov                             |
 | `UI-SCREEN-NAV`   | InProgress | antigravity-2 | 2026-11-11T04:05Z | 2026-11-11T04:05Z | Claimed: navigation/sidebar explorer screen (collection tree, folders, environment selector)     |
 | `UI-SCREEN-SHELL` | InReview   | mimo-flash-2  | 2026-11-11T02:43Z | 2026-11-11T03:01Z | 100 % cov, race×5 clean. Pure view + Actions; goldens for light/dark theme change                |
-| `UI-SCREEN-SET`   | Ready      | —             | —                 | —                 |                                                                                                  |
+| `UI-SCREEN-SET`   | InProgress | antigravity   | 2026-11-11T04:09Z | 2026-11-11T04:09Z | Claimed: settings panes (Preferences and Collection/Folder Settings)                             |
 | `UI-DIALOGS`      | Ready      | —             | —                 | —                 |                                                                                                  |
 | `UI-APP`          | Ready      | —             | —                 | —                 |                                                                                                  |
 | `PLATFORM`        | InReview   | zed-agent-1   | 2026-11-11T09:10Z | 2026-11-11T09:35Z | Six OS interfaces + fakes, real loopback listener; 89.7 % cov                                    |
