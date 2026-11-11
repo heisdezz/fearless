@@ -51,7 +51,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 | Package           | State      | Agent        | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                                      |
 | ----------------- | ---------- | ------------ | ----------------- | ----------------- | ---------------------------------------------------------------------------------------------------------- |
-| `UI-THEME`        | InProgress | mimo-flash-2  | 2026-11-11T01:10Z | 2026-11-11T01:10Z | Takeover from kilo (unavailable): code+tests exist, fixing gofmt/CI red and acceptance gaps |
+| `UI-THEME`        | InReview   | mimo-flash-2  | 2026-11-11T01:10Z | 2026-11-11T01:45Z | Takeover from kilo: Bruno's exact 7-verb × light/dark table, mode-aware fallback, system-following Apply tested headlessly, 97.3 % cov |
 | `UI-LAYOUT`       | InReview   | mimo-flash-2 | 2026-11-11T00:19Z | 2026-11-11T01:04Z | Takeover from kilo: percent splits fixed, DPI bands 100–200 % verified, state persists+repairs, 97.1 % cov; demo linked from main |
 | `UI-WIDGETS`      | Ready      | —            | —                 | —                 | Single owner; may need splitting                                                                           |
 | `UI-PRESENT-REQ`  | InReview   | antigravity  | 2026-11-11T01:55Z | 2026-11-11T02:02Z | Pure Go view-models for request, response, tabs; 95.6% cov, race-clean, dep-clean          |
@@ -105,7 +105,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `ADV-GRPC`       | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                        |
 | `ADV-WS`         | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                        |
 | `ADV-HISTORY`    | InReview   | zed-agent-1 | 2026-11-11T08:50Z | 2026-11-11T09:05Z | JSONL store per D-011; UI half blocked on UI-SCREEN-RESP; 87.5 % cov |
-| `ADV-EXTENSIONS` | Ready      | —           | —                 | —                 |                                          |
+| `ADV-EXTENSIONS` | InReview   | antigravity | 2026-11-11T02:50Z | 2026-11-11T03:00Z | Registries for HTTPHook, BodyEncoder, VariableResolver, Importer/Exporter; 83.3% cov |
 
 ---
 
