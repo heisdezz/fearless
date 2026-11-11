@@ -120,3 +120,29 @@ under `-race`.
   rules
 - `internal/core/engine/transport/transport.go` — `Sink.Chunk`, the byte source
   this layer sits above
+
+## B-018 — cancellation boundary fixed
+
+`mimo-flash`'s review was right. Re-verified on this host: the acceptance test
+failed 4/10 under `-race`, not intermittently-but-rarely, and the cause was the
+one described — `Pump` checked `ctx.Err()` only before `src.Read`, so a source
+that does not observe the context (the test's `chunkReader`, or any `io.ReadCloser`
+whose `Close` has not yet propagated) could still deliver one fragment after the
+cancel, which was then parsed and emitted.
+
+The fix moves the check to immediately after `Read` returns, before `p.Write`.
+It also discards that read's terminal error: if the stream ended *and* the caller
+cancelled, `context.Canceled` is the honest result, because a caller that wanted
+to stop must not be told the body completed.
+
+Documented consequence: `Pump` still cannot interrupt a `Read` that blocks
+forever. That is deliberate — the source must be cancelled by whoever owns it
+(in the pipeline, the request context, which makes the body reader return). The
+doc comment now says so, instead of implying `Pump` alone imposes a bound.
+
+New tests make the window deterministic rather than timing-dependent:
+`cancelOnRead` cancels from inside `Read`, which is precisely the sequence that
+used to lose the race.
+
+`go test -race -count=20 ./internal/core/engine/ -run TestPump` — green.
+`go test -race -count=5 ./internal/core/engine/` — green. Coverage 84.9 %.

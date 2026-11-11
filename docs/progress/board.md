@@ -100,7 +100,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 | Package          | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                                |
 | ---------------- | ---------- | ----------- | ----------------- | ----------------- | -------------------------------------------------------------------- |
-| `ADV-STREAM`     | InProgress | zed-agent-1 | 2026-11-11T10:50Z | 2026-11-11T03:03Z | Review: cancellation test fails 7/10 under -race; see B-018          |
+| `ADV-STREAM`     | InReview   | zed-agent-1 | 2026-11-11T10:50Z | 2026-11-11T12:02Z | B-018 fixed: post-cancel fragment dropped, cancel beats EOF; 2 new tests; 84.9 % cov |
 | `ADV-RUNNER`     | InReview   | antigravity | 2026-11-11T02:35Z | 2026-11-11T02:18Z | Owner-reported only; not reviewed                                    |
 | `ADV-GRPC`       | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                                                    |
 | `ADV-WS`         | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                                                    |

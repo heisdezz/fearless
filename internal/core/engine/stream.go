@@ -415,8 +415,11 @@ type Reader interface {
 // Pump copies src into the parser until EOF, cancellation, or an error.
 //
 // It reads in fixed-size fragments so a slow producer yields events as they
-// arrive rather than in one burst at the end. Cancellation is checked between
-// reads, so a cancelled stream stops within one fragment.
+// arrive rather than in one burst at the end. Cancellation is checked before
+// each read and again before each write, so a fragment produced after the
+// context is done is dropped rather than parsed. A source whose Read blocks
+// does not observe the context itself; the caller is responsible for
+// cancelling the underlying request so Read returns.
 //
 // Source: the acceptance criterion "stream renders without buffering the whole
 // body; cancellation mid-stream tested"
@@ -429,6 +432,15 @@ func Pump(ctx context.Context, p *Parser, src Reader) error {
 		}
 
 		n, err := src.Read(buf)
+
+		// A read that unblocks after cancellation still hands back bytes and a
+		// terminal error. Both belong to a stream nobody is watching any more, so
+		// report the cancellation instead: the caller asked to stop, and that is
+		// the more useful answer than "this fragment ended the body".
+		if cerr := ctx.Err(); cerr != nil {
+			return cerr
+		}
+
 		if n > 0 {
 			if werr := p.Write(buf[:n]); werr != nil {
 				return werr

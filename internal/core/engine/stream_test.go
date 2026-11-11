@@ -423,6 +423,29 @@ func TestFragmentSizeMatchesInputNotLines(t *testing.T) {
 	}
 }
 
+// cancelOnRead cancels the context from inside Read, so the cancel lands between
+// the source producing a fragment and Pump deciding what to do with it. It is the
+// narrow window B-018 was about, made deterministic.
+type cancelOnRead struct {
+	mu        sync.Mutex
+	fragments []string
+	index     int
+	cancel    context.CancelFunc
+}
+
+func (r *cancelOnRead) Read(p []byte) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.index >= len(r.fragments) {
+		return 0, io.EOF
+	}
+	n := copy(p, r.fragments[r.index])
+	r.index++
+	r.cancel()
+	return n, nil
+}
+
 // chunkReader yields pre-set fragments, optionally blocking on a channel.
 type chunkReader struct {
 	mu        sync.Mutex
@@ -516,6 +539,45 @@ func TestPumpCancelsMidStream(t *testing.T) {
 	// The events already parsed are delivered; the rest are not.
 	if got := len(rec.messages()); got >= 3 {
 		t.Errorf("messages = %d, the whole stream was consumed despite cancellation", got)
+	}
+}
+
+// TestPumpDropsFragmentProducedAfterCancel pins the boundary that B-018 exposed:
+// a source that does not observe the context can unblock after the cancel and
+// hand back one more fragment. That fragment must not reach the parser.
+func TestPumpDropsFragmentProducedAfterCancel(t *testing.T) {
+	rec := &recorder{}
+	p := NewParser(rec, 0)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	src := &chunkReader{fragments: []string{"data: late\n\n"}}
+	cancel()
+
+	if err := Pump(ctx, p, src); !errors.Is(err, context.Canceled) {
+		t.Fatalf("pump err = %v, want context.Canceled", err)
+	}
+	if got := rec.messages(); len(got) != 0 {
+		t.Errorf("messages = %+v, want none: the fragment arrived after cancel", got)
+	}
+	if src.index != 0 {
+		t.Errorf("source read %d fragments, want 0: nothing should be read after cancel", src.index)
+	}
+}
+
+// TestPumpReportsCancelNotEOFWhenReadEndsAfterCancel pins that cancellation wins
+// over the terminal error of a body that finished while the context was going
+// down, so callers do not mistake a stop for a complete stream.
+func TestPumpReportsCancelNotEOFWhenReadEndsAfterCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	src := &cancelOnRead{
+		fragments: []string{"data: a\n\n", "data: b\n\n"},
+		cancel:    cancel,
+	}
+
+	err := Pump(ctx, NewParser(&recorder{}, 0), src)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("pump err = %v, want context.Canceled rather than EOF", err)
 	}
 }
 

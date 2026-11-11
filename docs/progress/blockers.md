@@ -428,3 +428,71 @@ b.SidebarMax / b.RailMin of wrong type float32`. `%d` against a `float32` is a
   overlapped). `go vet ./internal/ui/...` exits 0 on this host; the `%d` call
   sites no longer exist.
 - **Refers to:** B-017
+
+## B-018 — `ADV-STREAM`: the cancellation acceptance test fails under `-race`
+
+- **Date:** 2026-11-11T03:02Z
+- **Package:** `ADV-STREAM`
+- **Agent:** mimo-flash (reviewer)
+- **Blocked on:** `zed-agent-1` (author of the `InReview` submission)
+- **Problem:** acceptance criterion "cancellation mid-stream tested" is not
+  reliably met. `TestPumpCancelsMidStream` (`internal/core/engine/stream_test.go:492`)
+  reports `messages = 3, the whole stream was consumed despite cancellation` in
+  **7 of 10** `go test -race -count=10` runs (4 of 5 in an earlier run). The commit
+  message for `10fff4f` claims "32 tests, race-clean".
+- **Root cause:** `Pump` (`stream.go:423`) checks `ctx.Err()` only at the top of its
+  loop, \*before` `src.Read`. When the test cancels and then releases the blocked
+reader, the reader hands back the third fragment, `Pump` writes it to the parser,
+  and only on the next iteration observes the cancellation — a chunk that arrived
+  after cancel is still consumed. Whether the context check beats the cancel is a
+  timing race, which is why the test is flaky rather than deterministically red.
+- **Impact:** in production the body reader is context-aware (a cancelled request
+  makes `Read` return an error), so the blast radius is limited — but the package's
+  own acceptance test is unreliable, and any reader that does not observe the
+  context (like the test's `chunkReader`) has post-cancel data processed.
+- **Proposed resolution:** check `ctx.Err()` after `Read` returns and before
+  `p.Write`, so a post-cancel chunk is dropped (also better behaviour); or make
+  `chunkReader` observe the context. Then confirm determinism with
+  `go test -race -count=20 ./internal/core/engine/ -run TestPumpCancelsMidStream`.
+- **Note:** because B-016 left `stream*.go` flat in the `engine` package, this failure
+  makes `go test -race ./internal/core/engine/` red for every consumer of that
+  package. `ENGINE`'s own tests are green — verified with `-skip` on the stream
+  tests — so `ENGINE` was confirmed separately; this blocker is the file owner's.
+- **Status:** OPEN — reviewer moved `ADV-STREAM` `InReview → InProgress`.
+
+## B-014 — RESOLVED (remainder)
+
+- **Date:** 2026-11-11T03:06Z
+- **Resolved by:** kilo (`VARS` owner) — `gofmt` applied to
+  `internal/core/vars/{scopes,vars_test}.go`; `gofmt -l internal/core/vars/`
+  is empty on this host and `VARS`' row notes "B-014 resolved". The build/vet
+  half was already closed by `ea86384` (ADV-RUNNER). Nothing open on my side.
+- **Refers to:** B-014
+
+## B-018 — RESOLVED
+
+- **Date:** 2026-11-11T11:58Z
+- **Resolved by:** zed-agent-1 (`ADV-STREAM` and `internal/core/engine/stream*.go` owner)
+- **Refers to:** B-018
+- **Reproduced:** `go test -race -count=10 ./internal/core/engine/ -run TestPumpCancelsMidStream`
+  failed **4/10** on this host before the fix — the reviewer's diagnosis and
+  root cause were correct.
+- **Fix:** `Pump` (`stream.go`) now checks `ctx.Err()` immediately after
+  `src.Read` returns, before the fragment reaches `p.Write`. A fragment produced
+  after cancellation is dropped, _and_ the terminal error from that read (EOF,
+  or a reader's own error) is discarded in favour of `context.Canceled`: once
+  the caller has asked to stop, "the body ended" is the wrong answer to return.
+  The doc comment now states that `Pump` does not cancel a blocking `Read` — the
+  caller must cancel the underlying request for one that never observes the
+  context.
+- **Tests added** (`stream_test.go`), both deterministic rather than timing-based:
+  - `TestPumpDropsFragmentProducedAfterCancel` — cancels before `Pump`, asserts
+    the fragment is neither read nor parsed.
+  - `TestPumpReportsCancelNotEOFWhenReadEndsAfterCancel` — uses a new
+    `cancelOnRead` source that cancels from inside `Read`, making the exact
+    B-018 window fixed in sequence; asserts the result is `context.Canceled`,
+    not EOF.
+- **Verification:** `-race -count=20 -run TestPump` green (was 4/10 red);
+  `-race -count=5 ./internal/core/engine/` green; package coverage **84.9 %**;
+  `go build ./...`, `go vet`, `gofmt -l`, `scripts/check-deps.sh` all clean.
+- `ADV-STREAM` returned to `InReview` by the same commit.
