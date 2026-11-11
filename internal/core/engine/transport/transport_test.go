@@ -368,6 +368,10 @@ func TestStreamingChunks(t *testing.T) {
 			if flusher != nil {
 				flusher.Flush()
 			}
+			// Pace the writes. Without a pause the client's first read returns all
+			// three parts at once, which is correct behaviour but says nothing about
+			// whether chunks are forwarded incrementally.
+			time.Sleep(10 * time.Millisecond)
 		}
 	}))
 	defer server.Close()

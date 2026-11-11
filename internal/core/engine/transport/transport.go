@@ -17,6 +17,7 @@ package transport
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"net/http"
 	"net/url"
@@ -63,6 +64,14 @@ type Options struct {
 	Proxy *url.URL
 	// TLS configures verification and client certificates.
 	TLS enginetls.BuildOptions
+	// TLSConfig, when non-nil, is the fully resolved TLS configuration supplied
+	// by the engine (CA bundles, client certificates, SNI). It takes precedence
+	// over the verification switches derived from TLS.
+	TLSConfig *tls.Config
+	// WrapTransport, when non-nil, wraps the round tripper built by the
+	// transport (e.g. for Digest/NTLM challenge-response handshakes). The wrapper
+	// is applied once, around the whole client.
+	WrapTransport func(http.RoundTripper) http.RoundTripper
 	// Jar is the shared cookie jar; nil disables cookie handling.
 	Jar *cookies.Jar
 	// Spooler stores response bodies.

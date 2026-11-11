@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"fearless/internal/core/engine/proxy"
+	"fearless/internal/core/model"
 )
 
 // errText renders an error for a timeline detail.
@@ -26,6 +27,9 @@ func errText(err error) string {
 // full *tls.Config through it and passes the result in Options, so the two
 // concerns do not duplicate each other.
 func buildTLSConfig(opts Options) *tls.Config {
+	if opts.TLSConfig != nil {
+		return opts.TLSConfig.Clone()
+	}
 	cfg := &tls.Config{MinVersion: tls.VersionTLS12}
 	if opts.TLS.VerifyServerCertificates != nil && !*opts.TLS.VerifyServerCertificates {
 		cfg.InsecureSkipVerify = true
@@ -47,8 +51,15 @@ func newClient(opts Options, tl *timeline) (*http.Client, error) {
 		return nil, err
 	}
 
+	var rt http.RoundTripper = tr
+	if opts.WrapTransport != nil {
+		rt = opts.WrapTransport(rt)
+	}
+
 	client := &http.Client{
-		Transport: tr,
+		// WrapTransport, when supplied, wraps the round tripper once for the whole
+		// client: that is the seam Digest and NTLM use for their handshakes (B-006).
+		Transport: rt,
 		// Redirects are followed by Execute, not by net/http: each hop must be
 		// recorded, re-authenticated and given the jar's cookies for the new host.
 		CheckRedirect: func(*http.Request, []*http.Request) error {
@@ -92,6 +103,15 @@ func newTransport(opts Options, _ *timeline) (*http.Transport, error) {
 // while client.Do is in flight, so they cannot write to the timeline directly.
 // Each callback sends to a channel, which the hop drains once Do returns; that
 // serialises the writes and preserves their order.
+// traceBuffer sizes the trace channel.
+//
+// It must hold every event one hop can emit, because the hop drains the channel
+// only after the request completes: DNS, connect and TLS in begin/end pairs, then
+// the write and the first-byte pair. At 16, a hop that resolved DNS and opened a
+// fresh connection filled the buffer before the first-byte event, which was then
+// dropped — leaving `waiting` absent rather than merely duplicated.
+const traceBuffer = 32
+
 func newTrace(tl *timeline) *httptrace.ClientTrace {
 	rec := tl.trace
 
@@ -99,31 +119,48 @@ func newTrace(tl *timeline) *httptrace.ClientTrace {
 		select {
 		case rec <- ev:
 		default:
-			// Dropping a phase beats blocking a connection goroutine.
+			// Dropping a phase beats blocking a connection goroutine, but it must
+			// not happen in practice: traceBuffer is sized for the worst-case hop,
+			// so reaching this means the capacity assumption is wrong.
 		}
 	}
 
 	return &httptrace.ClientTrace{
 		DNSStart: func(httptrace.DNSStartInfo) {
-			send(traceEvent{begin: true, phase: modelPhaseDNS})
+			send(traceEvent{begin: true, phase: modelPhaseDNS, at: time.Now()})
 		},
 		DNSDone: func(httptrace.DNSDoneInfo) {
-			send(traceEvent{phase: modelPhaseDNS})
+			send(traceEvent{phase: modelPhaseDNS, at: time.Now()})
 		},
 		ConnectStart: func(string, string) {
-			send(traceEvent{begin: true, phase: modelPhaseConnect})
+			send(traceEvent{begin: true, phase: modelPhaseConnect, at: time.Now()})
 		},
 		ConnectDone: func(_, _ string, err error) {
-			send(traceEvent{phase: modelPhaseConnect, detail: errText(err)})
+			send(traceEvent{phase: modelPhaseConnect, detail: errText(err), at: time.Now()})
 		},
 		TLSHandshakeStart: func() {
-			send(traceEvent{begin: true, phase: modelPhaseTLS})
+			send(traceEvent{begin: true, phase: modelPhaseTLS, at: time.Now()})
 		},
 		TLSHandshakeDone: func(_ tlsState, err error) {
-			send(traceEvent{phase: modelPhaseTLS, detail: errText(err)})
+			send(traceEvent{phase: modelPhaseTLS, detail: errText(err), at: time.Now()})
+		},
+		WroteRequest: func(info httptrace.WroteRequestInfo) {
+			// The write finished, so the client is now polling for the response.
+			// `waiting` opens here rather than before Do so its duration measures
+			// the wait itself, and the first-byte hook below is guaranteed to run
+			// after this, so it always finds the phase open.
+			// Both stamps are taken here, on the connection goroutine: drain runs
+			// after Do returns, so stamping there would collapse every duration.
+			now := time.Now()
+			send(traceEvent{phase: model.PhaseRequestSent, detail: errText(info.Err), at: now})
+			send(traceEvent{begin: true, phase: modelPhaseWaiting, at: now})
 		},
 		GotFirstResponseByte: func() {
-			send(traceEvent{phase: modelPhaseWaiting, detail: "first byte"})
+			// The first response byte ends the wait. Both phases are ended here,
+			// in the one place that observes the transition: ending them in doHop
+			// as well recorded a second, zero-duration `waiting` entry and left
+			// `request-sent` measuring the whole round trip.
+			send(traceEvent{phase: modelPhaseWaiting, detail: "first byte", at: time.Now()})
 		},
 	}
 }

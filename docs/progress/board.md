@@ -29,21 +29,21 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `FORMAT-CODE`    | InReview | antigravity   | 2026-11-10T22:30Z | 2026-11-10T22:40Z | Builds, vet-clean, race-clean, 98.4 % coverage                             |
 | `FORMAT-BRU`     | InReview | zed-agent-1   | 2026-11-10T23:15Z | 2026-11-11T00:25Z | Parser+mapper+writer; 357/357 parse, 335/335 round-trip, 77 % cov          |
 | `FORMAT-YAML`    | InReview | zed-agent-1   | 2026-11-11T00:30Z | 2026-11-11T01:05Z | 64/64 yml fixtures; 86.5 % coverage; three body shapes handled             |
-| `VARS`           | InReview | kilo          | 2026-11-10T21:08Z | 2026-11-11T02:45Z | Builds, vet-clean, race-clean, 84.2 % cov, all fixture cases pass          |
+| `VARS`           | InReview | kilo          | 2026-11-10T21:08Z | 2026-11-11T02:30Z | B-014 resolved: gofmt applied to scopes.go/vars_test.go; tests pass        |
 | `TPL`            | InReview | zed-agent-1   | 2026-11-11T02:25Z | 2026-11-11T02:50Z | vars blocks natively; 89.5 % cov; zero goja dependency                     |
-| `COOKIES`        | InReview | mimo-flash    | 2026-11-10T21:06Z | 2026-11-10T23:00Z | Implemented; race-clean, 83.3% cov, repo green; D-010 raised               |
+| `COOKIES`        | InReview | mimo-flash    | 2026-11-10T21:06Z | 2026-11-11T02:18Z | Reviewed: 83.3 % cov. Open: Secure over http dropped; no cookie cap        |
 | `PERSIST`        | InReview | antigravity   | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage                             |
 | `COLLECTION`     | InReview | antigravity   | 2026-11-10T23:28Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 83.2 % cov, 1000 reqs in 22ms               |
-| `BUILD`          | InReview | antigravity-2 | 2026-11-10T23:59Z | 2026-11-11T01:30Z | Builds, vet-clean, race-clean, 86.7 % cov, UQ-B1 + root + order fixes       |
-| `PROXY`          | InProgress | antigravity   | 2026-11-10T23:30Z | 2026-11-11T01:17Z | Review: PAC unimplemented; gates green, 82.0 % cov; B-011                |
+| `BUILD`          | InReview | antigravity-2 | 2026-11-10T23:59Z | 2026-11-11T02:18Z | Reviewed: 86.7 % cov. Open: user Authorization precedes auth's             |
+| `PROXY`          | Blocked  | antigravity   | 2026-11-10T23:30Z | 2026-11-11T02:30Z | Blocked on B-011: PAC acceptance criterion, owner notified                 |
 | `TLS`            | Done     | antigravity   | 2026-11-10T23:13Z | 2026-11-11T01:17Z | Confirmed: 4-way precedence + live mTLS; gates green; 85.4 % cov           |
 | `AUTH-CORE`      | InReview | zed-agent-1   | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov                    |
-| `TRANSPORT`      | InProgress | zed-agent-1   | 2026-11-11T01:45Z | 2026-11-11T01:17Z | Review: duplicate waiting phase, body cap untested; B-012                |
-| `ENGINE`         | InReview | antigravity   | 2026-11-11T00:20Z | 2026-11-11T00:40Z | Builds, vet-clean, race-clean, 86.8 % cov, phase-order asserted            |
+| `TRANSPORT`      | InReview | zed-agent-1   | 2026-11-11T01:45Z | 2026-11-11T02:30Z | B-012 fixed: unique ordered phases + body-cap tests; 86.1 % cov            |
+| `ENGINE`         | InReview | antigravity   | 2026-11-11T00:20Z | 2026-11-11T02:30Z | B-013 fixed: tls.Resolve wired via Options.TLSConfig; gofmt clean          |
 | `CMD-SEND`       | InReview | antigravity   | 2026-11-11T00:45Z | 2026-11-11T00:55Z | Builds, vet-clean, race-clean, 87.4 % cov, terminal invariant verified     |
-| `CMD-COLLECTION` | InReview | antigravity-2 | 2026-11-11T00:05Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 85.7 % coverage, idempotent                 |
-| `CMD-ENV`        | InReview | antigravity-2 | 2026-11-11T00:52Z | 2026-11-11T00:58Z | Builds, vet-clean, race-clean, 88.5 % cov, select/save/create/delete       |
-| `CMD-SETTINGS`   | InReview | antigravity-2 | 2026-11-11T01:02Z | 2026-11-11T01:08Z | Builds, vet-clean, race-clean, 85.9 % cov, save/load/migrate/oauth         |
+| `CMD-COLLECTION` | InReview | antigravity-2 | 2026-11-11T00:05Z | 2026-11-11T02:18Z | Reviewed: 85.7 % cov. Open: move_item.go:79 drops SaveItem error           |
+| `CMD-ENV`        | InReview | antigravity-2 | 2026-11-11T00:52Z | 2026-11-11T02:18Z | Reviewed: 88.5 % cov. Open: save_environment lacks self-suppression        |
+| `CMD-SETTINGS`   | InReview | antigravity-2 | 2026-11-11T01:02Z | 2026-11-11T02:18Z | Reviewed: 85.9 % cov. Open: future schema version silently downgraded      |
 | `CMD-RUNNER`     | InReview | antigravity   | 2026-11-11T01:08Z | 2026-11-11T01:13Z | Builds, vet-clean, race-clean, 83.5 % cov, folder run, tags, control, bail |
 | `CLI`            | InReview | antigravity   | 2026-11-11T00:55Z | 2026-11-11T01:06Z | Builds, vet-clean, race-clean, 82.8 % cov, zero GUI deps, runs corpus      |
 
@@ -51,9 +51,9 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 | Package           | State      | Agent        | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                                      |
 | ----------------- | ---------- | ------------ | ----------------- | ----------------- | ---------------------------------------------------------------------------------------------------------- |
-| `UI-THEME`        | InReview   | mimo-flash-2  | 2026-11-11T01:10Z | 2026-11-11T01:45Z | Takeover from kilo: Bruno's exact 7-verb × light/dark table, mode-aware fallback, system-following Apply tested headlessly, 97.3 % cov |
-| `UI-LAYOUT`       | InReview   | mimo-flash-2 | 2026-11-11T00:19Z | 2026-11-11T01:04Z | Takeover from kilo: percent splits fixed, DPI bands 100–200 % verified, state persists+repairs, 97.1 % cov; demo linked from main |
-| `UI-WIDGETS`      | Ready      | —            | —                 | —                 | Single owner; may need splitting                                                                           |
+| `UI-THEME`        | InReview   | mimo-flash-2 | 2026-11-11T01:10Z | 2026-11-11T02:18Z | Reviewed: 97.3 % cov, 7-verb x light/dark table. Open: mode match is case-sensitive                        |
+| `UI-LAYOUT`       | InReview   | mimo-flash-2 | 2026-11-11T00:19Z | 2026-11-11T02:18Z | Reviewed: 97.1 % cov, DPI 100-200 % verified. Open: View skips Normalize                                   |
+| `UI-WIDGETS`      | InProgress | —            | —                 | 2026-11-11T02:30Z | Claimed by antigravity 03:10Z; tree does not compile yet                                                   |
 | `UI-PRESENT-REQ`  | InReview   | antigravity  | 2026-11-11T01:55Z | 2026-11-11T02:02Z | Pure Go view-models for request, response, tabs; 95.6% cov, race-clean, dep-clean          |
 | `UI-PRESENT-NAV`  | InReview   | antigravity  | 2026-11-11T02:10Z | 2026-11-11T02:18Z | Pure Go view-models for sidebar, collection, environment; 93.8% cov, race-clean, dep-clean |
 | `UI-PRESENT-SET`  | InReview   | antigravity  | 2026-11-11T02:25Z | 2026-11-11T02:27Z | Pure Go view-models for preferences and settings; 94.8% cov, race-clean, dep-clean         |
@@ -101,11 +101,11 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | Package          | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                    |
 | ---------------- | ---------- | ----------- | ----------------- | ----------------- | ---------------------------------------- |
 | `ADV-STREAM`     | Ready      | —           | —                 | —                 |                                          |
-| `ADV-RUNNER`     | InReview   | antigravity | 2026-11-11T02:35Z | 2026-11-11T02:45Z | Runner, data files, iterations, JUnit/HTML/JSON/CLI reporters; >82% cov   |
+| `ADV-RUNNER`     | InReview   | antigravity | 2026-11-11T02:35Z | 2026-11-11T02:18Z | Owner-reported only; not reviewed        |
 | `ADV-GRPC`       | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                        |
 | `ADV-WS`         | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                        |
 | `ADV-HISTORY`    | InReview   | zed-agent-1 | 2026-11-11T08:50Z | 2026-11-11T09:05Z | JSONL store per D-011; UI half blocked on UI-SCREEN-RESP; 87.5 % cov |
-| `ADV-EXTENSIONS` | InReview   | antigravity | 2026-11-11T02:50Z | 2026-11-11T03:00Z | Registries for HTTPHook, BodyEncoder, VariableResolver, Importer/Exporter; 83.3% cov |
+| `ADV-EXTENSIONS` | InReview   | antigravity | 2026-11-11T02:50Z | 2026-11-11T02:18Z | Reviewed: 83.3 % cov. Open: unwired      |
 
 ---
 

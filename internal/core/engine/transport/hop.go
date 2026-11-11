@@ -21,7 +21,7 @@ func doHop(ctx context.Context, client *http.Client, req *http.Request, opts Opt
 	traceCtx := httptrace.WithClientTrace(ctx, newTrace(tl))
 	req = req.WithContext(traceCtx)
 
-	tl.begin(model.PhaseRequestSent)
+	tl.begin(model.PhaseRequestSent, time.Now())
 
 	// Cookies are applied per hop, not through http.Client.Jar: our Jar exposes an
 	// explicit API (HeaderFor/AddRaw) rather than net/http's CookieJar interface,
@@ -37,7 +37,7 @@ func doHop(ctx context.Context, client *http.Client, req *http.Request, opts Opt
 	// logical phases that follow, so the recorded order matches reality.
 	tl.drain()
 	if err != nil {
-		tl.end(model.PhaseRequestSent, err.Error())
+		tl.end(model.PhaseRequestSent, err.Error(), time.Now())
 		return nil, classifyError(err)
 	}
 	defer resp.Body.Close()
@@ -50,10 +50,12 @@ func doHop(ctx context.Context, client *http.Client, req *http.Request, opts Opt
 		}
 	}
 
-	// The send phase ends when the response headers arrive; the download phase
-	// that follows measures the body.
-	tl.end(model.PhaseRequestSent, "")
-	tl.end(model.PhaseWaiting, "")
+	// Both phases are ended by the trace hooks, which observe the transition. They
+	// are closed here only if a hook did not fire — a connection reused from the
+	// pool skips some trace callbacks — so a phase is never left open and never
+	// recorded twice.
+	tl.endIfOpen(model.PhaseRequestSent, "")
+	tl.endIfOpen(model.PhaseWaiting, "")
 
 	out := &hopResult{
 		status:     resp.StatusCode,
@@ -77,9 +79,9 @@ func doHop(ctx context.Context, client *http.Client, req *http.Request, opts Opt
 		return out, nil
 	}
 
-	tl.begin(model.PhaseDownload)
+	tl.begin(model.PhaseDownload, time.Now())
 	ref, serr := spoolBody(resp.Body, opts, contentType, encoding)
-	tl.end(model.PhaseDownload, "")
+	tl.end(model.PhaseDownload, "", time.Now())
 	out.bodyRef = ref
 	if serr != nil {
 		return nil, serr
@@ -130,15 +132,28 @@ func spoolBody(body io.Reader, opts Options, contentType, encoding string) (mode
 	if opts.Spooler == nil {
 		// No spooler: read into memory so the caller still gets a body. This is the
 		// path used by unit tests that do not set up persistence.
-		data, err := io.ReadAll(io.LimitReader(reader, opts.MaxResponseBytes))
+		//
+		// One byte beyond the cap is read so truncation is detectable: reading
+		// exactly the cap cannot distinguish "the body ended here" from "it was cut",
+		// which left a truncated body looking complete.
+		limit := opts.MaxResponseBytes + 1
+		data, err := io.ReadAll(io.LimitReader(reader, limit))
 		if err != nil {
 			return model.BodyRef{}, err
 		}
+
+		truncated := false
+		if int64(len(data)) > opts.MaxResponseBytes {
+			truncated = true
+			data = data[:opts.MaxResponseBytes]
+		}
+
 		return model.BodyRef{
 			Size:        int64(len(data)),
 			ContentType: contentType,
 			Encoding:    encoding,
 			Inline:      data,
+			Truncated:   truncated,
 		}, nil
 	}
 	return opts.Spooler.Spool(reader, contentType, encoding, opts.MaxResponseBytes)
@@ -277,6 +292,13 @@ type traceEvent struct {
 	phase  model.TimelinePhase
 	begin  bool
 	detail string
+	// at is when the hook fired, on the connection's goroutine.
+	//
+	// It must be captured there rather than in drain: drain runs after Do
+	// returns, so stamping there would give every phase the same start time and
+	// collapse the durations to zero — which is exactly what happened before this
+	// field existed.
+	at time.Time
 }
 
 // timeline records phases and forwards completed ones to the sink.
@@ -294,7 +316,7 @@ func newTimeline(sink Sink) *timeline {
 	return &timeline{
 		sink:  sink,
 		open:  make(map[model.TimelinePhase]time.Time),
-		trace: make(chan traceEvent, 16),
+		trace: make(chan traceEvent, traceBuffer),
 	}
 }
 
@@ -307,9 +329,9 @@ func (t *timeline) drain() {
 		select {
 		case ev := <-t.trace:
 			if ev.begin {
-				t.begin(ev.phase)
+				t.begin(ev.phase, ev.at)
 			} else {
-				t.end(ev.phase, ev.detail)
+				t.end(ev.phase, ev.detail, ev.at)
 			}
 		default:
 			return
@@ -317,26 +339,46 @@ func (t *timeline) drain() {
 	}
 }
 
-// begin opens a phase.
-func (t *timeline) begin(phase model.TimelinePhase) {
-	t.open[phase] = time.Now()
+// begin opens a phase at a recorded instant.
+func (t *timeline) begin(phase model.TimelinePhase, at time.Time) {
+	t.open[phase] = at
 }
 
 // end closes a phase and records it.
-func (t *timeline) end(phase model.TimelinePhase, detail string) {
+//
+// A phase that was never opened is ignored rather than recorded with a fabricated
+// start time. That distinction is what produced the zero-duration duplicate B-012
+// reported: two call sites ended the same phase, and the second got a fresh
+// timestamp and a second entry.
+func (t *timeline) end(phase model.TimelinePhase, detail string, at time.Time) {
 	start, ok := t.open[phase]
 	if !ok {
-		start = time.Now()
+		return
 	}
 	delete(t.open, phase)
+	if at.IsZero() {
+		at = time.Now()
+	}
 	entry := model.TimelineEntry{
 		Phase:    phase,
 		Started:  start,
-		Duration: time.Since(start),
+		Duration: at.Sub(start),
 		Detail:   detail,
 	}
 	t.entries_ = append(t.entries_, entry)
 	t.sink.Phase(entry)
+}
+
+// endIfOpen closes a phase only when nothing else has already done so.
+//
+// It is for the case where a trace hook may not have fired: a connection reused
+// from the pool skips some callbacks, so doHop has to close the phases itself
+// then. When the hook did fire this is a no-op, and no duplicate appears.
+func (t *timeline) endIfOpen(phase model.TimelinePhase, detail string) {
+	if _, open := t.open[phase]; !open {
+		return
+	}
+	t.end(phase, detail, time.Now())
 }
 
 // mark records an instantaneous phase.

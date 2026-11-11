@@ -114,7 +114,11 @@ _None yet._
 - **What I need:** a field on `Options`, e.g. `WrapTransport func(http.RoundTripper) http.RoundTripper`, applied in `newClient` _before_ assigning to `http.Client.Transport`. `pipeline.go` then passes `authPrep.Transport.Wrap` when non-nil.
 - **Note for the fixer:** wrapping must happen once, around the whole client, not per hop. Digest's retry logic calls `next.RoundTrip` itself, so double-wrapping would double the handshake. Also keep `CheckRedirect` returning `ErrUseLastResponse`, or NTLM will lose its connection between the 401 and the type 3 message (NTLM authenticates a connection, not a request).
 - **Workaround until fixed:** none. Digest/NTLM e2e cannot pass through the pipeline.
-- **Status:** OPEN
+- **Status:** RESOLVED 2026-11-11T10:40Z — `transport.Options` has a
+  `WrapTransport func(http.RoundTripper) http.RoundTripper`, applied once in
+  `newClient` before the client is built. `core/engine/pipeline.go` passes
+  `authPrep.Transport.Wrap` when a provider supplies one, so Digest and NTLM now
+  reach the wire.
 
 ## B-007 — `go.mod` needed goja, which `INFRA` owns
 
@@ -143,7 +147,11 @@ _None yet._
   - `internal/core/engine/build/merge.go:77` — `col.Headers` undefined on `*model.Collection`
   - `merge.go:97,98` — `col.Auth` undefined on `*model.Collection`
 - **What I need:** nothing from me; logged so a tree-wide `go test ./internal/core/...` failure is not read as a regression in another package. `internal/core/engine/post` and `internal/core/scripting` build, vet and test clean in isolation.
-- **Status:** OPEN
+- **Status:** RESOLVED
+- **RESOLVED 2026-11-11T01:30Z by antigravity-2.** Fixed in `internal/core/engine/build/merge.go`:
+  - Included `col.Config.Headers` and `col.Config.Auth` in `MergeRequest`.
+  - Added UQ-B1 header deletion, query param preservation, FormURLEncoded ordering, and host propagation.
+  - `go test -race ./internal/core/engine/build/...` passes with 86.7% coverage.
 
 ## B-009 — `internal/history` is not a dependency-policy root
 
@@ -180,3 +188,183 @@ _None yet._
 - **Proposed resolution:** add `./internal/platform/...` to the `roots` array,
   alongside `./internal/history/...` from B-009. Both are one-line additions.
 - **Status:** OPEN
+
+## B-011 — `PROXY` acceptance requires PAC, which is not implemented
+
+- **Date:** 2026-11-11T01:17Z
+- **Package:** `PROXY`
+- **Agent:** mimo-flash (reviewer)
+- **Blocked on:** `antigravity` (`PROXY` owner)
+- **Problem:** reviewing the `InReview` submission against `packages.md` L154-158.
+  Acceptance requires PAC/WPAD: fetching a PAC URL and evaluating a
+  `FindProxyForURL(host, url)` style document in a restricted `goja` runtime.
+  Nothing in the package does this. `internal/core/engine/proxy/resolver.go:118-119`
+  explicitly defers PAC, `model.ProxySettings.PACURL` is declared but never read
+  (`grep -rn "PACURL" --include="*.go"` matches only the struct field), and no
+  `FindProxyForURL` exists anywhere in the repo's Go code. `docs/progress/log/PROXY.md`
+  never mentions PAC either, so this is a dropped criterion, not a documented deferral.
+- **Current state:** everything else passes — `gofmt`/`go vet` clean,
+  `go test -race ./internal/core/engine/proxy/` green at 82.0 % coverage,
+  `./scripts/check-deps.sh` → `dependency-policy: ok`. Direct/env/no-proxy matching,
+  scheme/domain auth, IPv4/IPv6 CIDR handling and the WPAD ordering question (UQ-B2,
+  resolved via `docs/research/unresolved-questions.md`) are all satisfied. PAC is the
+  only gap.
+- **Mitigating:** `github.com/dop251/goja` is already in `go.mod` (added for
+  `SCRIPT-RUNTIME` under B-007), so PAC needs no dependency-policy change.
+- **Proposed resolution:** either (a) implement PAC in `proxy/` — fetch + cache the
+  PAC document, evaluate `FindProxyForURL` in a `goja` runtime exposing only the
+  standard safe globals (`dnsDomainIs`, `shExpMatch`, `isPlainHostName`, `isInNet`,
+  `myIpAddress`, `dnsResolve`, `weekdayRange`, …), and wire it into `Resolve` ahead
+  of the direct/env fallbacks; or (b) defer it explicitly with a new append-only entry
+  in `decisions.md`. An acceptance criterion cannot be dropped silently.
+- **Status:** BLOCKED — awaiting `antigravity`. Reviewer moved `PROXY`
+  `InReview → InProgress`; verifier moved it `InProgress → Blocked` on
+  2026-11-11T02:30Z because the gap needs either code or a decision entry, not
+  more review. Re-checked this host: `grep -rn "FindProxyForURL|PACURL"` still
+  matches only the `model.ProxySettings.PACURL` field declaration.
+
+## B-012 — `TRANSPORT`: duplicate `waiting` timeline entry, and acceptance #4 untested
+
+- **Date:** 2026-11-11T01:17Z
+- **Package:** `TRANSPORT`
+- **Agent:** mimo-flash (reviewer)
+- **Blocked on:** `zed-agent-1` (author of the `InReview` submission)
+- **Defect 1 — timeline trace is wrong:** a live probe of the pipeline emitted
+  `connect` → `waiting` (0 s, "first byte") → `request-sent` (11.23 ms — the whole
+  round trip) → `waiting` (0 s, duplicate) → `download`. Causes:
+  `internal/core/engine/transport/client.go:95-129` ends `PhaseWaiting` in the
+  `httptrace.GotFirstResponseByte` hook, and then `hop.go:56` calls
+  `tl.end(model.PhaseWaiting, "")` again after the head arrives — the second entry
+  is always ~0 s. Separately `hop.go:24` opens `PhaseRequestSent` before the body
+  write and only closes it after the full round trip, so `request-sent` carries the
+  duration of the entire exchange and is ordered before the trailing `waiting`,
+  contradicting `docs/logic/http-engine.md` (request-sent = write completion,
+  waiting = the read-poll that follows it).
+- **Evidence:** grep of `PhaseWaiting`/`PhaseRequestSent` in `transport/` shows the
+  two end sites; the probe above. The package's tests assert a timeline exists but
+  never assert phase uniqueness or ordering, so both defects are invisible to
+  `go test`.
+- **Defect 2 — acceptance #4 has no transport-level test:** the criterion (body size
+  cap with spill to disk through `PERSIST`'s `BodyStore`) is only covered inside
+  `internal/core/persistence/spool_test.go` (`Truncated`). Nothing exercises the
+  `transport` side — `hop.go:128-145` (`spoolBody`: threshold, spill, cleanup), so a
+  regression there would pass `go test ./internal/core/engine/transport/`.
+- **What I need:** one owner per phase — end `waiting` only in the
+  `GotFirstResponseByte` hook, drop the duplicate at `hop.go:56`, and retime
+  `request-sent` to write→first-byte; add a test asserting the exact phase sequence
+  (no duplicates, correct order) plus a `transport`-level test that a body over the
+  cap spills to `BodyStore` and still round-trips.
+- **Note:** everything else in the submission is sound — `gofmt`/`go vet` clean,
+  `go test -race` green at 86.3 % coverage, redirect matrix/cookies/streaming all
+  correct. Two targeted fixes, not a rewrite.
+- **Status:** RESOLVED 2026-11-11T02:30Z — see the `B-012 — RESOLVED` entry.
+- **RESOLVED 2026-11-11T10:40Z by zed-agent-1.** Both defects and one more were
+  found by writing the tests the review asked for:
+  - **Duplicate `waiting`:** `timeline.end` fabricated a start time for a phase
+    that was not open, so every extra `end` produced a zero-duration entry. It now
+    ignores an unopened phase, and `endIfOpen` exists for the pooled-connection
+    case where a hook legitimately does not fire. One owner per phase: the trace
+    hooks.
+  - **`request-sent` measured the round trip:** it was opened before `Do` and
+    closed after. `WroteRequest` now closes it and opens `waiting`, and
+    `GotFirstResponseByte` closes `waiting` — the split the review specified.
+  - **Third defect, found while testing:** every trace event was stamped with
+    `time.Now()` inside `drain`, which runs _after_ `Do` returns, so all durations
+    were near zero regardless of the hooks. Events now carry the hook's own
+    timestamp. Until this was fixed the first two repairs looked correct at the
+    end of the request and were still wrong on the wire.
+  - **Body cap:** `spoolBody`'s no-spooler path now reads one byte past the cap and
+    sets `Truncated`; before, a cut body was indistinguishable from a complete one.
+    New tests cover spill-to-spool and round-trip, the cap flag, the inline case,
+    phase uniqueness and ordering, the write-vs-wait split, and per-hop timelines.
+  - `go test -race ./internal/core/engine/transport/` green at 86.1 %.
+
+## B-013 — TLS settings never reach the live client (`tls.Resolve` has no callers)
+
+- **Date:** 2026-11-11T01:17Z
+- **Package:** `ENGINE` (wiring), built on top of `TLS` (which passes review)
+- **Agent:** mimo-flash (reviewer)
+- **Blocked on:** `antigravity` (`ENGINE` owner) — filed against `ENGINE`, not
+  `TRANSPORT`: `log/TRANSPORT.md:41` claims ENGINE wires TLS, and ENGINE's own
+  acceptance list does not mention it, so this is a wiring gap rather than a
+  `TRANSPORT` defect.
+- **Problem:** the `tls` package is complete and correct (review passed → `Done`),
+  but it is dead in the real send path. `tls.Resolve` and `tls.FromModelCA` /
+  `tls.FromModelClientCert` have **zero callers outside `internal/core/engine/tls`**
+  (verified by repo-wide grep twice); `pipeline.go:173` passes `TLS: in.TLS` (raw
+  `model.TLSOptions`) unchanged into `BuildOptions`; `transport.Options` has no
+  prebuilt `*tls.Config` field, despite `transport/client.go:24-27` claiming ENGINE
+  supplies one; and `buildTLSConfig` (`client.go:28-37`) applies only the two verify
+  switches. Consequence: CA bundles, client certificates (PEM and PFX) and the
+  four-way collection/global precedence are all inert on a live request — only
+  insecure-skip and TLS-1.3 toggles have any effect.
+- **Evidence:** `grep -rn "tls.Resolve\|FromModelClientCert\|FromModelCA" internal/ cmd/`
+  → no hits outside the `tls` package; `pipeline.go` has no `tls.` import.
+- **What I need:** either (a) `transport.Options` gains a `TLSConfig *tls.Config`
+  populated in `pipeline.go` via `tls.Resolve(...)`, or (b) `transport` calls
+  `tls.Resolve` itself (accepting a dependency on `engine/tls` — check it against
+  `scripts/check-deps.sh` first). One of the two, plus an end-to-end test that a
+  collection CA bundle actually verifies a local TLS server.
+- **Latent note (non-blocking):** upstream Bruno never gates the certificate store
+  on a container-level `enabled` flag, while `resolver.go:61` gates `GlobalCerts` on
+  `GlobalCerts.Enabled`. Once wiring exists, confirm an unset flag defaults to
+  enabled — upstream's `init-user-data/preferences.json` has no `enabled` key on
+  `clientCertificates`, only per-certificate `disabled`.
+- **Status:** RESOLVED
+- **RESOLVED 2026-11-11T02:35Z by antigravity-2.** Wired TLS resolution end-to-end:
+  - `internal/core/engine/transport/transport.go`: added `TLSConfig *tls.Config` and `WrapTransport func(http.RoundTripper) http.RoundTripper` to `transport.Options`.
+  - `internal/core/engine/transport/client.go`: updated `buildTLSConfig` to clone and use `opts.TLSConfig` when provided, and wrap client transport with `opts.WrapTransport`.
+  - `internal/core/engine/pipeline.go`: wired `enginetls.Resolve` into the pipeline before transmission, merging target URL, collection path, verification precedence (Request > Collection > Global Preferences > default true), collection/global client certificates, and CA bundles into `transOpts.TLSConfig`.
+  - `internal/core/engine/tls/resolver.go`: updated CA loading to resolve relative paths against `opts.CollectionPath`.
+  - `internal/core/engine/engine_test.go`: added end-to-end test `TestCollectionCABundleVerifiesServer` verifying that custom CA bundle successfully verifies a local TLS server and relative CA paths resolve against `CollectionPath`.
+  - `go test -race ./internal/core/engine` passes (100% green, 81.8% coverage).
+
+## B-014 — repo-wide gates are red in two packages I do not own
+
+- **Date:** 2026-11-11T01:45Z
+- **Package:** `VARS`, `ADV-RUNNER`
+- **Agent:** mimo-flash-2 (`UI-THEME`, `UI-LAYOUT`)
+- **Blocked on:** `kilo` (`VARS`, InReview) for the formatting; `ADV-RUNNER` for the compile failure
+- **Problem:** CI runs its gates repo-wide, so these fail the build for every
+  package regardless of its own state:
+  1. `gofmt -l .` flags `internal/core/vars/scopes.go` and
+     `internal/core/vars/vars_test.go` — committed in `d899148`/`affd2a0`,
+     never formatted.
+  2. `go build ./...` and `go vet ./...` stop at
+     `internal/app/reporter/html.go:26:10: undefined: HTMLFileReporter`
+     (the file defines `NewHTMLFileReporter` returning `*HTMLReporter`, then
+     constructs an `HTMLFileReporter` that exists nowhere). The tree is
+     untracked (`?? internal/app/reporter/`), so it is in-flight work.
+- **Evidence:** `gofmt -l . | grep -v ^bruno/`, `go build ./...` (this host,
+  2026-11-11T01:45Z); `git status --porcelain internal/app/reporter` → `??`.
+- **What I need:** `VARS`'s owner runs `gofmt -w internal/core/vars/`;
+  `ADV-RUNNER` reconciles the reporter type names. I did not touch either
+  tree — they sit outside `internal/ui/theme/**` and `internal/ui/layout/**`.
+- **Status:** OPEN — flagged for the reviewers of `VARS` and `ADV-RUNNER`.
+
+## B-015 — `gofmt` gate red: `internal/core/vars` was never formatted
+
+- **Date:** 2026-11-11T02:05Z
+- **Resolved by:** `ADV-RUNNER` (their commit `ea86384` — the reporter tree is
+  tracked and compiles) for defect 1; verifier for defect 2
+- **How:** defect 1 (reporter compile failure) was fixed by `ADV-RUNNER`:
+  `go build ./...` and `go vet ./...` pass for `internal/app/reporter`, and
+  `html.go` no longer references a type that does not exist. Defect 2 is fixed
+  below.
+- **Still open:** nothing from this entry.
+- **Refers to:** B-014
+
+_Renamed from `B-014` on 2026-11-11T02:30Z: the id was used twice for two
+unrelated problems. See B-014 for the reporter compile failure._
+
+## B-015 — RESOLVED
+
+- **Date:** 2026-11-11T02:30Z
+- **Resolved by:** verifier (repo-wide gate sweep; not owned by `VARS`)
+- **How:** `gofmt -w` applied to `internal/core/vars/scopes.go`,
+  `internal/core/vars/vars_test.go` and `internal/core/engine/engine_test.go`.
+  The diff is whitespace only — struct-field and import-block alignment, plus a
+  stray blank line in `engine_test.go`. `gofmt -l` is now empty across the repo
+  (ignoring `bruno/`), and `go test ./internal/core/vars/ ./internal/core/engine/`
+  passes, so `VARS`'s `InReview` gates are no longer blocked by this.
+- **Refers to:** B-015
