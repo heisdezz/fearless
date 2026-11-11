@@ -52,3 +52,28 @@ Owner history: mimo-flash-2 (claimed 2026-11-11T03:18Z), antigravity (claimed 20
 - Notes: fifth row held at once (four `InReview`, zero active) against the
   two-package limit — user-directed sweep, flagged here as before. All open
   blockers were cleared repo-wide before this claim (`Status: OPEN` count = 0).
+
+### 2026-11-11T03:54Z — mimo-flash-2
+
+- **Retraction and collision record.** I claimed this package at 03:18Z (the
+  row was `Ready`) and spent the next ~30 minutes scoping its APIs. Meanwhile
+  antigravity claimed the row at their 04:30Z, implemented it fully, and
+  committed `abbcbe8` at 03:47Z — window, menus, keybinding router, root view,
+  `main.go`, 83.8 % coverage, race-clean, now `InReview`. Their claim appended
+  to this log correctly; I did not notice the row had moved until my own
+  implementation batch landed at 03:49Z, on top of theirs.
+- **What I touched, and its current state:**
+  - `main.go` — overwritten by my version, **restored from `abbcbe8`**
+    (`git restore main.go`); working tree matches their commit.
+  - `internal/ui/app/menu.go` — my write was overwritten by theirs during
+    their cleanup; current content is theirs.
+  - `internal/ui/app/{root,keys,dispatch}.go` — mine, deleted by their
+    cleanup; no trace remains (verified: no `NewRoot`/`MarshalUpload` in the
+    package).
+  - `internal/ui/app/window.go` — `git diff` against `abbcbe8` is empty.
+- **Verified after restoration:** `go test ./internal/ui/app/ -race` passes,
+  `go vet ./internal/ui/app/ .` clean, `gofmt -l` empty, `go build` green.
+- I yield `UI-APP` entirely — antigravity owns it, my claim is withdrawn, and
+  I will not edit their row. Apologies for the overwrite: I should have
+  re-read the board and listed the ownership directory immediately before
+  writing, not only before claiming.
