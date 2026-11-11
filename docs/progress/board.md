@@ -92,7 +92,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | --------------- | ----- | ----- | ------------- | ------------- | ----- |
 | `CONV-POSTMAN`  | InReview   | antigravity | 2026-11-11T01:38Z | 2026-11-11T01:43Z | Builds, vet-clean, race-clean, 82.2 % cov, v2/v2.1 import+export+env |
 | `CONV-INSOMNIA` | InReview   | antigravity | 2026-11-11T01:45Z | 2026-11-11T01:48Z | Builds, vet-clean, race-clean, 83.8 % cov, v4/v5 JSON/YAML import+export |
-| `CONV-OPENAPI`  | Ready | —     | —             | —             |       |
+| `CONV-OPENAPI`  | Claimed | antigravity | 2026-11-11T01:50Z | 2026-11-11T01:50Z | OpenAPI 3.x / Swagger 2 importer and exporter |
 | `CONV-CURL`     | InReview   | antigravity | 2026-11-11T01:18Z | 2026-11-11T01:25Z | Builds, vet-clean, race-clean, 87.6 % cov, import+export+round-trip |
 | `CODEGEN`       | InReview   | antigravity | 2026-11-11T01:30Z | 2026-11-11T01:35Z | Builds, vet-clean, race-clean, 87.5 % cov, cURL/Go/JS/Python generators |
 
