@@ -14,3 +14,13 @@ Owner history: antigravity (claimed 2026-11-11T01:55Z)
   - `tabs.go`: Request tabs view-model, tab selection, reordering, close, dirty indicators, transient/scratch tabs.
   - Ports for consumer interfaces (`RequestSender`, `RequestCanceller`, `ItemSaver`).
   - Strict GUI-free invariant: zero MyGo or Lobe imports verified by `./scripts/check-deps.sh`.
+
+### 2026-11-11T02:02Z — antigravity
+
+- Did: Completed implementation and testing for `UI-PRESENT-REQ`:
+  - `internal/ui/presenters/request.go`: `RequestPresenter`, draft tracking, dirty detection, subtab management, send/cancel/save workflow hooks, lifecycle event handling.
+  - `internal/ui/presenters/response.go`: `ResponsePresenter`, subtab switching, formatted status, duration, byte size, streaming body buffer and size, lifecycle events.
+  - `internal/ui/presenters/tabs.go`: `TabsPresenter`, tab open, duplicate tab deduplication/activation, close, close others, close all, reorder, active state tracking.
+  - `request_test.go`, `response_test.go`, `tabs_test.go`: 95.6% test coverage.
+- Tests: `go test -race -cover ./internal/ui/presenters/...` passed (95.6% coverage); `go vet` and `gofmt` clean; `./scripts/check-deps.sh` passed.
+- Notes: Quality bar satisfied. Moving to `Done`.
