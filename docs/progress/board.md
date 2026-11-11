@@ -38,8 +38,8 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `PROXY`          | Blocked  | antigravity   | 2026-11-10T23:30Z | 2026-11-11T02:30Z | Blocked on B-011: PAC acceptance criterion, owner notified                 |
 | `TLS`            | Done     | antigravity   | 2026-11-10T23:13Z | 2026-11-11T01:17Z | Confirmed: 4-way precedence + live mTLS; gates green; 85.4 % cov           |
 | `AUTH-CORE`      | InReview | zed-agent-1   | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov                    |
-| `TRANSPORT`      | InReview | zed-agent-1   | 2026-11-11T01:45Z | 2026-11-11T02:30Z | B-012 fixed: unique ordered phases + body-cap tests; 86.1 % cov            |
-| `ENGINE`         | InReview | antigravity-2 | 2026-11-11T00:20Z | 2026-11-11T02:35Z | B-013 fixed: tls.Resolve wired, E2E CA verified, race-clean, 81.8% cov     |
+| `TRANSPORT`      | Done     | zed-agent-1   | 2026-11-11T01:45Z | 2026-11-11T02:52Z | Confirmed: B-012 fixed; phase+cap tests green, gates green; 86.1 % cov     |
+| `ENGINE`         | Done     | antigravity-2 | 2026-11-11T00:20Z | 2026-11-11T02:58Z | Confirmed: B-013 fixed, E2E CA green; race-clean; 81.8 % cov               |
 | `CMD-SEND`       | InReview | antigravity   | 2026-11-11T00:45Z | 2026-11-11T00:55Z | Builds, vet-clean, race-clean, 87.4 % cov, terminal invariant verified     |
 | `CMD-COLLECTION` | InReview | antigravity-2 | 2026-11-11T00:05Z | 2026-11-11T02:18Z | Reviewed: 85.7 % cov. Open: move_item.go:79 drops SaveItem error           |
 | `CMD-ENV`        | InReview | antigravity-2 | 2026-11-11T00:52Z | 2026-11-11T02:18Z | Reviewed: 88.5 % cov. Open: save_environment lacks self-suppression        |
@@ -49,34 +49,34 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 ## Phase 2
 
-| Package           | State    | Agent        | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                      |
-| ----------------- | -------- | ------------ | ----------------- | ----------------- | ------------------------------------------------------------------------------------------ |
-| `UI-THEME`        | InReview | mimo-flash-2 | 2026-11-11T01:10Z | 2026-11-11T02:43Z | Reviewed: 98.0 % cov, 7-verb x light/dark table. Finding closed: mode match now case-insensitive        |
-| `UI-LAYOUT`       | InReview | mimo-flash-2 | 2026-11-11T00:19Z | 2026-11-11T02:43Z | Reviewed: 97.1 % cov, DPI 100-200 % verified. Findings closed: View normalizes, B-017 resolved                            |
-| `UI-WIDGETS`      | InReview | antigravity  | 2026-11-11T03:10Z | 2026-11-11T03:38Z | Custom widgets (all 8 + CodeEditor); 94.2% cov, race-clean, dep-clean                      |
-| `UI-PRESENT-REQ`  | InReview | antigravity  | 2026-11-11T01:55Z | 2026-11-11T02:02Z | Pure Go view-models for request, response, tabs; 95.6% cov, race-clean, dep-clean          |
-| `UI-PRESENT-NAV`  | InReview | antigravity  | 2026-11-11T02:10Z | 2026-11-11T02:18Z | Pure Go view-models for sidebar, collection, environment; 93.8% cov, race-clean, dep-clean |
-| `UI-PRESENT-SET`  | InReview | antigravity  | 2026-11-11T02:25Z | 2026-11-11T02:27Z | Pure Go view-models for preferences and settings; 94.8% cov, race-clean, dep-clean         |
-| `UI-SCREEN-REQ`   | Ready    | —            | —                 | —                 |                                                                                            |
-| `UI-SCREEN-RESP`  | Ready    | —            | —                 | —                 |                                                                                            |
-| `UI-SCREEN-NAV`   | Ready    | —            | —                 | —                 |                                                                                            |
-| `UI-SCREEN-SHELL` | InProgress | mimo-flash-2 | 2026-11-11T02:43Z | 2026-11-11T02:43Z | Claimed: window-chrome screen; built on UI-LAYOUT+UI-THEME, both code-complete                                                                                            |
-| `UI-SCREEN-SET`   | Ready    | —            | —                 | —                 |                                                                                            |
-| `UI-DIALOGS`      | Ready    | —            | —                 | —                 |                                                                                            |
-| `UI-APP`          | Ready    | —            | —                 | —                 |                                                                                            |
-| `PLATFORM`        | InReview | zed-agent-1  | 2026-11-11T09:10Z | 2026-11-11T09:35Z | Six OS interfaces + fakes, real loopback listener; 89.7 % cov                              |
+| Package           | State      | Agent         | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                            |
+| ----------------- | ---------- | ------------- | ----------------- | ----------------- | ------------------------------------------------------------------------------------------------ |
+| `UI-THEME`        | InReview   | mimo-flash-2  | 2026-11-11T01:10Z | 2026-11-11T02:43Z | Reviewed: 98.0 % cov, 7-verb x light/dark table. Finding closed: mode match now case-insensitive |
+| `UI-LAYOUT`       | InReview   | mimo-flash-2  | 2026-11-11T00:19Z | 2026-11-11T02:43Z | Reviewed: 97.1 % cov, DPI 100-200 % verified. Findings closed: View normalizes, B-017 resolved   |
+| `UI-WIDGETS`      | InReview   | antigravity   | 2026-11-11T03:10Z | 2026-11-11T03:38Z | Custom widgets (all 8 + CodeEditor); 94.2% cov, race-clean, dep-clean                            |
+| `UI-PRESENT-REQ`  | InReview   | antigravity   | 2026-11-11T01:55Z | 2026-11-11T02:02Z | Pure Go view-models for request, response, tabs; 95.6% cov, race-clean, dep-clean                |
+| `UI-PRESENT-NAV`  | InReview   | antigravity   | 2026-11-11T02:10Z | 2026-11-11T02:18Z | Pure Go view-models for sidebar, collection, environment; 93.8% cov, race-clean, dep-clean       |
+| `UI-PRESENT-SET`  | InReview   | antigravity   | 2026-11-11T02:25Z | 2026-11-11T02:27Z | Pure Go view-models for preferences and settings; 94.8% cov, race-clean, dep-clean               |
+| `UI-SCREEN-REQ`   | InReview   | antigravity   | 2026-11-11T03:47Z | 2026-11-11T04:04Z | Request editor screen with URL/method, sub-tabs, and body/param editors; 87.0% cov, race-clean   |
+| `UI-SCREEN-RESP`  | InProgress | zed-agent-1   | 2026-11-11T11:25Z | 2026-11-11T11:25Z | Response viewer screen: status row, sub-tabs, body/headers/timeline/tests                        |
+| `UI-SCREEN-NAV`   | InProgress | antigravity-2 | 2026-11-11T04:05Z | 2026-11-11T04:05Z | Claimed: navigation/sidebar explorer screen (collection tree, folders, environment selector)     |
+| `UI-SCREEN-SHELL` | InReview   | mimo-flash-2  | 2026-11-11T02:43Z | 2026-11-11T03:01Z | 100 % cov, race×5 clean. Pure view + Actions; goldens for light/dark theme change                |
+| `UI-SCREEN-SET`   | Ready      | —             | —                 | —                 |                                                                                                  |
+| `UI-DIALOGS`      | Ready      | —             | —                 | —                 |                                                                                                  |
+| `UI-APP`          | Ready      | —             | —                 | —                 |                                                                                                  |
+| `PLATFORM`        | InReview   | zed-agent-1   | 2026-11-11T09:10Z | 2026-11-11T09:35Z | Six OS interfaces + fakes, real loopback listener; 89.7 % cov                                    |
 
 ## Phase 4
 
-| Package         | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                       |
-| --------------- | ---------- | ----------- | ----------------- | ----------------- | ------------------------------------------------------------------------------------------- |
-| `AUTH-DIGEST`   | InReview   | zed-agent-1 | 2026-11-11T02:55Z | 2026-11-11T03:05Z | Wired into Apply; end-to-end challenge test                                                 |
-| `AUTH-NTLM`     | InReview   | zed-agent-1 | 2026-11-11T05:15Z | 2026-11-11T05:45Z | NTLMv2 per MS-NLMP; §4.2 vectors exact; e2e blocked on B-006                                |
-| `AUTH-OAUTH1`   | InReview   | zed-agent-1 | 2026-11-11T04:20Z | 2026-11-11T05:10Z | RFC 5849 signing; openssl-verified base string; header/query/body placement, body hash, RSA |
-| `AUTH-OAUTH2`   | InReview   | zed-agent-1 | 2026-11-11T09:40Z | 2026-11-11T10:20Z | 4 grants, PKCE, cache+refresh, placement; 3 bugs found; 89 % cov                            |
-| `AUTH-AWSV4`    | InProgress | zed-agent-1 | 2026-11-11T03:40Z | 2026-11-11T03:40Z | SigV4 against AWS golden vectors                                                            |
-| `AUTH-EDGEGRID` | InReview   | zed-agent-1 | 2026-11-11T06:25Z | 2026-11-11T06:50Z | EG1-HMAC-SHA256; all intermediates recomputed independently; no live-gateway vector         |
-| `ENV-FILES`     | InReview   | zed-agent-1 | 2026-11-11T05:50Z | 2026-11-11T06:20Z | `extends` chains w/ cycle detection, `.env`, path-safe loader; 91.2 % cov                   |
+| Package         | State    | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                       |
+| --------------- | -------- | ----------- | ----------------- | ----------------- | ------------------------------------------------------------------------------------------- |
+| `AUTH-DIGEST`   | InReview | zed-agent-1 | 2026-11-11T02:55Z | 2026-11-11T03:05Z | Wired into Apply; end-to-end challenge test                                                 |
+| `AUTH-NTLM`     | InReview | zed-agent-1 | 2026-11-11T05:15Z | 2026-11-11T05:45Z | NTLMv2 per MS-NLMP; §4.2 vectors exact; e2e blocked on B-006                                |
+| `AUTH-OAUTH1`   | InReview | zed-agent-1 | 2026-11-11T04:20Z | 2026-11-11T05:10Z | RFC 5849 signing; openssl-verified base string; header/query/body placement, body hash, RSA |
+| `AUTH-OAUTH2`   | InReview | zed-agent-1 | 2026-11-11T09:40Z | 2026-11-11T10:20Z | 4 grants, PKCE, cache+refresh, placement; 3 bugs found; 89 % cov                            |
+| `AUTH-AWSV4`    | InReview | zed-agent-1 | 2026-11-11T03:40Z | 2026-11-11T03:55Z | SigV4 matches AWS documented vector byte-for-byte; 89.3 % cov                               |
+| `AUTH-EDGEGRID` | InReview | zed-agent-1 | 2026-11-11T06:25Z | 2026-11-11T06:50Z | EG1-HMAC-SHA256; all intermediates recomputed independently; no live-gateway vector         |
+| `ENV-FILES`     | InReview | zed-agent-1 | 2026-11-11T05:50Z | 2026-11-11T06:20Z | `extends` chains w/ cycle detection, `.env`, path-safe loader; 91.2 % cov                   |
 
 ## Phase 5
 
@@ -100,7 +100,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 | Package          | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                                |
 | ---------------- | ---------- | ----------- | ----------------- | ----------------- | -------------------------------------------------------------------- |
-| `ADV-STREAM`     | InProgress | zed-agent-1 | 2026-11-11T10:50Z | 2026-11-11T02:40Z | Open: B-016 wrong package clause                                     |
+| `ADV-STREAM`     | InProgress | zed-agent-1 | 2026-11-11T10:50Z | 2026-11-11T03:03Z | Review: cancellation test fails 7/10 under -race; see B-018          |
 | `ADV-RUNNER`     | InReview   | antigravity | 2026-11-11T02:35Z | 2026-11-11T02:18Z | Owner-reported only; not reviewed                                    |
 | `ADV-GRPC`       | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                                                    |
 | `ADV-WS`         | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                                                    |
