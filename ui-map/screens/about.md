@@ -11,7 +11,7 @@ Sources: `components/Bruno` (logo/wordmark), `components/BrunoSupport`,
 
 Reachable from Preferences (see `screens/preferences.md`). Shows the
 `Bruno` wordmark and version. `useApp().version` renders as `v{version}` in the
-status bar (`StatusBar/index.js:169-171`); the About surface shows the same
+status bar (`components/StatusBar/index.js:169-171`); the About surface shows the same
 version plus support links via `BrunoSupport`.
 
 ## Help
@@ -22,7 +22,7 @@ overridable via `iconComponent`, size default 14) that opens a panel
 (default width 200, default placement `right`). Content is arbitrary children.
 
 Use it as the single tooltip-with-rich-content primitive. Plain one-line tips
-use `ToolHint` (see `components/tooltip.md`).
+use `ToolHint` (see `components/misc-primitives.md`).
 
 ## Changelog
 

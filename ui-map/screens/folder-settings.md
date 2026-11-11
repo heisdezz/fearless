@@ -38,8 +38,8 @@ row and the `Save` button exactly as specified here.
 | Content            | `folder-settings-content flex mt-4 flex-1 min-h-0 overflow-auto`                                                                                                                                                                                                                         | `:130`                                  |
 | Count superscript  | `<sup class="ml-1 font-medium">` on Headers / Vars                                                                                                                                                                                                                                       | `:97,109`                               |
 | Dot                | `<StatusDot />` (Script / Test / Auth / Settings)                                                                                                                                                                                                                                        | `:101,105,113,120`                      |
-| Markdown           | `.markdown-body { height:auto; overflow-y:visible }`                                                                                                                                                                                                                                     | `StyledWrapper.js:6-9`                  |
-| Muted helper class | `.muted → colors.text.muted`                                                                                                                                                                                                                                                             | `StyledWrapper.js:51-53`                |
+| Markdown           | `.markdown-body { height:auto; overflow-y:visible }`                                                                                                                                                                                                                                     | `components/FolderSettings/StyledWrapper.js:6-9`                  |
+| Muted helper class | `.muted → colors.text.muted`                                                                                                                                                                                                                                                             | `components/FolderSettings/StyledWrapper.js:51-53`                |
 
 ### 1.1 Tab strip (exact order) — `FolderSettings/index.js:95-121`
 
@@ -85,7 +85,7 @@ Intro (verbatim): **`Request headers that will be sent with every request inside
 
 Validation: `Header name cannot contain spaces or newlines`,
 `Header value cannot contain newlines` (same `getRowError` as collection,
-`Headers/index.js:61-75` pattern).
+`components/FolderSettings/Headers/index.js:61-75` pattern).
 
 Footer: **`Bulk Edit`** text link right-aligned (`:170-174`); `Save`
 `Button size="sm"` at `mt-6` (`:175-179`). Bulk mode: intro line + `BulkEditor`
@@ -134,11 +134,11 @@ at `mt-6` (`:44-64`). No placeholder, no empty state.
 
 | #   | Caption (verbatim) | `varType`  | Data path                        | Source                |
 | --- | ------------------ | ---------- | -------------------------------- | --------------------- |
-| 1   | `Pre Request`      | `request`  | `root.request.vars.req`          | `Vars/index.js:25-26` |
-| 2   | `Post Response`    | `response` | `root.request.vars.res`          | `Vars/index.js:29-30` |
-| 3   | —                  | —          | `Save` `Button size="sm"` `mt-6` | `Vars/index.js:32-36` |
+| 1   | `Pre Request`      | `request`  | `root.request.vars.req`          | `components/FolderSettings/Vars/index.js:25-26` |
+| 2   | `Post Response`    | `response` | `root.request.vars.res`          | `components/FolderSettings/Vars/index.js:29-30` |
+| 3   | —                  | —          | `Save` `Button size="sm"` `mt-6` | `components/FolderSettings/Vars/index.js:32-36` |
 
-Columns (`Vars/VarsTable/index.js:74-128`):
+Columns (`components/FolderSettings/Vars/VarsTable/index.js:74-128`):
 
 | Column                                            | Placeholder      | Notes                                                                                                                                                                                                                     | Source           |
 | ------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
@@ -230,7 +230,7 @@ title. Rendered:
 `FolderSettings/Settings/index.js` → `Settings/Tags/index.js` →
 `components/TagList`.
 
-Intro (verbatim): **`Configure settings for this folder.`** (`Settings/index.js:8`).
+Intro (verbatim): **`Configure settings for this folder.`** (`components/FolderSettings/Settings/index.js:8`).
 
 Section heading: `IconTag` 16 px + `Tags` (`text-xs font-medium`) (`:11-14`).
 
@@ -269,11 +269,11 @@ simply empty).
 | Interaction                | Result                                                                           | Source                                                                                     |
 | -------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | Switch tab                 | Redux `updatedFolderSettingsSelectedTab`                                         | `FolderSettings/index.js:48-56`                                                            |
-| `Save` in any tab          | `saveFolderRoot(collection.uid, folder.uid)`                                     | `Headers:59`, `Vars/index.js:16`, `Auth:57-59`, `Tests:32`, `Script:100-102`, `Tags:30-32` |
+| `Save` in any tab          | `saveFolderRoot(collection.uid, folder.uid)`                                     | `Headers:59`, `components/FolderSettings/Vars/index.js:16`, `Auth:57-59`, `Tests:32`, `Script:100-102`, `Tags:30-32` |
 | Header/Vars row add/delete | `EditableTable` trailing blank row / trash                                       | `EditableTable`                                                                            |
-| Vars reorder               | Drag when sort is `Default order` (rows carry a grip handle)                     | `Vars/VarsTable/index.js:53-55`                                                            |
+| Vars reorder               | Drag when sort is `Default order` (rows carry a grip handle)                     | `components/FolderSettings/Vars/VarsTable/index.js:53-55`                                                            |
 | Tags                       | `Enter` adds; chip × removes; inherited tags read-only                           | `TagList`                                                                                  |
-| Folder auth `inherit`      | Shows `InheritedAuthSourceLabel` naming the source (collection or parent folder) | `Auth/index.js:68-71,208-210`                                                              |
+| Folder auth `inherit`      | Shows `InheritedAuthSourceLabel` naming the source (collection or parent folder) | `components/FolderSettings/Auth/index.js:68-71,208-210`                                                              |
 
 Folder settings **inherit downward**: headers/vars/scripts/tests/auth set here
 apply to every request in the folder and its sub-folders (copy in each tab intro).
@@ -297,6 +297,6 @@ apply to every request in the folder and its sub-folders (copy in each tab intro
 6. **Inherited-auth source label copy** is owned by
    `components/RequestPane/Auth/InheritedAuth` — see `screens/request-auth.md` §3.2;
    not duplicated here.
-7. **OAuth2 grant default** is `authorization_code` (`Auth/index.js:35`) while the
+7. **OAuth2 grant default** is `authorization_code` (`components/FolderSettings/Auth/index.js:35`) while the
    collection uses `{}` and shows `TBD` for unknown grants
    (`CollectionSettings/Auth/OAuth2/index.js:21,37`). Harmonise in the port.

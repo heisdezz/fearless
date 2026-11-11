@@ -4,7 +4,7 @@ Mode: **Operate**. A side panel/modal opened from the status-bar bell.
 
 Source: `components/Notifications/` (`index.js`, `NotificationsModal/`:
 `index.js`, `NotificationList.js`, `NotificationDetail.js`, `NotificationTabs.js`).
-Test hook: bell has `aria-label="Check all Notifications"` (`index.js:13`).
+Test hook: bell has `aria-label="Check all Notifications"` (`components/Notifications/NotificationsModal/index.js:13`).
 
 ---
 
@@ -29,7 +29,7 @@ Test hook: bell has `aria-label="Check all Notifications"` (`index.js:13`).
 
 | State | Copy |
 | --- | --- |
-| Nothing at all | **`You are all caught up!`** (`index.js:78`) |
+| Nothing at all | **`You are all caught up!`** (`components/Notifications/NotificationsModal/index.js:78`) |
 | Empty tab | **`No notifications to show.`** (`NotificationList.js:30`) |
 | No selection | **`Select a notification to read more.`** (`NotificationDetail.js:28`) |
 

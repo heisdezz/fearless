@@ -18,7 +18,7 @@ are the Go ports.
 | `icon`, `iconPosition` | element, `left` \| `right` | — / `left` |
 | `disabled`, `loading`, `fullWidth` | bool | false |
 
-(`index.js:4-17`.)
+(`ui/Button/index.js:4-17`.)
 
 ## Sizes (CSS → px at 16 px root)
 
@@ -30,7 +30,7 @@ are the Go ports.
 | md | `0.625rem 1.125rem` (10×18) | 12 px (`sm`) | 8 | 16 px |
 | lg | `0.75rem 1.5rem` (12×24) | 13 px (`base`) | 12 | 18 px |
 
-(`StyledWrapper.js:14-94`.) Radius from `border.radius.*`; `full` = 9999 px.
+(`ui/Button/StyledWrapper.js:14-94`.) Radius from `border.radius.*`; `full` = 9999 px.
 
 ## Colours (from `button2.color.<name>`)
 
@@ -48,7 +48,7 @@ are the Go ports.
 ## Variant behaviour
 
 - **filled**: bg/border/text as above. Hover darkens bg+border 3 %, active
-  darkens 7 % (`StyledWrapper.js:127-145`).
+  darkens 7 % (`ui/Button/StyledWrapper.js:127-145`).
 - **outline**: transparent bg, colour+border = the colour's *display colour*
   (bg for most, text for `secondary`). Hover bg = display colour at 5 %,
   active 10 % (`:148-168`).
@@ -57,8 +57,8 @@ are the Go ports.
 - Focus-visible: `box-shadow 0 0 0 2px` of the display colour at 40 %.
 - Disabled: `opacity .7`, `cursor: not-allowed`, pointer-events off.
 - Loading: leading spinner (`strokeDasharray 31.4 31.4`, rotating), icon hidden
-  while loading (`index.js:49-60`).
-- Transition: `all .15s ease` (`StyledWrapper.js:220`).
+  while loading (`ui/Button/index.js:49-60`).
+- Transition: `all .15s ease` (`ui/Button/StyledWrapper.js:220`).
 
 ## Open Questions
 

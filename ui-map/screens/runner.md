@@ -44,7 +44,7 @@ Copy, verbatim:
 
 | Text                                             | Condition                       | Source              |
 | ------------------------------------------------ | ------------------------------- | ------------------- |
-| `Runner`                                         | always                          | `index.jsx:253-256` |
+| `Runner`                                         | always                          | `components/RunnerResults/index.jsx:253-256` |
 | `You have {N} request(s) in this collection.`    | always                          | `:258`              |
 | `(Loading...)`                                   | `areItemsLoading(collection)`   | `:259-263`          |
 | `Requests in this collection are still loading.` | loading (`danger`)              | `:265`              |
@@ -60,16 +60,16 @@ Dimensions: `.textbox` = `height:1.875rem`, `padding:.2rem .5rem`,
 `input.focusBorder` (`RunnerResults/StyledWrapper.js:4-27`). Space between
 section title and body: `mt-2` (8 px). Left column `.pr-4` (16 px). The config
 panel is separated by a `1px` left border coloured
-`background.surface1` (`StyledWrapper.js:107-109`).
+`background.surface1` (`components/RunnerResults/StyledWrapper.js:107-109`).
 
 The whole setup body is `pl-4` (16 px) with no bottom scroll
-(`index.jsx:250`).
+(`components/RunnerResults/index.jsx:250`).
 
 ---
 
 ## 2. Layout tree — results face
 
-Shown once `runnerResult.items.length > 0` (`index.jsx:248`, `:321-620`).
+Shown once `runnerResult.items.length > 0` (`components/RunnerResults/index.jsx:248`, `:321-620`).
 
 ```text
 StyledWrapper (px-4 pb-4 flex flex-col flex-grow relative overflow-auto)
@@ -107,7 +107,7 @@ StyledWrapper (px-4 pb-4 flex flex-col flex-grow relative overflow-auto)
 
 | Property    | Value                                                     | Source              |
 | ----------- | --------------------------------------------------------- | ------------------- |
-| Icon        | `IconExternalLink` 64/1.5, `colors.text.subtext0`, `mb-4` | `index.jsx:567-570` |
+| Icon        | `IconExternalLink` 64/1.5, `colors.text.subtext0`, `mb-4` | `components/RunnerResults/index.jsx:567-570` |
 | Text        | `Click on the status code to view the response`           | `:571-573`          |
 | Text colour | `colors.text.subtext1`                                    | `:571-573`          |
 
@@ -115,7 +115,7 @@ StyledWrapper (px-4 pb-4 flex flex-col flex-grow relative overflow-auto)
 
 - Left: `displayName` (`mr-2`) + one status icon at 20/1.5 —
   `IconCircleCheck` (`test-success`), `IconCircleX` (`test-failure`),
-  `IconCircleOff` (`skipped-request`) (`index.jsx:540-551`).
+  `IconCircleOff` (`skipped-request`) (`components/RunnerResults/index.jsx:540-551`).
 - Right: close button `p-1 rounded hover-bg-surface`, `title="Close"`,
   `aria-label="Close response view"`, `IconX` 16/1.5 (`:553-560`).
 - Below: the runner `ResponsePane` (`:562`), covered in §6.
@@ -124,7 +124,7 @@ StyledWrapper (px-4 pb-4 flex flex-col flex-grow relative overflow-auto)
 
 ## 3. Result rows
 
-One row per request (`index.jsx:404-534`):
+One row per request (`components/RunnerResults/index.jsx:404-534`):
 
 ```text
 div.item-path  (mt-2)                        data-testid=runner-result-item
@@ -145,7 +145,7 @@ div.item-path  (mt-2)                        data-testid=runner-result-item
 
 | Element                 | Spec                                                                                                          | Source                           |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| Pass icon               | `IconCircleCheck` 20/1.5, `colors.text.green`                                                                 | `index.jsx:412-413`              |
+| Pass icon               | `IconCircleCheck` 20/1.5, `colors.text.green`                                                                 | `components/RunnerResults/index.jsx:412-413`              |
 | Fail icon               | `IconCircleX` 20/1.5, `colors.text.danger`                                                                    | `:418-419`                       |
 | Skipped icon            | `IconCircleOff` 20/1.5, `colors.text.muted`                                                                   | `:415-416`                       |
 | Pass predicate          | `status !== 'error'` **and** all four statuses `'pass'`                                                       | `:32-38`                         |
@@ -154,7 +154,7 @@ div.item-path  (mt-2)                        data-testid=runner-result-item
 | Status text             | `{status} - {statusText}`, `text-xs`, `textLink`                                                              | `:430-435`                       |
 | Failed placeholder      | `(request failed)`                                                                                            | `:436-438`                       |
 | In-flight spinner       | `IconRefresh` 18/1.5 `animate-spin`                                                                           | `:428`                           |
-| Error line              | `pl-8 pt-2 text-xs`, `colors.text.danger` via `.error-message` (only when `status == 'error'`)                | `:446`, `StyledWrapper.js:69-75` |
+| Error line              | `pl-8 pt-2 text-xs`, `colors.text.danger` via `.error-message` (only when `status == 'error'`)                | `:446`, `components/RunnerResults/StyledWrapper.js:69-75` |
 | Test rows (pass)        | `IconCheck` 18/2 `mr-2`, `colors.text.green`                                                                  | `:450-466`                       |
 | Test rows (fail)        | `IconX` 18/2 `mr-2`, `colors.text.danger`, then error in `error-message pl-8 text-xs`                         | `:462-464`                       |
 | Assertion text          | `{lhsExpr}: {rhsExpr}`                                                                                        | `:509-511`                       |
@@ -164,7 +164,7 @@ div.item-path  (mt-2)                        data-testid=runner-result-item
 `postResponseTestStatus` are derived per row with
 `getTestStatus(results)` = `fail` if any result failed, else `pass`, and
 **not recomputed** for rows whose status is `error`, `skipped` or `running`
-(`index.jsx:115-120`, `:26-30`).
+(`components/RunnerResults/index.jsx:115-120`, `:26-30`).
 
 Rows are keyed by `item.uid` and listed in `runnerResult.items` order, which
 is the run order (see §5).
@@ -185,21 +185,21 @@ is the run order (see §5).
 
 | Property              | Value                                                                                                                                                                                          | Source                                                              |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Label                 | `Filter by:` (verbatim, incl. colon)                                                                                                                                                           | `RunnerFilter/index.jsx:29`                                         |
+| Label                 | `Filter by:` (verbatim, incl. colon)                                                                                                                                                           | `components/RunnerResults/RunnerFilter/index.jsx:29`                                         |
 | Filter labels         | `All`, `Passed`, `Failed`, `Skipped`                                                                                                                                                           | `RunnerResults/index.jsx:49-70`                                     |
-| Predicates            | All: everything · Passed: `allTestsPassed` · Failed: `anyTestFailed` · Skipped: `status === 'skipped'`                                                                                         | `index.jsx:49-70`                                                   |
-| Counts                | recomputed from current `items`                                                                                                                                                                | `index.jsx:235-245`                                                 |
-| Count chip            | `padding 2px 4.5px; radius 2px; 1px solid border.border0; background.surface0; font.size.xs; 500`                                                                                              | `RunnerFilter/StyledWrapper.js:150-161`                             |
+| Predicates            | All: everything · Passed: `allTestsPassed` · Failed: `anyTestFailed` · Skipped: `status === 'skipped'`                                                                                         | `components/RunnerResults/index.jsx:49-70`                                                   |
+| Counts                | recomputed from current `items`                                                                                                                                                                | `components/RunnerResults/index.jsx:235-245`                                                 |
+| Count chip            | `padding 2px 4.5px; radius 2px; 1px solid border.border0; background.surface0; font.size.xs; 500`                                                                                              | `components/RunnerResults/RunnerFilter/StyledWrapper.js:150-161`                             |
 | Inactive button       | 500, `colors.text.subtext0`, transparent bottom border                                                                                                                                         | `:87-94`                                                            |
 | Active button         | `tabs.active.fontWeight` (400), `tabs.active.color`, 2 px bottom border `tabs.active.border`                                                                                                   | `:77-85`                                                            |
 | Transition            | `color .15s ease, border-bottom-color .15s ease`                                                                                                                                               | `:68`                                                               |
 | Focus ring            | `2px solid tabs.active.border`, offset 2 px                                                                                                                                                    | `:72-75`                                                            |
-| Compact variant       | below the breakpoint the buttons hide and a `.filter-select` dropdown (`{label} {count} ⌄`, `IconChevronDown` 14/2) takes over, menu `placement="bottom-start"`, tick in `.filter-check` 14 px | `RunnerFilter/index.jsx:47-63`, `StyledWrapper.js:45-53`, `:97-140` |
-| Result list filtering | filtering also narrows the per-row test lists (`resultFilter`) — Passed keeps passes, Failed keeps `fail`/`error`                                                                              | `index.jsx:128-131`                                                 |
+| Compact variant       | below the breakpoint the buttons hide and a `.filter-select` dropdown (`{label} {count} ⌄`, `IconChevronDown` 14/2) takes over, menu `placement="bottom-start"`, tick in `.filter-check` 14 px | `components/RunnerResults/RunnerFilter/index.jsx:47-63`, `components/RunnerResults/StyledWrapper.js:45-53`, `:97-140` |
+| Result list filtering | filtering also narrows the per-row test lists (`resultFilter`) — Passed keeps passes, Failed keeps `fail`/`error`                                                                              | `components/RunnerResults/index.jsx:128-131`                                                 |
 
-Toolbar collapse levels are `['compact', 'tiny']` (`index.jsx:18`): `compact`
+Toolbar collapse levels are `['compact', 'tiny']` (`components/RunnerResults/index.jsx:18`): `compact`
 switches the filter to the dropdown; `tiny` additionally hides the action
-button labels (icon-only, `padding-left/right .5rem`) (`StyledWrapper.js:147-157`).
+button labels (icon-only, `padding-left/right .5rem`) (`components/RunnerResults/StyledWrapper.js:147-157`).
 
 ---
 
@@ -223,25 +223,25 @@ runner-config-panel (bg, height 100%, flex column, overflow hidden)
 
 | Element          | Spec                                                                                                                    | Source                                |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| Counter          | `{selectedItems.length} of {enabledCount} selected`                                                                     | `RunConfigurationPanel/index.jsx:401` |
+| Counter          | `{selectedItems.length} of {enabledCount} selected`                                                                     | `components/RunnerResults/RunConfigurationPanel/index.jsx:401` |
 | Select-all label | `Deselect All` when everything selected, else `Select All`                                                              | `:408`                                |
 | Reset            | `Reset`, `title="Reset selection and order"`                                                                            | `:412-419`                            |
-| Loading          | `Loading requests...` (muted, `font.size.base`, padding `.75rem`)                                                       | `:424-425`, `StyledWrapper.jsx:48-53` |
+| Loading          | `Loading requests...` (muted, `font.size.base`, padding `.75rem`)                                                       | `:424-425`, `components/RunnerResults/StyledWrapper.jsx:48-53` |
 | Empty            | `No requests found in this collection`                                                                                  | `:427`                                |
-| Row selected     | bg `background.mantle`, border `border.border0`, checkbox filled `primary.solid` with `bg`-coloured tick                | `StyledWrapper.jsx:73-85`             |
+| Row selected     | bg `background.mantle`, border `border.border0`, checkbox filled `primary.solid` with `bg`-coloured tick                | `components/RunnerResults/StyledWrapper.jsx:73-85`             |
 | Row disabled     | `opacity .4`, `pointer-events:none`, drag handle hidden, checkbox `border.border2` on `surface0`                        | `:87-108`                             |
 | Row dragging     | `opacity .5`, `1px dashed sidebar.dragbar`, `scale(.98)`, `shadow.md`, `z-index 5`                                      | `:110-117`                            |
 | Drop target      | 2 px bar above/below (`::before`/`::after`) at `dragAndDrop.border`                                                     | `:119-154`                            |
 | Checkbox hover   | border `primary.solid`                                                                                                  | `:188-190`                            |
 | Method colour    | `request.methods.{verb}`; GRPC `request.grpc`, WS `request.ws`, GQL `request.gql`; fallback `sidebar.muted`             | `:194-241`                            |
-| Method text      | verb uppercased, truncated to 3 chars when longer than 5 (`OPTIONS` → `OPT`); GraphQL → `GQL`, gRPC → `GRPC`, WS → `WS` | `index.jsx:35-59`                     |
-| Folder path      | `sidebar.muted`, `ml-0.5rem`                                                                                            | `StyledWrapper.jsx:250-254`           |
-| Transition       | `transform, background-color, box-shadow .15s ease`                                                                     | `StyledWrapper.jsx:71`                |
+| Method text      | verb uppercased, truncated to 3 chars when longer than 5 (`OPTIONS` → `OPT`); GraphQL → `GQL`, gRPC → `GRPC`, WS → `WS` | `components/RunnerResults/index.jsx:35-59`                     |
+| Folder path      | `sidebar.muted`, `ml-0.5rem`                                                                                            | `components/RunnerResults/StyledWrapper.jsx:250-254`           |
+| Transition       | `transform, background-color, box-shadow .15s ease`                                                                     | `components/RunnerResults/StyledWrapper.jsx:71`                |
 | Scrollbar        | 6 px wide, thumb `console.scrollbarThumb`                                                                               | `:35-46`                              |
 
 Behaviour:
 
-- Default selection = every enabled request (`index.jsx:251-257`).
+- Default selection = every enabled request (`components/RunnerResults/index.jsx:251-257`).
 - A saved `runnerConfiguration.requestItemsOrder` re-orders the list, unknown
   uids appended after (`:225-247`).
 - Tag filters disable rows that do not match, and deselect them
@@ -251,14 +251,14 @@ Behaviour:
   dropping persists the new order (`:319-334`).
 
 Ordering summary: folders first (by name, then sequence), then requests by
-`seq`, depth-first through folders (`index.jsx:185-216`); a saved order
+`seq`, depth-first through folders (`components/RunnerResults/index.jsx:185-216`); a saved order
 overrides this and drag-and-drop edits that saved order.
 
 ### 5.2 Results-face run controls
 
 | State                                                   | Buttons              | Icon                        | Colour/size                                                                                 | Source              |
 | ------------------------------------------------------- | -------------------- | --------------------------- | ------------------------------------------------------------------------------------------- | ------------------- |
-| Running (`status !== 'ended'` and has `cancelTokenUid`) | `Cancel Execution`   | `IconPlayerStop`            | `Button variant="filled" color="danger" size="sm"`, `title`/`aria-label` `Cancel Execution` | `index.jsx:331-346` |
+| Running (`status !== 'ended'` and has `cancelTokenUid`) | `Cancel Execution`   | `IconPlayerStop`            | `Button variant="filled" color="danger" size="sm"`, `title`/`aria-label` `Cancel Execution` | `components/RunnerResults/index.jsx:331-346` |
 | Ended                                                   | `Run Again`, `Reset` | `IconRefresh`, `IconReload` | `filled secondary sm`, titles/aria-labels `Run Again`, `Reset`                              | `:347-375`          |
 | Idle (neither)                                          | none                 | —                           | —                                                                                           | `:376`              |
 
@@ -269,7 +269,7 @@ runner state and the delay (`:219-228`); `Cancel Execution` dispatches
 
 ### 5.3 Tags — `RunnerTags` → `IncludeExcludeTags`
 
-Filled with the unique tags of the collection (`RunnerTags/index.jsx:8-28`).
+Filled with the unique tags of the collection (`components/RunnerResults/RunnerTags/index.jsx:8-28`).
 
 ```text
 IncludeExcludeTags (data-testid=runner-tags)
@@ -282,9 +282,9 @@ IncludeExcludeTags (data-testid=runner-tags)
 | ------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | Column labels       | `Include Tags`, `Exclude Tags` (verbatim)                                                             | `IncludeExcludeTags/index.jsx:48`, `:60`      |
 | Label style         | `font.size.sm`, 500, `text`                                                                           | `IncludeExcludeTags/StyledWrapper.js:19-24`   |
-| Include placeholder | `e.g. Production ready`                                                                               | `index.jsx:56`                                |
-| Exclude placeholder | `e.g. Work in progress`                                                                               | `index.jsx:68`                                |
-| Columns             | `flex:1` each, `gap .25rem` inside, `1rem` between                                                    | `StyledWrapper.js:4-17`                       |
+| Include placeholder | `e.g. Production ready`                                                                               | `components/RunnerResults/index.jsx:56`                                |
+| Exclude placeholder | `e.g. Work in progress`                                                                               | `components/RunnerResults/index.jsx:68`                                |
+| Columns             | `flex:1` each, `gap .25rem` inside, `1rem` between                                                    | `components/RunnerResults/StyledWrapper.js:4-17`                       |
 | Input               | padding `.375rem .5rem`, `font.size.sm`, `border.border1`, `radius.base`, focus `input.focusBorder`   | `components/TagPicker/StyledWrapper.js:13-31` |
 | Tag chip            | `height 1.75rem`, `1px solid border.border0`, `radius.base`, `IconTag` + text + remove `IconX`        | `:47-91`                                      |
 | Suggestions menu    | fixed, `max-height:10rem`, `dropdown.bg`, `border.border1`, `dropdown.shadow`                         | `:94-120`                                     |
@@ -294,7 +294,7 @@ IncludeExcludeTags (data-testid=runner-tags)
 | Added tag order     | sorted ascending                                                                                      | `IncludeExcludeTags/index.jsx:34`             |
 
 The same tag set is shown on results (`Tags:` line, §2) and per row when the
-row carries any include tag (`index.jsx:433-437`).
+row carries any include tag (`components/RunnerResults/index.jsx:433-437`).
 
 ---
 
@@ -351,15 +351,15 @@ SelectionList (max-width 720px; width 100%)
 | Property           | Value                                                                                                                                        | Source                                             |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
 | Defaults           | `visibleRows=8`, `rowHeight=40`, `rowGap=4`, `emptyMessage='No items found'`, `maxWidth='720px'`                                             | `SelectionList/index.js:22-28`, `constants.js:1-2` |
-| List height        | `rowHeight × rows + rowGap × (rows-1)` px; rows = `min(items.length, visibleRows)` or 1 when empty                                           | `index.js:47`, `StyledWrapper.js:4-9`              |
-| Count badge        | `min-width/height 1.25rem`, `radius.base`, `surface0` on `border.border1` (dark: `workspace.button.bg` border, `overlay.overlay0` fill), 500 | `StyledWrapper.js:26-42`                           |
-| Search placeholder | `Search {title}` when none passed                                                                                                            | `index.js:99`                                      |
-| Select-all label   | `Select all` (lowercase “a”), indeterminate when partial                                                                                     | `index.js:102-111`, `:53-57`                       |
-| Filtering          | fuzzy match (`fast-fuzzy`) over title + description                                                                                          | `index.js:33-40`                                   |
-| Item row           | `grid-template-columns: 1.5rem minmax(0,1fr)`, `gap .375rem`, `padding .25rem 0`                                                             | `StyledWrapper.js:141-153`                         |
+| List height        | `rowHeight × rows + rowGap × (rows-1)` px; rows = `min(items.length, visibleRows)` or 1 when empty                                           | `components/RunnerResults/index.js:47`, `components/RunnerResults/StyledWrapper.js:4-9`              |
+| Count badge        | `min-width/height 1.25rem`, `radius.base`, `surface0` on `border.border1` (dark: `workspace.button.bg` border, `overlay.overlay0` fill), 500 | `components/RunnerResults/StyledWrapper.js:26-42`                           |
+| Search placeholder | `Search {title}` when none passed                                                                                                            | `components/RunnerResults/index.js:99`                                      |
+| Select-all label   | `Select all` (lowercase “a”), indeterminate when partial                                                                                     | `components/RunnerResults/index.js:102-111`, `:53-57`                       |
+| Filtering          | fuzzy match (`fast-fuzzy`) over title + description                                                                                          | `components/RunnerResults/index.js:33-40`                                   |
+| Item row           | `grid-template-columns: 1.5rem minmax(0,1fr)`, `gap .375rem`, `padding .25rem 0`                                                             | `components/RunnerResults/StyledWrapper.js:141-153`                         |
 | Item title         | `font.size.base`, 600, ellipsis                                                                                                              | `:170-178`                                         |
-| Item description   | `font.size.sm`, 500, `subtext1`, 2-line clamp, paths normalised to `/`                                                                       | `:180-192`, `index.js:10`, `:71`                   |
-| Empty state        | muted, `font.size.sm`, italic, grid-aligned to the text column                                                                               | `StyledWrapper.js:194-214`                         |
+| Item description   | `font.size.sm`, 500, `subtext1`, 2-line clamp, paths normalised to `/`                                                                       | `:180-192`, `components/RunnerResults/index.js:10`, `:71`                   |
+| Empty state        | `No requests found in this collection`, muted, `font.size.base`, `padding .75rem`                                                             | `components/RunnerResults/RunConfigurationPanel/index.jsx:426`, `RunConfigurationPanel/StyledWrapper.jsx:48-53` |
 
 `SelectionFooter` (`components/SelectionFooter/index.js:3-12`) is a styled
 `div`: `colors.text.subtext2`, `font.size.base`, 500, `line-height 1.25rem`;
@@ -389,18 +389,18 @@ its `<span>` (the number) is `primary.solid`. Used as
 
 | Action                  | Trigger                                 | Effect                                                   | Source                                    |
 | ----------------------- | --------------------------------------- | -------------------------------------------------------- | ----------------------------------------- |
-| Run                     | `Run N Request(s)`                      | persists config, clears exchanges, `runCollectionFolder` | `index.jsx:188-195`                       |
+| Run                     | `Run N Request(s)`                      | persists config, clears exchanges, `runCollectionFolder` | `components/RunnerResults/index.jsx:188-195`                       |
 | Reset (setup)           | `Reset` ghost                           | `resetCollectionRunner`, delay cleared                   | `:219-228`                                |
 | Cancel                  | `Cancel Execution`                      | `cancelRunnerExecution`                                  | `:230-232`                                |
 | Run Again               | results toolbar                         | re-run saved configuration                               | `:197-217`                                |
-| Filter results          | chip / dropdown                         | client-side filter                                       | `:76`, `RunnerFilter/index.jsx:23-24`     |
-| Open result             | click status code or `(request failed)` | selects the item into the detail pane                    | `index.jsx:423`, `:429`                   |
+| Filter results          | chip / dropdown                         | client-side filter                                       | `:76`, `components/RunnerResults/RunnerFilter/index.jsx:23-24`     |
+| Open result             | click status code or `(request failed)` | selects the item into the detail pane                    | `components/RunnerResults/index.jsx:423`, `:429`                   |
 | Close detail            | `×`                                     | `setSelectedItem(null)`                                  | `:553-560`                                |
-| Select/deselect request | checkbox / row click                    | toggles selection, persists order                        | `RunConfigurationPanel/index.jsx:336-361` |
+| Select/deselect request | checkbox / row click                    | toggles selection, persists order                        | `components/RunnerResults/RunConfigurationPanel/index.jsx:336-361` |
 | Select/Deselect all     | header button                           | all enabled uids                                         | `:363-379`                                |
 | Reorder                 | drag handle                             | reorders and persists                                    | `:303-334`                                |
 | Add/remove tag          | picker                                  | re-evaluates disabled rows                               | `:265-298`                                |
-| Delay                   | numeric input                           | integer, stored in `runnerConfiguration.delay`           | `index.jsx:161-168`, `:192`               |
+| Delay                   | numeric input                           | integer, stored in `runnerConfiguration.delay`           | `components/RunnerResults/index.jsx:161-168`, `:192`               |
 
 No keyboard shortcut is bound in the runner; the pickers use
 `Enter`/`↑`/`↓`/`Esc` (§5.3).
@@ -410,18 +410,18 @@ No keyboard shortcut is bound in the runner; the pickers use
 ## Open Questions
 
 1. **`Run {N} Request{s}` with zero selected.** The button is disabled when
-   `selectedRequestItems.length === 0` (`index.jsx:296`), so `Run 0 Request`
+   `selectedRequestItems.length === 0` (`components/RunnerResults/index.jsx:296`), so `Run 0 Request`
    is unreachable — harmless but odd copy.
 2. **Filter counts vs. visible rows.** Counts are computed from all items
-   (`index.jsx:235-240`) while the list shows only `filteredItems`; the
+   (`components/RunnerResults/index.jsx:235-240`) while the list shows only `filteredItems`; the
    `All` chip can therefore display a number larger than the rows on screen
    when another filter is active. Unverified whether this is intentional.
-3. **Empty filtered list** has no empty state (`index.jsx:405-534` maps an
+3. **Empty filtered list** has no empty state (`components/RunnerResults/index.jsx:405-534` maps an
    empty array to nothing). A Go port may want `No matching results`.
 4. **Test-row ordering** interleaves Pre-Request → Post-Response → Tests →
    Assertions without a visual section header; the same order in
    `TestResults` uses headings. Divergence is real
-   (`index.jsx:448-521` vs `ResponsePane/TestResults/index.js:127-161`).
+   (`components/RunnerResults/index.jsx:448-521` vs `ResponsePane/TestResults/index.js:127-161`).
 5. **`assertionResults` always rendered.** Runner rows render
    `assertionResults` without a null guard (`RunnerResults/index.jsx:509`),
    while the tests panel hides the section when empty

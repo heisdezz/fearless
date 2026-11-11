@@ -11,7 +11,7 @@ Source: `src/ui/MethodBadge/` (`index.js`, `StyledWrapper.js`). Port:
 Shows an HTTP verb coloured by the theme's `request.methods` table. The method
 is normalised to lowercase for the colour lookup and uppercased for display;
 a missing method falls back to `colors.text.muted` and displays `GET`
-(`index.js:4-6`).
+(`ui/MethodBadge/index.js:4-6`).
 
 | Input | Colour (light / dark) |
 | --- | --- |
@@ -33,7 +33,7 @@ a missing method falls back to `colors.text.muted` and displays `GET`
 | `md` (default) | inline-block, `font.size.xs` (11 px), weight 600, uppercase, fixed width **52 px**, left-aligned, no background |
 | `sm` | 9 px monospace, weight 600, `padding .05rem .25rem`, radius 3 px, uppercase — a small tinted pill |
 
-(`StyledWrapper.js:12-33`.)
+(`ui/MethodBadge/StyledWrapper.js:12-33`.)
 
 ## Notes
 

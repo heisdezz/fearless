@@ -34,9 +34,9 @@ source-derived.
 | 2. Environment settings tab | `Environments/EnvironmentSettings` | Tab type `environment-settings` (uid `` `${collectionUid}-environment-settings` ``) | edits env names, colours, variables, secrets, `.env` files |
 | 3. Variables viewer tab     | `VariablesEditor`                  | Tab type `variables` (read-only view of currently resolved runtime + env variables) | read-only                                                  |
 
-Sources: `EnvironmentSelector/index.js:271-353`; `EnvironmentSettings/index.js:8-54`;
+Sources: `components/Environments/EnvironmentSelector/index.js:271-353`; `components/Environments/EnvironmentSettings/index.js:8-54`;
 `VariablesEditor/index.js:198-281`; tab types from
-`EnvironmentSelector/index.js:231-241,261-269` and
+`components/Environments/EnvironmentSelector/index.js:231-241,261-269` and
 `CollectionSettings/Overview/Info/index.js:107-130`.
 
 ---
@@ -69,7 +69,7 @@ Badge background = env colour at **12 % alpha**: `transparentize(1 - 0.12, color
 only one env) (`:54-58`). Icon and text inherit the env colour when set
 (`:85-99`).
 
-Trigger chrome (`EnvironmentSelector/StyledWrapper.js:4-54`):
+Trigger chrome (`components/Environments/EnvironmentSelector/StyledWrapper.js:4-54`):
 
 | Property       | Value                                                                                                                                    |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
@@ -98,12 +98,12 @@ Name truncation: `max-w-24` + tooltip after 1 s when the name is ≥ 7 chars
 `Dropdown` (tippy) `placement="bottom-end"`, `popperOptions={{ strategy:'fixed' }}`,
 trigger `click` (`components/Dropdown/index.js:36-38,57`).
 
-Panel (`EnvironmentSelector/StyledWrapper.js:57-225`):
+Panel (`components/Environments/EnvironmentSelector/StyledWrapper.js:57-225`):
 
 | Property    | Value                                                                            | Source                                |
 | ----------- | -------------------------------------------------------------------------------- | ------------------------------------- |
-| Width       | `max(longest env name length × 8px, 12rem)` — JS-computed `width` prop           | `:70-77,58`, `StyledWrapper.js:57-60` |
-| Min / max   | `min-width: 12rem`, `max-width: 650px !important`                                | `StyledWrapper.js:59-60`              |
+| Width       | `max(longest env name length × 8px, 12rem)` — JS-computed `width` prop           | `:70-77,58`, `components/EnvironmentVariablesTable/StyledWrapper.js:57-60` |
+| Min / max   | `min-width: 12rem`, `max-width: 650px !important`                                | `components/EnvironmentVariablesTable/StyledWrapper.js:59-60`              |
 | Height      | `min-height: 15.5rem`, `max-height: 75vh`                                        | `:61-62`                              |
 | Font        | `font.size.base`                                                                 | `:63`                                 |
 | List scroll | `max-height: calc(75vh - 8rem)`, `padding-bottom: 2.625rem` (room for Configure) | `:124-129`                            |
@@ -123,16 +123,16 @@ Tab headers (`:282-301`): two buttons, `font.size.sm`, idle
 
 | Element            | Verbatim / detail                                                                                                                                   | Source                               |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| Search             | `SearchInput` placeholder **`Search environments...`**, height 30 px, `text-xs`, icon 13 px, sticky at top (`padding: 0 4px 6px`, bg `dropdown.bg`) | `:69-83`, `StyledWrapper.js:131-140` |
+| Search             | `SearchInput` placeholder **`Search environments...`**, height 30 px, `text-xs`, icon 13 px, sticky at top (`padding: 0 4px 6px`, bg `dropdown.bg`) | `:69-83`, `components/EnvironmentVariablesTable/StyledWrapper.js:131-140` |
 | No Environment row | leading spacer `w-2` (aligned with the 8 px colour dot) then `No Environment`; active when no env selected                                          | `:84-91`                             |
 | Env row            | `ColorBadge size={8}` + name (`truncate`); active row `.dropdown-item-active`; tooltip (right, 1 s, `max-width:200px`) when name ≥ 90 chars         | `:108-121`                           |
 | No results         | italic `No results found`, centred, `text-xs opacity-50`                                                                                            | `:103-106`                           |
-| Configure footer   | pinned bottom bar, top border `dropdown.separator`, button `IconSettings` 16 px + `Configure`                                                       | `:125-130`, `StyledWrapper.js:68-90` |
+| Configure footer   | pinned bottom bar, top border `dropdown.separator`, button `IconSettings` 16 px + `Configure`                                                       | `:125-130`, `components/EnvironmentVariablesTable/StyledWrapper.js:68-90` |
 
 `dropdown-item` chrome comes from `components/Dropdown/StyledWrapper.js:56-71`
 (`gap .5rem`, `padding .275rem .625rem`, radius 6px, `font.size.sm`).
 
-Selection toasts (`EnvironmentSelector/index.js:221-228`):
+Selection toasts (`components/Environments/EnvironmentSelector/index.js:221-228`):
 `Environment changed to {name}` / `No Environments are active now` /
 `An error occurred while selecting the environment`.
 
@@ -140,15 +140,15 @@ Selection toasts (`EnvironmentSelector/index.js:221-228`):
 
 | Element                   | Verbatim                                                                                                                                                                 | Source                                 |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
-| Title (`h3`, 16 px / 500) | `Ready to get started?`                                                                                                                                                  | `:135`, `StyledWrapper.js:158-164`     |
+| Title (`h3`, 16 px / 500) | `Ready to get started?`                                                                                                                                                  | `:135`, `components/EnvironmentVariablesTable/StyledWrapper.js:158-164`     |
 | Body                      | collection: `Create your first environment to begin working with your collection.` · global: `Create your first global environment to begin working across collections.` | `:23-26,136`                           |
-| Buttons                   | `Create` (`IconPlus` 16 px) and `Import` (`IconDownload` 16 px); full width, `1px solid text`, transparent, `padding .5rem 1rem`, radius .375rem                         | `:137-146`, `StyledWrapper.js:182-204` |
+| Buttons                   | `Create` (`IconPlus` 16 px) and `Import` (`IconDownload` 16 px); full width, `1px solid text`, transparent, `padding .5rem 1rem`, radius .375rem                         | `:137-146`, `components/EnvironmentVariablesTable/StyledWrapper.js:182-204` |
 
-Empty-state container `max-width:20rem`, `min-height:12.5rem` (`StyledWrapper.js:147-157`).
+Empty-state container `max-width:20rem`, `min-height:12.5rem` (`components/EnvironmentVariablesTable/StyledWrapper.js:147-157`).
 
 Keyboard: typing any printable character focuses the search input; `Escape`
 clears the query then blurs (`:20-54`). Query resets when the dropdown closes
-(`EnvironmentSelector/index.js:276`).
+(`components/Environments/EnvironmentSelector/index.js:276`).
 
 Create / Import from the dropdown open modals and then **open the settings tab**
 (`:321-351`).
@@ -195,7 +195,7 @@ Container: `height/width 100%`, two columns (`EnvironmentList/StyledWrapper.js:6
 
 Two `CollapsibleSection`s (`components/Environments/CollapsibleSection`):
 chevron `IconChevronRight` 14 px (rotates when expanded), title, optional count
-badge, action buttons on the right (`CollapsibleSection/index.js:19-41`).
+badge, action buttons on the right (`components/Environments/CollapsibleSection/index.js:19-41`).
 
 #### Section 1 — `Environments` (`expanded` by default)
 
@@ -228,7 +228,7 @@ Row interactions:
 - **double click** → inline rename (`:201-209`).
 - **right click** → context menu (`:800`).
 - **multi-select + Ctrl/Cmd+A** → select all; **Delete/Backspace** → delete
-  (`useEnvironmentShortcuts`, `Common/EnvironmentSelection/useEnvironmentShortcuts/index.js:37-47`);
+  (`useEnvironmentShortcuts`, `components/Environments/Common/EnvironmentSelection/useEnvironmentShortcuts/index.js:37-47`);
   `Escape` clears selection (`:28`).
 
 Inline rename (`:803-836`): input `.environment-name-input` + save (`title="Save"`,
@@ -282,7 +282,7 @@ Name validation (`validateEnvironmentName`, `:222-240` and
 | Title         | env name, `data-testid="env-details-title"`                                                                                                                                                    | `:243`                                                          |
 | Colour        | `ColorPicker` (`title="Change color"`); presets `#CE4F3B`, `#2E8A54`, `#346AB2`, `#C77A0F`, `#B83D7F`, `#8D44B2`; also `No color` and `Custom color` (range `#D85D43 → #F4BB91 → … → #B491E5`) | `components/ColorPicker/index.js:9-18,108-159`                  |
 | Rename        | `ActionIcon label="Rename"` → replaces title with `.title-input` (`font-size:15px`, weight 500, padding `4px 8px`, radius 5px, bg `sidebar.collection.item.hoverBg`) plus save/cancel          | `:208-240,257-258`; `EnvironmentDetails/StyledWrapper.js:22-50` |
-| Inherits from | `InheritsFrom` — menu `Inherit variables from`, items `No Environment` + inheritable envs; active label `Inherits from: {name}`; `ActionIcon label="Inherit variables from"`                   | `:250-255`; `Common/InheritsFrom/index.js:23-62`                |
+| Inherits from | `InheritsFrom` — menu `Inherit variables from`, items `No Environment` + inheritable envs; active label `Inherits from: {name}`; `ActionIcon label="Inherit variables from"`                   | `:250-255`; `components/Environments/Common/InheritsFrom/index.js:23-62`                |
 | Save All      | `ActionIcon label="Save All"` (`IconDeviceFloppy` 15 px) — dispatches `environment-save-all`                                                                                                   | `:256-258,191-193`                                              |
 | Copy          | `ActionIcon label="Copy"` → `CopyEnvironment` modal                                                                                                                                            | `:262-264`                                                      |
 | Delete        | `ActionIcon label="Delete"` (`IconTrash` 15 px, hover danger) → delete modal                                                                                                                   | `:265-267`                                                      |
@@ -290,7 +290,7 @@ Name validation (`validateEnvironmentName`, `:222-240` and
 Inheritance toasts (`:176-189`): `Inheriting variables from {name}` /
 `Stopped inheriting variables` / `An error occurred while saving the inherited environment`.
 
-Inheritance warnings (`Common/EnvironmentInheritanceWarning/index.js:8-38`),
+Inheritance warnings (`components/Environments/Common/EnvironmentInheritanceWarning/index.js:8-38`),
 rendered directly under the header (`EnvironmentDetails/index.js:271`):
 
 | Case           | Verbatim                                          |
@@ -347,22 +347,22 @@ Used by the environment settings tab (collection scope).
 | Table font            | `12px`; cell padding `2px 10px`                                                                                      | `:27-36`                                           |
 | Checkbox column       | `25px`                                                                                                               | `:3,37-40`                                         |
 | Actions column        | `40px`                                                                                                               | `:4,42-44`                                         |
-| Default column widths | `[20, 45, 35]` percent                                                                                               | `index.js:127-128`                                 |
+| Default column widths | `[20, 45, 35]` percent                                                                                               | `components/EnvironmentVariablesTable/index.js:127-128`                                 |
 | Min column width      | `80`                                                                                                                 | `:47`                                              |
 | Row height            | `35` (`MIN_ROW_HEIGHT`)                                                                                              | `:48`                                              |
 | Min table height      | `70` (`MIN_H = 35*2`)                                                                                                | `:46`                                              |
-| Header                | bg `sidebar.bg`, colour `table.thead.color`, `font.size.base`, `padding 5px 10px`, `1px border0` grid lines          | `StyledWrapper.js:47-82`                           |
+| Header                | bg `sidebar.bg`, colour `table.thead.color`, `font.size.base`, `padding 5px 10px`, `1px border0` grid lines          | `components/EnvironmentVariablesTable/StyledWrapper.js:47-82`                           |
 | Resize handle         | 3 px, `col-resize`, visible bg `colors.accent` on hover/drag                                                         | `:67-80`                                           |
 | Checkbox              | 14×14, `accent-color: colors.accent`                                                                                 | `:160-167`                                         |
-| Drag handle           | hidden until row hover; `IconGripVertical` 14 px / `IconMinusVertical` 14 px swap on hover; opacity transition `.1s` | `:214-234`, `index.js:1072-1081`                   |
+| Drag handle           | hidden until row hover; `IconGripVertical` 14 px / `IconMinusVertical` 14 px swap on hover; opacity transition `.1s` | `:214-234`, `components/EnvironmentVariablesTable/index.js:1072-1081`                   |
 | Dragging source       | `opacity: .4`                                                                                                        | `:232-234`                                         |
-| No-results            | `No results found for “{query}”` (curly quotes) centred, `padding 24px`, `font.size.sm`                              | `index.js:978-981`, `StyledWrapper.js:138-143`     |
+| No-results            | `No results found for “{query}”` (curly quotes) centred, `padding 24px`, `font.size.sm`                              | `components/EnvironmentVariablesTable/index.js:978-981`, `components/EnvironmentVariablesTable/StyledWrapper.js:138-143`     |
 
-### 4.2 Columns — `index.js:993-1022`
+### 4.2 Columns — `components/EnvironmentVariablesTable/index.js:993-1022`
 
 | #   | Column        | Content                                                                                                                       | Notes | Source                 |
 | --- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------- |
-| 1   | _(checkbox)_  | enabled checkbox (hidden for the trailing blank row)                                                                          |       | `index.js:1071-1091`   |
+| 1   | _(checkbox)_  | enabled checkbox (hidden for the trailing blank row)                                                                          |       | `components/EnvironmentVariablesTable/index.js:1071-1091`   |
 | 2   | `Name`        | text input, placeholder `Name`; sortable header (cycles Default → A-Z → Z-A); error icon `IconAlertCircle` 20 px with tooltip |       | `:993-1009,1093-1121`  |
 | 3   | `Value`       | `EnvVarValueCell` (below)                                                                                                     |       | `:1010-1018,1122-1137` |
 | 4   | `Description` | `MultiLineEditor`, placeholder `Description` (blank row only)                                                                 |       | `:1019,1138-1163`      |
@@ -371,7 +371,7 @@ Used by the environment settings tab (collection scope).
 Sort tooltips: `Default order`, `Sorted A-Z`, `Sorted Z-A`
 (`hooks/useSortCycle/index.js:17-21`).
 
-Validation messages (`index.js:425-473`): `Name cannot be empty`;
+Validation messages (`components/EnvironmentVariablesTable/index.js:425-473`): `Name cannot be empty`;
 invalid characters → `Variable contains invalid characters. Must only contain alphanumeric characters, "-", "_", "."`
 (`utils/common/variables.js:31-32`); duplicate secret → `Secret names must be unique`
 (`utils/environments.js:147`).
@@ -380,22 +380,22 @@ invalid characters → `Variable contains invalid characters. Must only contain 
 
 | Behaviour        | Detail                                                                                                                                                                         | Source                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| Mask             | Rows with `secret: true` render the `MultiLineEditor` with `isSecret` and `hideSecretEye`; text is masked by CodeMirror                                                        | `index.js:178-210`                                                       |
-| Reveal control   | `SecretEyeButton` (`IconEyeOff` while masked, `IconEye` while revealed; 18 px, stroke 2) in `trailingContent`, `data-testid="secret-reveal-toggle"`                            | `index.js:163-171`; `components/MultiLineEditor/SecretEyeButton.js:4-12` |
-| State            | `masked` mirrors `showAsSecret = secret && !isLastEmptyRow`; toggling calls the editor's `toggleVisibleSecret()` and the editor reports back via `onMaskChange`                | `index.js:155-160,166-170,187`                                           |
-| Inherited secret | Masked with the same character repeated (`*` per non-newline char) in `InheritedVariableRow`; its own eye toggles local state (`data-testid="inherited-secret-reveal-toggle"`) | `InheritedVariableRow/index.js:8-9,12-15,39-45`                          |
+| Mask             | Rows with `secret: true` render the `MultiLineEditor` with `isSecret` and `hideSecretEye`; text is masked by CodeMirror                                                        | `components/EnvironmentVariablesTable/index.js:178-210`                                                       |
+| Reveal control   | `SecretEyeButton` (`IconEyeOff` while masked, `IconEye` while revealed; 18 px, stroke 2) in `trailingContent`, `data-testid="secret-reveal-toggle"`                            | `components/EnvironmentVariablesTable/index.js:163-171`; `components/MultiLineEditor/SecretEyeButton.js:4-12` |
+| State            | `masked` mirrors `showAsSecret = secret && !isLastEmptyRow`; toggling calls the editor's `toggleVisibleSecret()` and the editor reports back via `onMaskChange`                | `components/EnvironmentVariablesTable/index.js:155-160,166-170,187`                                           |
+| Inherited secret | Masked with the same character repeated (`*` per non-newline char) in `InheritedVariableRow`; its own eye toggles local state (`data-testid="inherited-secret-reveal-toggle"`) | `components/EnvironmentVariablesTable/InheritedVariableRow/index.js:8-9,12-15,39-45`                          |
 
 `VarValueCell` (compact behaviour) — `components/VarValueCell/index.js`:
 
 | Rule              | Value                                                                                                                                                                | Source                             |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | Compact threshold | container width `< 150px`                                                                                                                                            | `:4,18-23`                         |
-| Compact           | type selector overlays the cell, `opacity 0` → `1` on hover (`transition .15s`), bg `bg`, `padding 0 4px`, radius 4px; always visible when a type warning is present | `:27-34`; `StyledWrapper.js:13-42` |
+| Compact           | type selector overlays the cell, `opacity 0` → `1` on hover (`transition .15s`), bg `bg`, `padding 0 4px`, radius 4px; always visible when a type warning is present | `:27-34`; `components/EnvironmentVariablesTable/StyledWrapper.js:13-42` |
 | Non-compact       | type selector rendered inline with `gap .5rem`                                                                                                                       | `:37-65`                           |
 
 ### 4.4 Section rows (inherited vs own)
 
-Shown only when the environment inherits from another (`index.js:953-970`).
+Shown only when the environment inherits from another (`components/EnvironmentVariablesTable/index.js:953-970`).
 
 | Order | Section label         | Count     | Behaviour               | Source                                                          |
 | ----- | --------------------- | --------- | ----------------------- | --------------------------------------------------------------- | -------------------- |
@@ -403,20 +403,20 @@ Shown only when the environment inherits from another (`index.js:953-970`).
 | 2     | `{Variables           | Secrets}` | own named rows          | collapsible                                                     | `:962-969`           |
 
 Section toggle: `font.size.base`, weight 600, `padding 8px 10px`, gap 6 px,
-count in `colors.text.muted` (`StyledWrapper.js:109-123`).
+count in `colors.text.muted` (`components/EnvironmentVariablesTable/StyledWrapper.js:109-123`).
 
-Inherited rows (`InheritedVariableRow/index.js:24-62`): checkbox **checked &
+Inherited rows (`components/EnvironmentVariablesTable/InheritedVariableRow/index.js:24-62`): checkbox **checked &
 disabled**, name, value (`valueToString(value, 2)`, masked if secret), inline
 data type badge (`variable.dataType || 'string'`), description, and a source
 button (`title="Inherited from {name}"`, `IconArrowUpRight` 16 px,
 `data-testid="inherited-source"`) that **switches the detail pane to the parent
-environment** (`:17-22`). Rows are `colors.text.muted` (`StyledWrapper.js:125-127`).
+environment** (`:17-22`). Rows are `colors.text.muted` (`components/EnvironmentVariablesTable/StyledWrapper.js:125-127`).
 
 ### 4.5 Drag-to-reorder
 
 | Rule               | Detail                                                       | Source         |
 | ------------------ | ------------------------------------------------------------ | -------------- |
-| Enabled            | only when sort mode is `default` **and** no search is active | `index.js:333` |
+| Enabled            | only when sort mode is `default` **and** no search is active | `components/EnvironmentVariablesTable/index.js:333` |
 | Handle             | appears on row hover in the checkbox column, `cursor: grab`  | `:1072-1081`   |
 | Reorder            | within the active tab's subset only (`reorderWithinSubset`)  | `:499-505`     |
 | Trailing blank row | cannot be dragged                                            | `:94,1072`     |
@@ -425,17 +425,17 @@ environment** (`:17-22`). Rows are `colors.text.muted` (`StyledWrapper.js:125-12
 
 | Button  | Style                                                                                              | Behaviour                                                                         | Source                                                       |
 | ------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `Save`  | `.submit`: `padding 6px 16px`, `font.size.sm`, radius 6px, bg `brand`, text `bg`; hover opacity .9 | saves only the active tab's rows; if nothing changed → toast `No changes to save` | `index.js:1181-1183`, `:675-693`; `StyledWrapper.js:190-203` |
-| `Reset` | `.reset`: transparent, text `brand`                                                                | `handleReset`                                                                     | `:1184-1186`; `StyledWrapper.js:205-212`                     |
+| `Save`  | `.submit`: `padding 6px 16px`, `font.size.sm`, radius 6px, bg `brand`, text `bg`; hover opacity .9 | saves only the active tab's rows; if nothing changed → toast `No changes to save` | `components/EnvironmentVariablesTable/index.js:1181-1183`, `:675-693`; `components/EnvironmentVariablesTable/StyledWrapper.js:190-203` |
+| `Reset` | `.reset`: transparent, text `brand`                                                                | `handleReset`                                                                     | `:1184-1186`; `components/EnvironmentVariablesTable/StyledWrapper.js:205-212`                     |
 
-Footer bar: `padding 12px 2px`, bg `bg`, gap 8 px (`StyledWrapper.js:182-188`).
+Footer bar: `padding 12px 2px`, bg `bg`, gap 8 px (`components/EnvironmentVariablesTable/StyledWrapper.js:182-188`).
 
 Draft / autosave: edits are staged to `environmentsDraft` 300 ms after the last
-change (`index.js:572-592`); closing with unsaved changes shows the
+change (`components/EnvironmentVariablesTable/index.js:572-592`); closing with unsaved changes shows the
 unsaved-changes modal (§6.4).
 
 Save shortcut: `Cmd/Ctrl+S` dispatches `environment-save`; `Cmd/Ctrl+Shift+S`
-dispatches `environment-save-all` (`index.js:883-898`).
+dispatches `environment-save-all` (`components/EnvironmentVariablesTable/index.js:883-898`).
 
 ---
 
@@ -457,22 +457,22 @@ dispatches `environment-save-all` (`index.js:883-898`).
 | ------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
 | Scroll area         | `padding: 0 1rem 1rem`                                                                                             | `VariablesEditor/StyledWrapper.js:17-23`                   |
 | Section header      | sticky, height **38px** (`SECTION_HEADER_HEIGHT`), gap 8 px, `padding 0 8px`, bg `bg`, hover `background.surface0` | `constants.js:7`; `VariablesSection/StyledWrapper.js:5-26` |
-| Chevron             | `IconChevronRight` 14 px, rotates 90° when expanded, `transition transform .2s ease`, `colors.text.muted`          | `VariablesSection/index.js:15`; `StyledWrapper.js:28-36`   |
-| Section icon        | 16 px, `primary.text`                                                                                              | `StyledWrapper.js:38-41`                                   |
+| Chevron             | `IconChevronRight` 14 px, rotates 90° when expanded, `transition transform .2s ease`, `colors.text.muted`          | `VariablesSection/index.js:15`; `components/EnvironmentVariablesTable/StyledWrapper.js:28-36`   |
+| Section icon        | 16 px, `primary.text`                                                                                              | `components/EnvironmentVariablesTable/StyledWrapper.js:38-41`                                   |
 | Title               | weight 600                                                                                                         | `:43-45`                                                   |
 | Count               | `colors.text.muted`, tabular numerals                                                                              | `:47-50`                                                   |
 | Subtitle (env name) | pushed right (`margin-left:auto`), `font.size.sm`, muted                                                           | `:52-56`                                                   |
 | Drawer              | width persisted, default **400px**, min **280px**, max `min(container, 60%)`                                       | `constants.js:9-13`                                        |
-| Drawer handle       | 6 px hit area at `left:-3px`, 1 px line `sidebar.dragbar.border`, hover `activeBorder`                             | `StyledWrapper.js:36-58`                                   |
+| Drawer handle       | 6 px hit area at `left:-3px`, 1 px line `sidebar.dragbar.border`, hover `activeBorder`                             | `components/EnvironmentVariablesTable/StyledWrapper.js:36-58`                                   |
 
 ### 5.2 Sections
 
 | #   | Icon           | Title                                                 | Count                    | Rows source                      | Empty text                                                                   | Source             |
 | --- | -------------- | ----------------------------------------------------- | ------------------------ | -------------------------------- | ---------------------------------------------------------------------------- | ------------------ |
-| 1   | `IconBolt`     | `Runtime Variables`                                   | `runtimeVariables` count | enabled/sorted name              | `No runtime variables found`                                                 | `index.js:202-226` |
-| 2   | `IconDatabase` | `Environment Variables` + active env name as subtitle | env vars count           | enabled env vars, sorted by name | `No environment selected` (no active env) / `No environment variables found` | `index.js:228-257` |
+| 1   | `IconBolt`     | `Runtime Variables`                                   | `runtimeVariables` count | enabled/sorted name              | `No runtime variables found`                                                 | `components/EnvironmentVariablesTable/index.js:202-226` |
+| 2   | `IconDatabase` | `Environment Variables` + active env name as subtitle | env vars count           | enabled env vars, sorted by name | `No environment selected` (no active env) / `No environment variables found` | `components/EnvironmentVariablesTable/index.js:228-257` |
 
-Empty/muted text: `.muted text-xs px-2 py-1` (`index.js:224,238,255`).
+Empty/muted text: `.muted text-xs px-2 py-1` (`components/EnvironmentVariablesTable/index.js:224,238,255`).
 
 ### 5.3 Table (`VariablesTable/index.js`)
 
@@ -494,12 +494,12 @@ Empty/muted text: `.muted text-xs px-2 py-1` (`index.js:224,238,255`).
 | Open object            | `IconArrowsDiagonal` 15 px, `title="Open in drawer"`, `aria-label="Open object in drawer"`                                                                                            | `:89-100`                                |
 | Reveal secret          | `IconEye`/`IconEyeOff` 15 px, `title` `Show value`/`Hide value`                                                                                                                       | `:101-114`                               |
 | Copy                   | `IconCopy` 15 px → `IconCheck` 15 px for 1200 ms (`COPY_FEEDBACK_MS`), `title="Copy value"`                                                                                           | `:115-125`; `constants.js:37`            |
-| Row actions visibility | `opacity 0`, pointer-events none; visible when `.is-pinned` (drawer open for that var) or `:focus-visible`; buttons `padding 2px`, radius 4px, `colors.text.muted`, `transition .12s` | `StyledWrapper.js:58-81`                 |
+| Row actions visibility | `opacity 0`, pointer-events none; visible when `.is-pinned` (drawer open for that var) or `:focus-visible`; buttons `padding 2px`, radius 4px, `colors.text.muted`, `transition .12s` | `components/EnvironmentVariablesTable/StyledWrapper.js:58-81`                 |
 
 Drawer (`VariableDetailsDrawer/index.js`): title = variable name + `(Runtime)` or
 `(Environment)` badge, close button `title="Close"` (`IconX` 16 px), JSON
 `CodeEditor` read-only (`:32-60`). Drawer opens only for object/array values and
-closes automatically when a secret is re-masked (`index.js:143-158`).
+closes automatically when a secret is re-masked (`components/EnvironmentVariablesTable/index.js:143-158`).
 
 ---
 
@@ -557,7 +557,7 @@ Toasts: `Failed to delete "{name}"` per failure, `{n} environment(s) deleted`
 
 | Step    | Copy                                                                                                                                                                                                                                                                                                                                                                                                               | Source                                                |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| Upload  | Title `Import environments` (collection) / `Import global environments`; dropzone `IconFileImport` 64 px; title `Import your environments`, on drag-over `Drop your environment files here`; subtitle `Drag & drop JSON files or click to browse. Supports both Bruno and Postman formats.`                                                                                                                        | `index.js:25`; `UploadStep/index.js:44,68-75`         |
+| Upload  | Title `Import environments` (collection) / `Import global environments`; dropzone `IconFileImport` 64 px; title `Import your environments`, on drag-over `Drop your environment files here`; subtitle `Drag & drop JSON files or click to browse. Supports both Bruno and Postman formats.`                                                                                                                        | `components/EnvironmentVariablesTable/index.js:25`; `UploadStep/index.js:44,68-75`         |
 | Review  | Custom header: title + `{n} found`; search placeholder `Filter by name`; groups `New` and `Already exists`; per-duplicate resolution `New` (`Import as a new environment`) / `Replace` (`Replace existing`); invalid group; warnings `{n} already exists with the same name`, `{n} could not be read and will be skipped`; no-match text `No environments match your filter`; footer `{selected}/{total} selected` | `ReviewStep/index.js:28-35,100-200`; `utils.js:22-25` |
 | Confirm | `Import ({n})` or `Import`; `Cancel`                                                                                                                                                                                                                                                                                                                                                                               | `ReviewStep/index.js:95-98`                           |
 
@@ -583,10 +583,10 @@ body `Are you sure you want to delete {filename} file?` (`:15-24`).
 
 | Part           | Detail                                                                                                                                                                       | Source                                              |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| Details header | filename title; when the file exists: view toggle `Table` / `Raw` (`role="group"` `aria-label="View mode"`) and delete button `title="Delete .env file"` (`IconTrash` 15 px) | `DotEnvFileDetails/index.js:28-57`                  |
-| Empty state    | `IconFileOff` 48 px + `No .env File` + `Add a variable below to create a .env file in this location.`                                                                        | `DotEnvFileEditor/DotEnvEmptyState.js:4-13`         |
-| Table view     | columns with placeholders `Name` / `Value`; `Save` (idle) / `Saving...`                                                                                                      | `DotEnvFileEditor/DotEnvTableView.js:62,77,121-123` |
-| Raw view       | plain-text editor; `Save` / `Saving...`                                                                                                                                      | `DotEnvFileEditor/DotEnvRawView.js:31-33`           |
+| Details header | filename title; when the file exists: view toggle `Table` / `Raw` (`role="group"` `aria-label="View mode"`) and delete button `title="Delete .env file"` (`IconTrash` 15 px) | `components/Environments/DotEnvFileDetails/index.js:28-57`                  |
+| Empty state    | `IconFileOff` 48 px + `No .env File` + `Add a variable below to create a .env file in this location.`                                                                        | `components/Environments/DotEnvFileEditor/DotEnvEmptyState.js:4-13`         |
+| Table view     | columns with placeholders `Name` / `Value`; `Save` (idle) / `Saving...`                                                                                                      | `components/Environments/DotEnvFileEditor/DotEnvTableView.js:62,77,121-123` |
+| Raw view       | plain-text editor; `Save` / `Saving...`                                                                                                                                      | `components/Environments/DotEnvFileEditor/DotEnvRawView.js:31-33`           |
 
 ---
 
@@ -594,14 +594,14 @@ body `Are you sure you want to delete {filename} file?` (`:15-24`).
 
 `GlobalEnvironmentSettings/index.js` renders `WorkspaceEnvironments`
 (`:11`) — global environments belong to the **workspace**, not the collection.
-Selector `Global` tab lists them (`EnvironmentSelector/index.js:194-198,309`),
+Selector `Global` tab lists them (`components/Environments/EnvironmentSelector/index.js:194-198,309`),
 selection dispatches `selectGlobalEnvironment` (`:219`). Toolbar can therefore
 show a collection env, a global env, both, or neither (§2.2).
 
 Deep workspace-environment UI is out of scope here; only the collection-side
 integration is specified. Create/import from the `Global` tab use
 `WorkspaceHome/WorkspaceEnvironments/CreateEnvironment` and the same
-`ImportEnvironmentModal type="global"` (`EnvironmentSelector/index.js:321-334`).
+`ImportEnvironmentModal type="global"` (`components/Environments/EnvironmentSelector/index.js:321-334`).
 
 ---
 
@@ -609,7 +609,7 @@ integration is specified. Create/import from the `Global` tab use
 
 | Location               | Component                                                                 | Size       | Source                                                           |
 | ---------------------- | ------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------- |
-| Selector trigger       | icon + text tinted by env colour; badge bg = colour @ 12 %                | 14 px icon | `EnvironmentSelector/index.js:31-38,82-103`                      |
+| Selector trigger       | icon + text tinted by env colour; badge bg = colour @ 12 %                | 14 px icon | `components/Environments/EnvironmentSelector/index.js:31-38,82-103`                      |
 | Dropdown rows          | `ColorBadge size={8}`                                                     | 8 px       | `EnvironmentListContent/index.js:118`                            |
 | Settings list rows     | `ColorBadge size={8}`                                                     | 8 px       | `EnvironmentList/index.js:839`                                   |
 | Settings detail header | `ColorPicker` (`ColorBadge size={8}` as its icon; `title="Change color"`) | 8 px       | `EnvironmentDetails/index.js:244`; `ColorPicker/index.js:75-109` |
@@ -625,7 +625,7 @@ integration is specified. Create/import from the `Global` tab use
 | -------------------- | -------------------------------------- | ------------------------------------ | -------------------------------------------------------------------- |
 | Selector dropdown    | any printable key                      | focus search                         | `EnvironmentListContent/index.js:30-54`                              |
 | Selector dropdown    | `Escape`                               | clear search, else blur              | `:20-28`                                                             |
-| Env list (settings)  | `Ctrl/Cmd+A`                           | select all (closes row menu)         | `Common/EnvironmentSelection/useEnvironmentShortcuts/index.js:37,43` |
+| Env list (settings)  | `Ctrl/Cmd+A`                           | select all (closes row menu)         | `components/Environments/Common/EnvironmentSelection/useEnvironmentShortcuts/index.js:37,43` |
 | Env list             | `Delete` (win) / `Cmd+Backspace` (mac) | delete target env(s)                 | `:38-47`; hint text in context menu                                  |
 | Env list             | `Escape`                               | clear selection                      | `:28`                                                                |
 | Variables grid       | `Cmd/Ctrl+S`                           | `environment-save` → save active tab | `EnvironmentVariablesTable/index.js:883-898`                         |
@@ -640,13 +640,13 @@ integration is specified. Create/import from the `Global` tab use
 
 | String                                                                                      | Where                     | Source                                                                   |
 | ------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------ |
-| `No Environment`                                                                            | trigger + dropdown row    | `EnvironmentSelector/index.js:119`; `EnvironmentListContent/index.js:90` |
+| `No Environment`                                                                            | trigger + dropdown row    | `components/Environments/EnvironmentSelector/index.js:119`; `EnvironmentListContent/index.js:90` |
 | `Search environments...`                                                                    | both search inputs        | `EnvironmentListContent/index.js:72`; `EnvironmentList/index.js:759`     |
 | `No results found`                                                                          | selector dropdown filter  | `EnvironmentListContent/index.js:105`                                    |
 | `Configure`                                                                                 | selector footer           | `:128`                                                                   |
 | `Ready to get started?`                                                                     | selector empty state      | `:135`                                                                   |
 | `Create` / `Import`                                                                         | selector empty state      | `:140,144`                                                               |
-| `Collection` / `Global`                                                                     | selector tabs             | `EnvironmentSelector/index.js:19-20`                                     |
+| `Collection` / `Global`                                                                     | selector tabs             | `components/Environments/EnvironmentSelector/index.js:19-20`                                     |
 | `Environments` / `.env Files`                                                               | sidebar sections          | `EnvironmentList/index.js:707,946`                                       |
 | `No environments` / `No .env files`                                                         | sidebar empties           | `:916,1016`                                                              |
 | `Environment name...`                                                                       | inline create placeholder | `:884`                                                                   |
@@ -654,15 +654,15 @@ integration is specified. Create/import from the `Global` tab use
 | `Name is required` / `Environment already exists`                                           | validation                | `:224,236`                                                               |
 | `Variables` / `Secrets`                                                                     | detail tabs               | `hooks/useEnvironmentTabs/index.js:38-39`                                |
 | `Search variables...` / `Search secrets...`                                                 | detail search             | `EnvironmentDetails/index.js:286`                                        |
-| `Inherit variables from` / `Inherits from: {name}` / `No Environment`                       | inheritance control       | `Common/InheritsFrom/index.js:23,27,57`                                  |
+| `Inherit variables from` / `Inherits from: {name}` / `No Environment`                       | inheritance control       | `components/Environments/Common/InheritsFrom/index.js:23,27,57`                                  |
 | `No changes to save`                                                                        | toast                     | `EnvironmentVariablesTable/index.js:691`                                 |
 | `No results found for “{q}”`                                                                | grid filter empty         | `:980`                                                                   |
 | `Name` / `Value` / `Description`                                                            | grid placeholders         | `:1107,184,1144`                                                         |
 | `Runtime Variables` / `Environment Variables`                                               | viewer sections           | `VariablesEditor/index.js:204,230`                                       |
 | `No runtime variables found` / `No environment variables found` / `No environment selected` | viewer empties            | `:224,255,238`                                                           |
 | `Show value` / `Hide value` / `Copy value` / `Open in drawer`                               | viewer row actions        | `VariableValue/index.js:94,106-107,119`                                  |
-| `No .env File` / `Add a variable below to create a .env file in this location.`             | `.env` empty              | `DotEnvFileEditor/DotEnvEmptyState.js:8-11`                              |
-| `Hold on...` / `You have unsaved changes in {scope}.`                                       | unsaved modal             | `ConfirmCloseEnvironment/index.js:28,31`                                 |
+| `No .env File` / `Add a variable below to create a .env file in this location.`             | `.env` empty              | `components/Environments/DotEnvFileEditor/DotEnvEmptyState.js:8-11`                              |
+| `Hold on...` / `You have unsaved changes in {scope}.`                                       | unsaved modal             | `components/Environments/ConfirmCloseEnvironment/index.js:28,31`                                 |
 | `Import your environments` / `Drop your environment files here`                             | import dropzone           | `UploadStep/index.js:70,71`                                              |
 | `Drag & drop JSON files or click to browse. Supports both Bruno and Postman formats.`       | import subtitle           | `UploadStep/index.js:73-74`                                              |
 
@@ -701,7 +701,7 @@ No `i18n` lookups exist anywhere in these components — all copy is inline Engl
 2. **Secret masking differs per surface**: the editor masks via CodeMirror's
    secret mode (bullet glyph defined in `MultiLineEditor`), the viewer uses
    eight literal `*` (`VariableValue/index.js:37`), and inherited rows repeat
-   `*` per character (`InheritedVariableRow/index.js:8-9`). Pick one convention
+   `*` per character (`components/EnvironmentVariablesTable/InheritedVariableRow/index.js:8-9`). Pick one convention
    for the Go port and note it in the design system.
 3. **`Name cannot be empty` vs `Name is required`** — two validators
    (`EnvironmentVariablesTable/index.js:433` vs `EnvironmentList/index.js:224`).
@@ -712,7 +712,7 @@ No `i18n` lookups exist anywhere in these components — all copy is inline Engl
    (`#CE4F3B …`), not part of the theme token set. Decide whether the port
    tokenises it.
 6. **`EnvironmentSelector` dropdown width** is computed as `maxNameLength × 8px`
-   (`EnvironmentSelector/index.js:70-77`) — a heuristic that breaks with wide
+   (`components/Environments/EnvironmentSelector/index.js:70-77`) — a heuristic that breaks with wide
    glyphs; clamp in the port.
 7. **`refs/workspace_switcher_bruno.png` is not an environment screenshot.**
    The workspace switcher popover (`My Workspace`, `test ✓`, `Workspaces`,

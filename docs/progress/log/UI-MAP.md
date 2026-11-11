@@ -52,3 +52,21 @@ Owner history: zed-design (claimed 2026-11-11T16:30Z)
 - Notes: the remaining open items are decisions (badge vs text slot, hover
   tokens, operator labelling, secret-mask style) or capture-dependent (sidebar
   indent, screenshot drift), not further reading.
+
+### 2026-11-11T18:10Z — zed-design
+
+- Did: made the map self-verifying and fixed every broken citation it exposed.
+  - Added `ui-map/_tools/verify.py` (checks checklist targets, internal doc
+    links, citation file resolution and past-EOF) and
+    `ui-map/_tools/qualify.py` (rewrites bare `index.js`/`StyledWrapper.js`
+    citations to src-relative paths per file).
+  - Qualified ~1,200 abbreviated citations and corrected genuine wrong-file
+    citations found by the check (RequestBody caret, Preferences/ProxySettings
+    vs Keybindings, CollectionSettings vs ShareCollection/Migrate, sidebar row
+    styles, RequestTabLoading/NotFound, response-pane section, Sidebar create/
+    packages rows).
+  - Fixed 2 broken internal doc links.
+- Tests: `python3 ui-map/_tools/verify.py` -> 1,565 citations, 0 unresolved,
+  0 past EOF. `go build ./...` and `go test ./...` green.
+- Notes: the map now states it is COMPLETE for the pinned commit, with only
+  capture-dependent items open. Agents can run verify.py after edits.

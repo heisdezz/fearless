@@ -37,19 +37,19 @@ resolve (via `theme.NewConfig`), or nested widgets fall back to Lobe defaults.
 
 ## 2. Browser-only behaviour → native approach
 
-| Source behaviour | Go approach |
-| --- | --- |
+| Source behaviour                         | Go approach                                                                                                                                         |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CSS layout (flexbox/grid, gap, position) | MyGo layout: `Row`/`Column`/`Box`, `Gap`, `Grow`, `Fill`, explicit widths; no CSS. Re-implement measured sizes from each screen's dimension tables. |
-| `-webkit-app-region: drag` title bar | MyGo custom title bar with `DragWindow()`; honour per-OS window-control insets (macOS 70 px left, 0 in fullscreen). |
-| CodeMirror | Custom editor widget (see `widgets.md`): syntax highlight, gutter, variable spans. No CodeMirror in Go. |
-| `contenteditable` / TipTap rich text | Native rich-text editor or markdown-with-preview; must keep bold/italic/headings/lists/links/code. |
-| tippy.js popovers (dropdowns, tooltips) | MyGo popover/overlay layer (`Portal` equivalent) with viewport clamping. |
-| react-hot-toast | `feedback.ToastHost` (already in repo). |
-| HTML `<select>` / native scroll | Lobe `field.Select` and MyGo scroll containers; custom scrollbar (`scrollbar.color`, width ~6–8). |
-| Copy to clipboard, open external URL | Platform layer (`internal/platform`), not IPC. |
-| Drag-and-drop (rows, sidebar, files) | MyGo drag events; drop indicator using `dragAndDrop.border` `2px solid` + `hoverBg`. |
-| Responsive overflow (tab strip chevron) | MyGo measure/overflow; keep the reserved chevron width to keep layout stable. |
-| Resizable panes | `layout.RootView` splitters already exist; keep 12 px drag bars and min sizes from the screen files. |
+| `-webkit-app-region: drag` title bar     | MyGo custom title bar with `DragWindow()`; honour per-OS window-control insets (macOS 70 px left, 0 in fullscreen).                                 |
+| CodeMirror                               | Custom editor widget (see `widgets.md`): syntax highlight, gutter, variable spans. No CodeMirror in Go.                                             |
+| `contenteditable` / TipTap rich text     | Native rich-text editor or markdown-with-preview; must keep bold/italic/headings/lists/links/code.                                                  |
+| tippy.js popovers (dropdowns, tooltips)  | MyGo popover/overlay layer (`Portal` equivalent) with viewport clamping.                                                                            |
+| react-hot-toast                          | `feedback.ToastHost` (already in repo).                                                                                                             |
+| HTML `<select>` / native scroll          | Lobe `field.Select` and MyGo scroll containers; custom scrollbar (`scrollbar.color`, width ~6–8).                                                   |
+| Copy to clipboard, open external URL     | Platform layer (`internal/platform`), not IPC.                                                                                                      |
+| Drag-and-drop (rows, sidebar, files)     | MyGo drag events; drop indicator using `dragAndDrop.border` `2px solid` + `hoverBg`.                                                                |
+| Responsive overflow (tab strip chevron)  | MyGo measure/overflow; keep the reserved chevron width to keep layout stable.                                                                       |
+| Resizable panes                          | `layout.RootView` splitters already exist; keep 12 px drag bars and min sizes from the screen files.                                                |
 
 Two components exist only to keep panes alive across React re-renders
 (`AppPreviewKeepAlive`, `HeightBoundContainer`, `Portal`, `ErrorCapture`/
@@ -119,7 +119,7 @@ builder does not re-open them.
   `react-hot-toast`. Only `Toast/ImportIssuesToast` exists. See
   `components/misc-primitives.md` (Toast).
 - **ColorPicker geometry** — preset grid (`#CE4F3B #2E8A54 #346AB2 #C77A0F
-  #B83D7F #8D44B2`, 20x20 swatches, `No color` with `IconBan`), a six-stop
+#B83D7F #8D44B2`, 20x20 swatches, `No color` with `IconBan`), a six-stop
   discrete slider (`#D85D43 #F4BB74 #61DCB1 #7EBDF2 #D48ADE #B491E5`). See
   `components/misc-primitives.md`.
 - **RichTextEditor toolbar** — Bold, Italic, Strikethrough, Inline code, Bullet
@@ -169,10 +169,16 @@ builder does not re-open them.
 
 ## 6. Verification plan
 
-- Each screen file's dimension/state tables are checkable with a golden capture
-  at 1440×900 (and at 100 %/200 % DPI). Use the repo's existing capture harness
-  (`internal/ui/app/design_capture_test.go`, opt-in via `CAPTURE_DESIGN=1`) and the `UPDATE_GOLDEN` convention.
+- **Citations and links are machine-checked.** `python3 ui-map/_tools/verify.py`
+  (run from the repo root) asserts every checklist target and internal doc link
+  exists, every citation resolves to a real file, and no cited line is past
+  end-of-file. It exits non-zero on failure, so it can gate a change. Current
+  state: 1,565 citations, 0 unresolved, 0 past EOF.
 - Token claims are machine-verified: re-run
   `cd bruno && node ../ui-map/_tools/dump-theme.mjs` and diff `tokens.json`.
+- Each screen file's dimension/state tables are checkable with a golden capture
+  at 1440x900 (and at 100%/200% DPI). Use the repo's capture harness
+  (`internal/ui/app/design_capture_test.go`, opt-in via `CAPTURE_DESIGN=1`) and
+  the `UPDATE_GOLDEN` convention.
 - Copy claims cite source `file:line`; grep the string to confirm before
   building a label.

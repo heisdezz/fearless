@@ -48,7 +48,7 @@ port should either implement them or drop them from the API.
   `fade-out`, `fade-and-slide-in-from-top`, `fade-and-slide-out-from-top`,
   `rotateClockwise`, `rotateCounterClockwise` — `globalStyles.js:127-188`)
   and not in `src/styles/globals.css`. The class also carries Tailwind
-  `animate-spin` (`index.js:8`), whose own keyframes rotate `0 → 360deg`
+  `animate-spin` (`components/Spinner/index.js:8`), whose own keyframes rotate `0 → 360deg`
   over 1 s. Unverified which animation wins in the built bundle.
 
 For a Go port, define the ring rotation explicitly:
@@ -67,10 +67,10 @@ For a Go port, define the ring rotation explicitly:
 
 | Case                      | Value                                                                                                                         | Source                 |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| Only size                 | 32 × 32 px, 4 px ring                                                                                                         | `StyledWrapper.js:5-7` |
+| Only size                 | 32 × 32 px, 4 px ring                                                                                                         | `components/Spinner/StyledWrapper.js:5-7` |
 | Compact placement         | wrap in a container that sets `font-size` to shrink the ring, since thickness is `em`-based — used nowhere in source          | —                      |
 | Default                   | animating, `currentColor`                                                                                                     | —                      |
-| With label                | children rendered below the ring, inherits block layout                                                                       | `index.js:9`           |
+| With label                | children rendered below the ring, inherits block layout                                                                       | `components/Spinner/index.js:9`           |
 | Disabled / reduced motion | no source rule; `globalStyles.css` disables all animation only under `.measuring-overflow` (`src/styles/globals.css:189-194`) | —                      |
 
 There are no colour variants — tint via `color` on a parent.

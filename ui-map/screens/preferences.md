@@ -7,7 +7,7 @@ Status: VERIFIED against source. Points that could not be confirmed inside the
 repository are marked **UNVERIFIED** inline and repeated under §10 Open Questions.
 
 Scope: `components/Preferences/**` (42 files) plus the shared pieces it renders
-(`components/Preferences/SettingsLayout/*`, `components/ListGroup`,
+(`components/Preferences/SettingsLayout/*`, `ui/ListGroup`,
 `components/ToggleSwitch`, `components/Modal`) and the key-binding data in
 `providers/Hotkeys/keyMappings.js`.
 
@@ -52,7 +52,7 @@ Scope: `components/Preferences/**` (42 files) plus the shared pieces it renders
 | Tab item transition | `background-color 0.15s ease` | `components/Preferences/StyledWrapper.js:18` |
 | Tab item active | text `text` (`#343434` L / `#cccccc` D), background `tabs.secondary.active.bg` (`#eaeaea` L / `#26292b` D) | `components/Preferences/StyledWrapper.js:29-36` |
 | Tab icon | Tabler, `size={16}`, `strokeWidth={1.5}` | `components/Preferences/index.js:95` (all tabs identical) |
-| Panel | `flex-grow`, `padding: 12px`, `padding-bottom: 0`, `overflow-y:auto`, `max-height:100%` | `components/Preferences/index.js:135-140`, `StyledWrapper.js:40-47` |
+| Panel | `flex-grow`, `padding: 12px`, `padding-bottom: 0`, `overflow-y:auto`, `max-height:100%` | `components/Preferences/index.js:135-140`, `components/Preferences/StyledWrapper.js:40-47` |
 | Checkbox/radio accent | `workspace.accent` (`#b96f1d` L / `#d9a342` D) | `components/Preferences/StyledWrapper.js:49-52` |
 | `.textbox` (shared input) | `line-height:1.5`, `padding:0.45rem`, radius 4px, bg `input.bg`, border `1px solid input.border`, text `text`; focus `1px solid input.focusBorder`; disabled `opacity:.5`, `cursor:not-allowed` | `components/Preferences/StyledWrapper.js:55-72` |
 | `.section-header` | `font.size.sm` (12px), `colors.text.muted`, weight 500, `margin: 6px 0 8px`, uppercase, `letter-spacing: 0.5px` | `components/Preferences/StyledWrapper.js:73-80` |
@@ -60,29 +60,29 @@ Scope: `components/Preferences/**` (42 files) plus the shared pieces it renders
 
 ### 1.1 Shared settings primitives (`components/Preferences/SettingsLayout/`)
 
-`SettingsGroup({title, description, children})` — `SettingsLayout/SettingsGroup/index.js:4-12`
+`SettingsGroup({title, description, children})` — `components/Preferences/SettingsLayout/SettingsGroup/index.js:4-12`
 
 | Part | Style | Source |
 | --- | --- | --- |
-| Wrapper | column, `padding-top: 1rem`, `border-top: 1px solid border.border1` (`#e5e5e5` L / `#333` D); first group: no top padding, no border | `SettingsLayout/SettingsGroup/StyledWrapper.js:5-12` |
-| Title (`h3`) | `font.size.base` (13px), weight 600, `text` | `SettingsLayout/SettingsGroup/StyledWrapper.js:14-19` |
-| Description (`p`) | `font.size.xs` (11px), `colors.text.muted`, `margin: 0.25rem 0 0 0` | `SettingsLayout/SettingsGroup/StyledWrapper.js:21-25` |
-| Body | column, `gap: 0.5rem`, `margin-top: 0.75rem` | `SettingsLayout/SettingsGroup/StyledWrapper.js:27-36` |
+| Wrapper | column, `padding-top: 1rem`, `border-top: 1px solid border.border1` (`#e5e5e5` L / `#333` D); first group: no top padding, no border | `components/Preferences/SettingsLayout/SettingsGroup/StyledWrapper.js:5-12` |
+| Title (`h3`) | `font.size.base` (13px), weight 600, `text` | `components/Preferences/SettingsLayout/SettingsGroup/StyledWrapper.js:14-19` |
+| Description (`p`) | `font.size.xs` (11px), `colors.text.muted`, `margin: 0.25rem 0 0 0` | `components/Preferences/SettingsLayout/SettingsGroup/StyledWrapper.js:21-25` |
+| Body | column, `gap: 0.5rem`, `margin-top: 0.75rem` | `components/Preferences/SettingsLayout/SettingsGroup/StyledWrapper.js:27-36` |
 
 `CheckboxSetting({id, name, label, description, checked, onChange, disabled, children})` —
-`SettingsLayout/CheckboxSetting/index.js:5-45`
+`components/Preferences/SettingsLayout/CheckboxSetting/index.js:5-45`
 
 | Part | Style | Source |
 | --- | --- | --- |
-| Control row | flex, `gap: 0.5rem` | `SettingsLayout/CheckboxSetting/StyledWrapper.js:7-10` |
+| Control row | flex, `gap: 0.5rem` | `components/Preferences/SettingsLayout/CheckboxSetting/StyledWrapper.js:7-10` |
 | Input | native `type=checkbox`, class `mousetrap` | `CheckboxSetting/index.js:22-32` |
-| Label | `font.size.base`, `text`, `cursor:pointer` | `SettingsLayout/CheckboxSetting/StyledWrapper.js:18-23` |
-| Description | `font.size.xs`, `colors.text.muted`, `margin: 0.125rem 0 0 1.5rem` | `SettingsLayout/CheckboxSetting/StyledWrapper.js:25-29` |
-| Children slot | column, `gap:0.5rem`, `margin: 0.3rem 0 0 1.5rem` (indented under the checkbox) | `SettingsLayout/CheckboxSetting/StyledWrapper.js:31-36` |
-| Disabled | label `colors.text.muted`, `cursor:not-allowed`; checkbox `opacity:.5` | `SettingsLayout/CheckboxSetting/StyledWrapper.js:38-48` |
+| Label | `font.size.base`, `text`, `cursor:pointer` | `components/Preferences/SettingsLayout/CheckboxSetting/StyledWrapper.js:18-23` |
+| Description | `font.size.xs`, `colors.text.muted`, `margin: 0.125rem 0 0 1.5rem` | `components/Preferences/SettingsLayout/CheckboxSetting/StyledWrapper.js:25-29` |
+| Children slot | column, `gap:0.5rem`, `margin: 0.3rem 0 0 1.5rem` (indented under the checkbox) | `components/Preferences/SettingsLayout/CheckboxSetting/StyledWrapper.js:31-36` |
+| Disabled | label `colors.text.muted`, `cursor:not-allowed`; checkbox `opacity:.5` | `components/Preferences/SettingsLayout/CheckboxSetting/StyledWrapper.js:38-48` |
 
 `SettingsField({label, htmlFor, hint, error, disabled, children})` —
-`SettingsLayout/SettingsField/index.js:5-18`; label `font.size.base`/`text`
+`components/Preferences/SettingsLayout/SettingsField/index.js:5-18`; label `font.size.base`/`text`
 (`SettingsField/StyledWrapper.js:8-12`), hint `font.size.xs`/`colors.text.muted`
 (`:14-18`), control row flex `gap:.5rem` `margin-top:.375rem` (`:20-25`),
 error `font.size.xs` `colors.text.danger` `margin-top:.25rem` (`:27-31`),
@@ -138,30 +138,30 @@ Preferences is a **tab** (`type: 'preferences'`, uid `` `${collectionUid}-prefer
 `components/Preferences/General/index.js`; styles `General/StyledWrapper.js`.
 
 Heading: `.section-header` text **`General Settings`** (`:191`).
-Form: `max-width: 40rem`, column, `gap: 1rem` (`General/StyledWrapper.js:11-16`).
+Form: `max-width: 40rem`, column, `gap: 1rem` (`components/Preferences/General/StyledWrapper.js:11-16`).
 
 ### 4.1 Control table
 
 Defaults come from `initialValues` with lodash `get(default)` fallbacks
-(`General/index.js:66-86`). "Persistence" — General auto-saves on a 500 ms debounce
+(`components/Preferences/General/index.js:66-86`). "Persistence" — General auto-saves on a 500 ms debounce
 (`:133-152`) **and** on submit; there is no explicit Save button.
 
 | # | Group | Label (verbatim) | Control | Default | Notes / validation | Source |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Certificates | `SSL/TLS Certificate Verification` | checkbox | `preferences.request.sslVerification` (no fallback — **undefined if unset**) | id `sslVerification` | `:22,194-200` |
 | 2 | Certificates | `Use Custom CA Certificate` | checkbox | `false` (`request.customCaCertificate.enabled`) | When checked (and a file is chosen) unlocks row 4 | `:69,201-207` |
-| 3 | Certificates | `Select File` | button, `IconUpload` 14px + label | — | Hidden `<input type=file>` id `caCertFilePath`; when a path exists the row is replaced by a chip showing `basename(path)` + a trash `IconTrash` 14px button (`aria-label="Remove custom CA certificate"`); wrapper `opacity:.5` when disabled; button style `padding:0.25rem 0.5rem`, radius 4px, `1px solid input.border`, hover border `input.focusBorder` | `:208-246`, `General/StyledWrapper.js:18-70` |
+| 3 | Certificates | `Select File` | button, `IconUpload` 14px + label | — | Hidden `<input type=file>` id `caCertFilePath`; when a path exists the row is replaced by a chip showing `basename(path)` + a trash `IconTrash` 14px button (`aria-label="Remove custom CA certificate"`); wrapper `opacity:.5` when disabled; button style `padding:0.25rem 0.5rem`, radius 4px, `1px solid input.border`, hover border `input.focusBorder` | `:208-246`, `components/Preferences/General/StyledWrapper.js:18-70` |
 | 4 | Certificates | `Keep Default CA Certificates` | checkbox (nested under #2) | `true` (`request.keepDefaultCaCertificates.enabled`) | Disabled unless `customCaCertificate.enabled && filePath` | `:73,181,247-254` |
 | 5 | Cookies & Authorization | `Store Cookies automatically` | checkbox | `true` | | `:76,259-265` |
 | 6 | Cookies & Authorization | `Send Cookies automatically` | checkbox | `true` | | `:77,266-272` |
 | 7 | Cookies & Authorization | `Use System Browser for OAuth2 Authorization` | checkbox | `false` | | `:83,273-279` |
 | 8 | Auto Save | `Enable Auto Save` | checkbox | `false` (`autoSave.enabled`) | | `:79,282-289` |
-| 9 | Auto Save | `Auto Save Delay (ms)` | text input (numeric), class `textbox numeric-input` (`max-width: 14rem`) | `1000` (`autoSave.interval`) | Disabled when #8 off. Errors: `Save Delay must be a number`, `Save Delay must be at least 500ms`, `Save Delay is required when Auto Save is enabled` | `:80,290-310`, `:45-58`, `General/StyledWrapper.js:72-75` |
+| 9 | Auto Save | `Auto Save Delay (ms)` | text input (numeric), class `textbox numeric-input` (`max-width: 14rem`) | `1000` (`autoSave.interval`) | Disabled when #8 off. Errors: `Save Delay must be a number`, `Save Delay must be at least 500ms`, `Save Delay is required when Auto Save is enabled` | `:80,290-310`, `:45-58`, `components/Preferences/General/StyledWrapper.js:72-75` |
 | 10 | Requests | `Request Timeout (ms)` | text input (numeric) | `preferences.request.timeout` (no fallback) | Errors: `Request Timeout must be a number`, `Request Timeout must be greater than or equal to 0` | `:75,313-329`, `:32-42` |
-| 11 | Default Location | *(no per-field label)*; group title `Default Location`, group description `Used as the default location for new workspaces and collections` | read-only text input (`aria-label="Default Location"`, placeholder `Click to browse for default location`) + `Browse` text-link button | `general.defaultLocation` ?? `''` | Clicking the input **or** `Browse` opens the platform directory picker; `defaultLocation` max 1024. Browse button: `font.size.sm`, `textLink`, underline on hover | `:62,331-362`, `General/StyledWrapper.js:77-101` |
+| 11 | Default Location | *(no per-field label)*; group title `Default Location`, group description `Used as the default location for new workspaces and collections` | read-only text input (`aria-label="Default Location"`, placeholder `Click to browse for default location`) + `Browse` text-link button | `general.defaultLocation` ?? `''` | Clicking the input **or** `Browse` opens the platform directory picker; `defaultLocation` max 1024. Browse button: `font.size.sm`, `textLink`, underline on hover | `:62,331-362`, `components/Preferences/General/StyledWrapper.js:77-101` |
 
 Numeric field errors are gated on `touched` so they do not flash while typing
-(`General/index.js:184-187`).
+(`components/Preferences/General/index.js:184-187`).
 
 Non-verbatim strings (toast): `Failed to update preferences` (`:127`),
 `Failed to browse for a default location` (`:175`).
@@ -233,7 +233,7 @@ and three `rgba(brand, 0.5)` bars (widths 100 %, 60 %, 70 %); border
 
 Selected state = `.selected` class (`:31`); the stylesheet selector is not in the
 shared token table, so its exact chrome is **VERIFIED only as the class name**
-(`Themes/index.js:31`) — see `Themes/StyledWrapper.js` when building. **UNVERIFIED**
+(`components/Preferences/Themes/index.js:31`) — see `Themes/StyledWrapper.js` when building. **UNVERIFIED**
 exact selected-card outline: the doc does not quote a token for it.
 
 State: all three modes always clickable; selecting applies immediately
@@ -275,7 +275,7 @@ Select chrome: `height: 35.89px` (literal, **quoted exactly as in source**),
 `padding: 0 0.5rem`, radius 4px, border `1px solid input.border`, bg
 `input.background` (**this token does not exist — see Open Questions**),
 font-size `0.875rem`, `line-height:1.5`, transition `all 0.15s ease`
-(`Display/Zoom/StyledWrapper.js:17-36`). Caret `IconChevronDown` 14 px coloured
+(`components/Preferences/Display/Zoom/StyledWrapper.js:17-36`). Caret `IconChevronDown` 14 px coloured
 `input.border` (`:46-51`). Menu: width `80px`, `margin-top: .25rem`, radius 4px,
 shadow `0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06)`,
 `max-height:200px`, scrollbar hidden; option `padding:.5rem .75rem`, font 14 px,
@@ -310,7 +310,7 @@ it is documented only so nobody wonders what the dead file is.
 `components/Preferences/ProxySettings/index.js`; styles `ProxySettings/StyledWrapper.js`.
 Heading: `.section-header` **`Proxy Settings`** (`:136`).
 
-Label column: `.settings-label { width: 100px }` (`ProxySettings/StyledWrapper.js:9-11`).
+Label column: `.settings-label { width: 100px }` (`components/Preferences/ProxySettings/StyledWrapper.js:9-11`).
 Local `.textbox` override: radius **3px** (`:19`), `padding: 0.15rem 0.45rem` (`:15`).
 
 ### 7.1 Mode (radio group)
@@ -350,11 +350,11 @@ Field errors are rendered inline `ml-3 text-red-500` (`:279,299,336,365,386`).
 | --- | --- | --- |
 | Title (`h2.text-xs`) | `System Proxy` + spinner `IconLoader2` 16 px while fetching | `:42-44` |
 | Description | `Below values are sourced from your system proxy settings.` | `:45-47` |
-| Error box | `Error loading system proxy settings: {error}` (danger tint bg/border, `width: fit-content`) | `:51-57`, `StyledWrapper.js:93-101` |
+| Error box | `Error loading system proxy settings: {error}` (danger tint bg/border, `width: fit-content`) | `:51-57`, `components/Preferences/ProxySettings/StyledWrapper.js:93-101` |
 | Source | `Proxy source:` + value | `:60-68` |
 | Info | `These values cannot be directly updated in Bruno. Please refer to your OS documentation to update these.` | `:70-72` |
-| Values (`100px` label) | `http_proxy`, `https_proxy`, `no_proxy`, `pac_url` — each `-` when empty, value in `colors.text.purple` at `opacity .8` | `:74-98`, `StyledWrapper.js:115-118` |
-| Action link | `Refresh` with `IconRefresh` 14 px; toast `PAC cache refreshed` / `Failed to refresh PAC cache` | `:99-107`; `ProxySettings/index.js:106-110` |
+| Values (`100px` label) | `http_proxy`, `https_proxy`, `no_proxy`, `pac_url` — each `-` when empty, value in `colors.text.purple` at `opacity .8` | `:74-98`, `components/Preferences/ProxySettings/StyledWrapper.js:115-118` |
+| Action link | `Refresh` with `IconRefresh` 14 px; toast `PAC cache refreshed` / `Failed to refresh PAC cache` | `:99-107`; `components/Preferences/ProxySettings/index.js:106-110` |
 | Timestamp | `Last refreshed: {formatProxyTimestamp(lastRefreshedAt)}` | `:108-116` |
 
 ### 7.4 `pac` branch
@@ -362,10 +362,10 @@ Field errors are rendered inline `ml-3 text-red-500` (`:279,299,336,365,386`).
 | Element | Detail | Source |
 | --- | --- | --- |
 | Row label | `PAC` (100 px) | `:394` |
-| Segmented toggle | `URL` / `File`; track radius `border.radius.base` (6px), `border 1px input.border`, `margin-right:12px`; button `height:34px`, `padding:.1rem .6rem`, `font.size.sm`, weight 500, idle `colors.text.muted`; active bg `button.secondary.bg`, text `button.secondary.color`; transition `background .12s, color .12s` | `:395-416`, `StyledWrapper.js:29-58` |
-| URL input | `placeholder="https://example.com/proxy.pac"`, width `265px` | `:417-430`, `StyledWrapper.js:60-62` |
+| Segmented toggle | `URL` / `File`; track radius `border.radius.base` (6px), `border 1px input.border`, `margin-right:12px`; button `height:34px`, `padding:.1rem .6rem`, `font.size.sm`, weight 500, idle `colors.text.muted`; active bg `button.secondary.bg`, text `button.secondary.color`; transition `background .12s, color .12s` | `:395-416`, `components/Preferences/StyledWrapper.js:29-58` |
+| URL input | `placeholder="https://example.com/proxy.pac"`, width `265px` | `:417-430`, `components/Preferences/StyledWrapper.js:60-62` |
 | File button | shows `Select File` or `decodeURIComponent(basename)` | `:431-450` |
-| Hint | `Enter the URL to your PAC file` (url mode) / `Supports .pac files for automatic proxy configuration` (file mode); `font.size.xs`, `colors.text.muted`, `margin-top:4px`, `padding-left:100px` | `:455-459`, `StyledWrapper.js:73-78` |
+| Hint | `Enter the URL to your PAC file` (url mode) / `Supports .pac files for automatic proxy configuration` (file mode); `font.size.xs`, `colors.text.muted`, `margin-top:4px`, `padding-left:100px` | `:455-459`, `components/Preferences/StyledWrapper.js:73-78` |
 | Refetch link | `Refetch` + `IconRefresh` 14 px, only when a source exists; toast `PAC cache refreshed` | `:460-468` |
 | Picker failure | toast `Failed to open file picker` | `:443` |
 
@@ -401,22 +401,22 @@ Header block: `h1` **`Client Certificates`** (`font-medium`, `0.9375rem` = 15 px
 + muted line **`Add client certificates to be used for specific domains.`**
 (`font.size.xs`) (`:231-232`).
 
-### 8.1 List (`components/ListGroup`)
+### 8.1 List (`ui/ListGroup`)
 
 | Part | Value | Source |
 | --- | --- | --- |
-| Container | `ListGroup` with `maxWidth` default `800px`, `margin-top: 20px` (`mt-5`) | `ClientCertSettings/index.js:234-235`; `components/ListGroup/index.js:49,62` |
+| Container | `ListGroup` with `maxWidth` default `800px`, `margin-top: 20px` (`mt-5`) | `components/Preferences/ClientCertSettings/index.js:234-235`; `components/ListGroup/index.js:49,62` |
 | Empty state icon | `IconCertificate` 24 px `strokeWidth={1.2}` | `:238-242` |
 | Empty state title | `No client certificates` | `:240` |
 | Empty state text | `Certificates added here are sent automatically with requests to their matching domains.` | `:241` |
 | Add button (empty state & footer) | `Add Certificate` + `IconPlus` 15 px, `Button size="sm"` | `:243-248`; `ListGroup/index.js:54-59,81-86` |
 | Footer extra | `Save` button (`Button size="sm"`) | `:262-265` |
-| Row leading | `IconCertificate` 20 px in `colors.text.yellow` | `:252`, `StyledWrapper.js:17-19` |
+| Row leading | `IconCertificate` 20 px in `colors.text.yellow` | `:252`, `components/Preferences/StyledWrapper.js:17-19` |
 | Row actions | `ToggleSwitch size="2xs"` (title `Disable certificate` / `Enable certificate`) + `ActionIcon label="Remove certificate"` (`IconTrash` 16 px, hover `colors.text.danger`) | `:255-268` |
 | Disabled row | `ListGroup.Item disabled` dims leading + body only, controls stay live | `ListGroup/index.js:14,18` |
 
 Row body fields (`CertField`, label column `80px`, gap `0.75rem`, `0.8125rem` —
-`StyledWrapper.js:21-37`):
+`components/Preferences/StyledWrapper.js:21-37`):
 
 | Field label | Source |
 | --- | --- |
@@ -434,8 +434,8 @@ dataTestId="add-client-cert-modal"` (`:305-312`). Intro (verbatim):
 
 | # | Label (verbatim) | Control | Options / default | Source |
 | --- | --- | --- | --- | --- |
-| 1 | `Domain` | text, placeholder `example.org`, inline animated protocol placeholder (`https://`, `grpcs://`, `wss://`) at `width:60px`, input `padding-left:60px`, width `300px` | empty | `:318-345`, `StyledWrapper.js:12-14,95-141` |
-| 2 | `Type` | segmented (`role=radiogroup`), button `Cert & Key` / `PFX` | `cert` | `:346-370`, `StyledWrapper.js:40-65` |
+| 1 | `Domain` | text, placeholder `example.org`, inline animated protocol placeholder (`https://`, `grpcs://`, `wss://`) at `width:60px`, input `padding-left:60px`, width `300px` | empty | `:318-345`, `components/Preferences/StyledWrapper.js:12-14,95-141` |
+| 2 | `Type` | segmented (`role=radiogroup`), button `Cert & Key` / `PFX` | `cert` | `:346-370`, `components/Preferences/StyledWrapper.js:40-65` |
 | 3 | `Cert file` (cert) / `PFX file` (pfx) | hidden file input + `Choose file` button (`Button size="xs" variant="outline"`, `IconUpload` 13 px); selected → chip `IconFile` + basename + remove `IconX` (`label="Remove file"`) | empty | `:28-67`, `:371-408` |
 | 4 | `Key file` (cert only) | same as #3 | empty | `:384-394` |
 | 5 | `Passphrase` | `type=password`/`text` + eye toggle; box `300px × 1.70rem` | empty | `:409-439` |
@@ -444,10 +444,10 @@ Validation messages: `Domain is required` (`:113`); `certFilePath is a required 
 (`:117`), `keyFilePath is a required field` (`:121`), `pfxFilePath is a required field`
 (`:126`). Type switch clears the other fields (`:177-188`).
 
-Protocol placeholder animation: 9 s loop, staggered 0/3/6 s (`StyledWrapper.js:116-141`).
+Protocol placeholder animation: 9 s loop, staggered 0/3/6 s (`components/Preferences/ProxySettings/StyledWrapper.js:116-141`).
 
 Pending-file chip: label `Remove file`; max filename width `260px` truncate
-(`ClientCertSettings/index.js:46-51`).
+(`components/Preferences/ClientCertSettings/index.js:46-51`).
 
 ---
 
@@ -463,18 +463,18 @@ group (`:769-785`):
 | Control | Detail | Source |
 | --- | --- | --- |
 | Enable toggle | `ToggleSwitch size="2xs"`, `activeColor={theme.primary.solid}`, default on (`keybindingsEnabled !== false`) | `:770-775`, `:271` |
-| Divider | `1px × 18px`, `input.border`, `opacity .9` | `StyledWrapper.js:32-37` |
+| Divider | `1px × 18px`, `input.border`, `opacity .9` | `components/Preferences/StyledWrapper.js:32-37` |
 | Reset all | text button `Reset Default`; disabled when no custom keybindings; success toast `All shortcuts have been reset to default` | `:777-784`, `:547-555` |
 
 When disabled, the table is dimmed: `opacity: .45`, `pointer-events:none`,
-`user-select:none` (`StyledWrapper.js:54-58`) and rows cannot be edited
+`user-select:none` (`components/Preferences/StyledWrapper.js:54-58`) and rows cannot be edited
 (`:558`).
 
 ### 9.2 Table
 
 Columns (thead, `padding 5px 10px`, bg `table.striped`, colour
 `table.thead.color`): **`Command`**, **`Keybinding`** (`:793-796`).
-Column widths 35 % / 45 % (`StyledWrapper.js:88-96`). Row height `30px`
+Column widths 35 % / 45 % (`components/Preferences/Keybindings/StyledWrapper.js:88-96`). Row height `30px`
 (`:101`), hover background `background.surface0` (`:111-114`).
 
 Section heading rows (`font-weight:700`, `padding 6px 10px`) come from
@@ -495,7 +495,7 @@ Section heading rows (`font-weight:700`, `padding 6px 10px`) come from
 Windows column uses `Ctrl` for `command`; Linux is display-only and labels the
 `command` token `Super` (`keyMappings.js:93-119`). Keycaps: `min-width:20px`,
 `height:20px`, `padding:2px`, radius 3px, `1px solid input.border`, bg
-`background.base`, `10px`/500 text (`StyledWrapper.js:236-250`).
+`background.base`, `10px`/500 text (`components/Preferences/Keybindings/StyledWrapper.js:236-250`).
 
 ### 9.3 Row states
 
@@ -505,7 +505,7 @@ Windows column uses `Ctrl` for `command`; Linux is display-only and labels the
 | Hover + customisable | `isHovered && !dirty && !editing && !readOnly` | pencil `IconPencil` 14 px, `title="Customize keys"` | `:815,902-910` |
 | Customised (dirty) | row value ≠ default | `IconReload` 14 px reset button, `title="Reset to default"` | `:816,889-900` |
 | Read-only | binding `readOnly` (only `Switch to Tab at Position`) | lock `IconLock` 14 px, `title="Reserved shortcut"`, `tabIndex=-1`, `aria-disabled` | `:817,912-921,846-849` |
-| Editing | row clicked | `outline: 1px solid status.warning.border`, radius 4px, full width, `padding 0 8px`, blinking caret 1 px `1s step-end infinite` | `StyledWrapper.js:200-207,282-295` |
+| Editing | row clicked | `outline: 1px solid status.warning.border`, radius 4px, full width, `padding 0 8px`, blinking caret 1 px `1s step-end infinite` | `components/Preferences/Keybindings/StyledWrapper.js:200-211,282-295` |
 | Editing + error | invalid combo held | `outline: 1px solid status.danger.border`, `IconAlertCircle` 14 px + tooltip | `:209-213,861-878` |
 | Success flash | saved | row bg `status.success.background` for 800 ms + `IconCircleCheck` 14 px | `:252-255,262-266,598-605` |
 
@@ -538,7 +538,7 @@ Tooltip (error) uses `react-tooltip` `place="bottom-start"`, `opacity 1`,
 `className="tooltip-mod tooltip-mod--error"` (danger text) (`:868-878`).
 
 Container: `max-width: 80%`, `max-height: calc(100% - 30px)`, scrollbars hidden
-(`StyledWrapper.js:3-16`).
+(`components/Preferences/StyledWrapper.js:3-16`).
 
 ---
 
@@ -554,21 +554,21 @@ implement in v1**; show the tab only if the Go port ships an AI backend.
 `components/Preferences/Cache/index.js`; styles `Cache/StyledWrapper.js`.
 
 Section title **`Cache`** — uppercase, `font.size.sm`, `letter-spacing .05em`,
-`colors.text.muted`, `margin-bottom:.75rem` (`:65`, `StyledWrapper.js:6-12`).
+`colors.text.muted`, `margin-bottom:.75rem` (`:65`, `components/Preferences/StyledWrapper.js:6-12`).
 
 Two cards; each card radius `border.radius.md` (8px), `border 1px border1`,
-`margin-bottom:1rem` (`StyledWrapper.js:14-19`). Header `padding .75rem 1rem`,
+`margin-bottom:1rem` (`components/Preferences/StyledWrapper.js:14-19`). Header `padding .75rem 1rem`,
 bg `background.surface0`, bottom border `1px border1` (`:21-29`); body
 `padding .875rem 1rem`, align-items flex-end (`:54-60`).
 
 | # | Title | Badge | Toggle default | Description (verbatim) | Extra | Source |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `File cache` | `Beta` (`status.info` tint, `padding 1px 6px`, radius 4px, `font.size.xs`, weight 500) | **off** (`cache.file.enabled` false) | `Loads your workspace faster by caching opened collections. Bruno refreshes the cache when your collection changes. Clearing it won't affect your original files.` | Size line: `Cache size` + `<strong>{formatSize(fileCacheSize)}</strong>`, `—` when null. `ActionIcon label="Clear cache"` (`IconEraser` 16 px, hover danger), disabled when size is falsy. Toasts `File cache cleared` / `Failed to clear file cache` | `:67-100`, `StyledWrapper.js:42-52,74-84` |
+| 1 | `File cache` | `Beta` (`status.info` tint, `padding 1px 6px`, radius 4px, `font.size.xs`, weight 500) | **off** (`cache.file.enabled` false) | `Loads your workspace faster by caching opened collections. Bruno refreshes the cache when your collection changes. Clearing it won't affect your original files.` | Size line: `Cache size` + `<strong>{formatSize(fileCacheSize)}</strong>`, `—` when null. `ActionIcon label="Clear cache"` (`IconEraser` 16 px, hover danger), disabled when size is falsy. Toasts `File cache cleared` / `Failed to clear file cache` | `:67-100`, `components/Preferences/StyledWrapper.js:42-52,74-84` |
 | 2 | `SSL session cache` | — | **off** (`cache.sslSession.enabled` false) | `Reuses TLS sessions and connections across requests for faster handshakes. Disable to create a fresh connection for every request.` | `ActionIcon label="Clear cache"`; toasts `SSL session cache cleared` / `Failed to clear SSL session cache`. Disabling the toggle also clears the agent cache | `:102-130`, `:37-46,57-61` |
 
 Toggle: `ToggleSwitch size="2xs" activeColor={theme.primary.solid}`
 (`:73-79,107-113`). Failure toast: `Failed to update cache preferences` (`:26`).
-Titles `font.size.md` (14px) weight 600 (`StyledWrapper.js:37-40`); descriptions
+Titles `font.size.md` (14px) weight 600 (`components/Preferences/StyledWrapper.js:37-40`); descriptions
 `font.size.base`, `colors.text.muted`, `line-height 1.5` (`:67-72`); size line
 `colors.text.subtext2`, `<strong>` weight 600 `text` (`:74-84`).
 
@@ -579,7 +579,7 @@ Titles `font.size.md` (14px) weight 600 (`StyledWrapper.js:37-40`); descriptions
 `components/Preferences/Support/index.js`; strings resolved via `react-i18next`
 (`useTranslation`, `:72`) from `i18n/translation/en.json`.
 
-Container `max-width: 40rem`, gap `1.25rem` (`Support/StyledWrapper.js:3-10`).
+Container `max-width: 40rem`, gap `1.25rem` (`components/Preferences/Support/StyledWrapper.js:3-10`).
 Heading `.section-header` **`Support`** (`:76`).
 
 | Group (key → English) | Card row: label → English · description → English · URL | i18n source |
@@ -595,11 +595,11 @@ Row chrome: `gap .75rem`, `padding .75rem .875rem`, hover bg
 `background.mantle`, divider between rows `1px border1`; icon tile `26×26`,
 radius 8px, bg `background.surface0`, hover `surface1`; label `font.size.base`;
 description `font.size.xs` `colors.text.muted`; trailing `IconExternalLink`;
-`target="_blank" rel="noreferrer"` (`Support/index.js:84-107`,
-`Support/StyledWrapper.js:24-99`). Icons: `IconBook`, `IconSpeakerphone`,
+`target="_blank" rel="noreferrer"` (`components/Preferences/Support/index.js:84-107`,
+`components/Preferences/Support/StyledWrapper.js:24-99`). Icons: `IconBook`, `IconSpeakerphone`,
 `IconBrandGithub`, `IconBrandDiscord`, `IconBrandTwitter`, `IconBrandLinkedin`
 (all 16 px, `:1-9,95-96`). Group headings `font.size.sm` weight 500
-`colors.text.muted` (`StyledWrapper.js:17-22`).
+`colors.text.muted` (`components/Preferences/StyledWrapper.js:17-22`).
 
 ---
 
@@ -623,10 +623,10 @@ Data-driven from `BETA_FEATURES` (`:45-82`):
 
 Action button `Go to …` uses `IconArrowRight` 14 px; docs link `View docs`
 `IconExternalLink` 14 px; both `font.size.sm` in `textLink`, underline on hover;
-gap `1.25rem`, `margin-top:.625rem` (`:219-243`, `StyledWrapper.js:34-52`).
+gap `1.25rem`, `margin-top:.625rem` (`:219-243`, `components/Preferences/StyledWrapper.js:34-52`).
 Rows `padding 1rem 0` + bottom `1px border1`, last row no border (`:13-20`).
 Mock-server toggle `ToggleSwitch size="xs"` (`:210-216`) — turning it off with
-unsaved mock responses opens the "Unsaved changes" modal (`Beta/useMockServerBetaToggle/index.js:37-43`;
+unsaved mock responses opens the "Unsaved changes" modal (`components/Preferences/Beta/useMockServerBetaToggle/index.js:37-43`;
 modal copy in `components/RequestTabs/RequestTab/ConfirmRequestClose`). Empty
 state (only when array emptied): `No beta features are currently available`
 (`:248-252`), italic. Auto-saves after 500 ms; failure toast `Failed to update
@@ -639,9 +639,9 @@ beta preferences` (`:143`).
 | Interaction | Result | Source |
 | --- | --- | --- |
 | Click left tab | Switch panel, remember last tab per window in Redux | `Preferences/index.js:36-44` |
-| Type in General / Proxy / Font / Beta | Debounced save after 500 ms | `General/index.js:133-152`, `ProxySettings/index.js:99-132`, `Display/Font/index.js:44-60`, `Beta/index.js:150-170` |
+| Type in General / Proxy / Font / Beta | Debounced save after 500 ms | `components/Preferences/General/index.js:133-152`, `components/Preferences/ProxySettings/index.js:99-132`, `components/Preferences/Display/Font/index.js:44-60`, `components/Preferences/Beta/index.js:150-170` |
 | Escape / close | Preferences is a tab — closed like any other tab (`Ctrl/Cmd+W`) | `keyMappings.js:7` |
-| `Cmd/Ctrl+S` | Saves the focused tab's form where the form supports submit (General, Proxy) | `General/index.js:192`, `ProxySettings/index.js:137` |
+| `Cmd/Ctrl+S` | Saves the focused tab's form where the form supports submit (General, Proxy) | `components/Preferences/General/index.js:192`, `components/Preferences/ProxySettings/index.js:137` |
 
 Divergence: only **General** and **Proxy** are `<form>`s; Themes/Display/
 Cache/Support/Beta have no submit path. In the Go port, give every settings tab
@@ -651,7 +651,7 @@ an explicit save or make autosave uniform.
 
 ## 15. Open Questions
 
-1. **`input.background` token is missing.** `Display/Zoom/StyledWrapper.js:25,60`
+1. **`input.background` token is missing.** `components/Preferences/Display/Zoom/StyledWrapper.js:25,60`
    reads `theme.input.background`, but the theme defines only
    `input.bg` (`themes/light/light.js:196-204`). The zoom select therefore falls
    back to the browser default background. The port should use `input.bg`.
@@ -660,12 +660,12 @@ an explicit save or make autosave uniform.
    control is canonical — I chose to document Themes and explicitly exclude the
    radio.
 3. **Apostrophe inconsistency** in the Keybindings empty-shortcut message
-   (curly vs straight, `Keybindings/index.js:422` vs `:661`). Pick one.
+   (curly vs straight, `components/Preferences/Keybindings/index.js:422` vs `:661`). Pick one.
 4. **Reset Default labels**: row-level tooltip says `Reset to default`
-   (`Keybindings/index.js:896`); header button says `Reset Default` (`:783`).
+   (`components/Preferences/Keybindings/index.js:896`); header button says `Reset Default` (`:783`).
    Decide whether to normalise to "Reset to Default".
 5. **Client-cert file-path wording drift**: preferences modal says *absolute
-   paths* and "apply to every collection" (`ClientCertSettings/index.js:314`),
+   paths* and "apply to every collection" (`components/Preferences/ClientCertSettings/index.js:314`),
    collection modal says *paths relative to the collection*
    (`CollectionSettings/ClientCertSettings/index.js:333`).
    Verify which one is true before writing copy in the port.

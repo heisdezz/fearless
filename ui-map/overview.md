@@ -1,6 +1,6 @@
 # UI Map — Bruno UI reconstruction specification for a Go GUI
 
-Status: IN PROGRESS. This directory is a framework-agnostic description of
+Status: COMPLETE for the pinned commit; capture-dependent items are listed in go-ui-notes.md section 5. This directory is a framework-agnostic description of
 Bruno's interface as it ships, written to rebuild it in Go with MyGo + Lobe
 MyGo. It covers **only the UI**; backend, file IO, request execution and
 parsing are out of scope.
@@ -15,6 +15,29 @@ names the captures that show it.
 ---
 
 ## How to read this map
+
+**Citation convention.** Every claim cites `path:line`. Paths are relative to
+`bruno/packages/bruno-app/src/` (or `bruno/packages/<pkg>/` for the few
+cross-package refs) and are written either fully
+(`components/Sidebar/Collections/Collection/index.jsx:88`) or relative to a base
+path stated at the top of that file. A bare filename (`StyledWrapper.js:16`)
+refers to the component named in the same paragraph or table row; a script
+resolving citations should try the file's base path, then the exact path, then a
+unique suffix match.
+
+Verified 2026-11-11: every checklist target exists, no cited line is past
+end-of-file, and each citation resolves to a real file.
+
+Verified 2026-11-11: every checklist target exists, no cited line is past
+end-of-file, and each citation resolves to a real file. Re-run the checks with:
+
+```bash
+python3 ui-map/_tools/verify.py    # exits non-zero on any broken target/citation
+```
+
+If a doc is edited and bare filenames must be added, `ui-map/_tools/qualify.py`
+rewrites them to src-relative paths using each file's `BASES` map. Token values
+come from `ui-map/_tools/dump-theme.mjs` (run from `bruno/`).
 
 | File               | Holds                                                                                                   |
 | ------------------ | ------------------------------------------------------------------------------------------------------- |
@@ -32,7 +55,7 @@ Legend: `S` = covered by a screen file, `C` = its own component file,
 
 | Component                   | Where                                                                               |
 | --------------------------- | ----------------------------------------------------------------------------------- |
-| Accordion                   | components/misc-primitives.md                                                            |
+| Accordion                   | components/misc-primitives.md                                                       |
 | AIAssist                    | — (deferred: AI is out of v1 scope, `docs/research/unresolved-questions.md` §UQ-D6) |
 | AiChatSidebar               | — (deferred: AI)                                                                    |
 | ApiSpecPanel                | — (deferred: OpenAPI sync is out of v1 scope)                                       |
@@ -48,12 +71,12 @@ Legend: `S` = covered by a screen file, `C` = its own component file,
 | ChangelogTab                | screens/about.md                                                                    |
 | CodeEditor                  | widgets.md                                                                          |
 | CodeMirrorSearch            | widgets.md                                                                          |
-| CodeSnippet                 | components/misc-primitives.md                                                          |
+| CodeSnippet                 | components/misc-primitives.md                                                       |
 | CollectionApp               | screens/app-shell.md                                                                |
 | CollectionSettings          | screens/collection-settings.md                                                      |
-| ColorBadge                  | components/misc-primitives.md                                                           |
-| ColorPicker                 | components/misc-primitives.md                                                          |
-| ColorRange                  | components/misc-primitives.md                                                          |
+| ColorBadge                  | components/misc-primitives.md                                                       |
+| ColorPicker                 | components/misc-primitives.md                                                       |
+| ColorRange                  | components/misc-primitives.md                                                       |
 | Cookies                     | screens/cookies.md                                                                  |
 | CreateTransientRequest      | screens/request-tabs.md                                                             |
 | CreateUntitledRequest       | screens/request-tabs.md                                                             |
@@ -62,29 +85,29 @@ Legend: `S` = covered by a screen file, `C` = its own component file,
 | Devtools                    | — (out of scope: developer tools)                                                   |
 | DndTargetErrorGuard         | go-ui-notes.md (drag-and-drop guard)                                                |
 | Documentation               | screens/request-docs.md                                                             |
-| Dropdown                    | components/select.md                                                              |
+| Dropdown                    | components/select.md                                                                |
 | EditableTable               | widgets.md                                                                          |
 | EmptyAppState               | screens/welcome.md                                                                  |
 | Environments                | screens/environments.md                                                             |
 | EnvironmentVariablesTable   | screens/environments.md                                                             |
 | ErrorCapture                | go-ui-notes.md (error boundary)                                                     |
-| Errors                      | components/misc-primitives.md                                                          |
+| Errors                      | components/misc-primitives.md                                                       |
 | FileEditor                  | screens/request-body.md (file body)                                                 |
 | FilePickerEditor            | components/text-input.md                                                            |
-| FilterDropdown              | components/select.md                                                              |
+| FilterDropdown              | components/select.md                                                                |
 | FolderSettings              | screens/folder-settings.md                                                          |
 | Git                         | — (out of v1 UI scope: source control pane; see go-ui-notes.md)                     |
 | GlobalSearchModal           | screens/global-search.md                                                            |
-| Help                        | screens/about.md                                                                     |
+| Help                        | screens/about.md                                                                    |
 | Icons                       | design-system.md (§ icons)                                                          |
 | IncludeExcludeTags          | screens/runner.md                                                                   |
-| InfoTip                     | components/misc-primitives.md                                                               |
+| InfoTip                     | components/misc-primitives.md                                                       |
 | InheritableSettingsInput    | components/text-input.md                                                            |
 | ManageWorkspace             | screens/workspace-switcher.md                                                       |
 | MarkDown                    | widgets.md                                                                          |
 | MigrateCollectionToYmlModal | screens/collection-settings.md                                                      |
 | MockServer                  | — (deferred: mock server out of v1 scope)                                           |
-| Modal                       | components/misc-primitives.md                                                                 |
+| Modal                       | components/misc-primitives.md                                                       |
 | ModeSwitch                  | components/toggle.md                                                                |
 | MultiLineEditor             | widgets.md                                                                          |
 | MultipartFileChipsCell      | widgets.md (multipart cells)                                                        |
@@ -94,12 +117,12 @@ Legend: `S` = covered by a screen file, `C` = its own component file,
 | PathDisplay                 | components/text-input.md                                                            |
 | Portal                      | go-ui-notes.md (overlay hosting)                                                    |
 | Preferences                 | screens/preferences.md                                                              |
-| RadioButton                 | components/misc-primitives.md                                                          |
+| RadioButton                 | components/misc-primitives.md                                                       |
 | ReorderTable                | widgets.md                                                                          |
 | RequestPane                 | screens/request-pane.md                                                             |
 | RequestTabPanel             | screens/request-pane.md                                                             |
 | RequestTabs                 | screens/request-tabs.md                                                             |
-| ResponseExample             | screens/request-docs.md (§ Response example)                                                         |
+| ResponseExample             | screens/request-docs.md (§ Response example)                                        |
 | ResponsePane                | screens/response-pane.md                                                            |
 | RunnerResults               | screens/runner.md                                                                   |
 | SaveTransientRequest        | screens/request-tabs.md                                                             |
@@ -108,8 +131,8 @@ Legend: `S` = covered by a screen file, `C` = its own component file,
 | SelectionFooter             | screens/runner.md                                                                   |
 | SelectionList               | screens/runner.md                                                                   |
 | SensitiveFieldWarning       | components/text-input.md                                                            |
-| SetAsVariableMenu           | components/select.md                                                              |
-| SetAsVariablePopover        | components/select.md                                                              |
+| SetAsVariableMenu           | components/select.md                                                                |
+| SetAsVariablePopover        | components/select.md                                                                |
 | SettingsAiAssist            | — (deferred: AI)                                                                    |
 | SettingsInput               | components/text-input.md                                                            |
 | ShareCollection             | screens/collection-settings.md                                                      |
@@ -123,14 +146,14 @@ Legend: `S` = covered by a screen file, `C` = its own component file,
 | Tab                         | components/tabs.md                                                                  |
 | Table                       | widgets.md                                                                          |
 | Tabs                        | components/tabs.md                                                                  |
-| TagList                     | components/misc-primitives.md                                                                   |
-| TagPicker                   | components/misc-primitives.md                                                                   |
-| Toast                       | components/misc-primitives.md                                                                 |
+| TagList                     | components/misc-primitives.md                                                       |
+| TagPicker                   | components/misc-primitives.md                                                       |
+| Toast                       | components/misc-primitives.md                                                       |
 | ToggleSwitch                | components/toggle.md                                                                |
-| ToolHint                    | components/misc-primitives.md                                                               |
+| ToolHint                    | components/misc-primitives.md                                                       |
 | TruncatedText               | components/text-input.md                                                            |
-| VariableScopeIcon           | components/misc-primitives.md                                                        |
-| VariableScopeList           | components/misc-primitives.md                                                        |
+| VariableScopeIcon           | components/misc-primitives.md                                                       |
+| VariableScopeList           | components/misc-primitives.md                                                       |
 | VariablesEditor             | screens/environments.md                                                             |
 | VarValueCell                | screens/environments.md                                                             |
 | WelcomeModal                | screens/welcome.md                                                                  |
@@ -227,18 +250,18 @@ See the Checklist table above: it is the authoritative index of every
 `src/components/*` folder and where it is specified. The `src/ui/*` primitives
 are indexed by `components/` file in this table:
 
-| Primitive (`src/ui/`)                                         | Component file                               |
-| ------------------------------------------------------------- | -------------------------------------------- |
-| `Button`                                                      | components/button.md                         |
-| `Checkbox`                                                    | components/misc-primitives.md                       |
-| `InputWrapper`, `TextInput`, `MaskedInput`, `MaskedTextfield` | components/text-input.md                     |
+| Primitive (`src/ui/`)                                         | Component file                             |
+| ------------------------------------------------------------- | ------------------------------------------ |
+| `Button`                                                      | components/button.md                       |
+| `Checkbox`                                                    | components/misc-primitives.md              |
+| `InputWrapper`, `TextInput`, `MaskedInput`, `MaskedTextfield` | components/text-input.md                   |
 | `Select`, `Dropdown`, `MenuDropdown`                          | components/select.md, components/select.md |
-| `Toggle`                                                      | components/toggle.md                         |
-| `SegmentedControl`, `ResponsiveTabs`, `Tabs`                  | components/tabs.md                           |
-| `ListGroup`                                                   | components/misc-primitives.md                     |
-| `MethodBadge`                                                 | components/method-badge.md                   |
-| `StatusBadge`, `CountBadge`                                   | components/status-badge.md                   |
-| `ErrorBanner`                                                 | components/misc-primitives.md                   |
-| `ContextMenu`                                                 | components/misc-primitives.md                   |
-| `RichTextEditor`                                              | widgets.md                                   |
-| `HeightBoundContainer`, `Portal`                              | go-ui-notes.md                               |
+| `Toggle`                                                      | components/toggle.md                       |
+| `SegmentedControl`, `ResponsiveTabs`, `Tabs`                  | components/tabs.md                         |
+| `ListGroup`                                                   | components/misc-primitives.md              |
+| `MethodBadge`                                                 | components/method-badge.md                 |
+| `StatusBadge`, `CountBadge`                                   | components/status-badge.md                 |
+| `ErrorBanner`                                                 | components/misc-primitives.md              |
+| `ContextMenu`                                                 | components/misc-primitives.md              |
+| `RichTextEditor`                                              | widgets.md                                 |
+| `HeightBoundContainer`, `Portal`                              | go-ui-notes.md                             |

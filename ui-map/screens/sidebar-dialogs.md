@@ -29,13 +29,13 @@ Every dialog in this file except the anchored dropdowns is a `Modal` rendered th
 | Size `md`                     | `min-width: 500px`, `max-width: 800px`                                                                                            | `:51-54`                                          |
 | Size `lg`                     | `min-width: 800px`, `max-width: 1140px`                                                                                           | `:56-59`                                          |
 | Header                        | `modal.title.bg` (`#f1f1f1` L / `#1a1a1a` D), `modal.title.color`, `font.size.md`, padding `0.5rem 1rem`                          | `:74-83`; tokens `modal.title.*`                  |
-| Header close                  | `IconX` `16px` stroke `1.5` in a `24 × 24` box, opacity `0.7` → `1` on hover with `rgba(modal.title.color, .1)` background        | `Modal/index.js:14-22`; `StyledWrapper.js:91-109` |
+| Header close                  | `IconX` `16px` stroke `1.5` in a `24 × 24` box, opacity `0.7` → `1` on hover with `rgba(modal.title.color, .1)` background        | `Modal/index.js:14-22`; `components/Sidebar/StyledWrapper.js:91-109` |
 | Body padding                  | `px-4 py-4` (`1rem`) unless `noPadding`                                                                                           | `Modal/index.js:26-28`                            |
 | Footer                        | padding `1rem`, cancel (`secondary`/`ghost`) then confirm (`primary` by default)                                                  | `Modal/index.js:50-80`                            |
-| Backdrop                      | black at `modal.backdrop.opacity` `0.4`, fade-in `0.1s`                                                                           | `StyledWrapper.js:158-170`                        |
-| Enter animation               | `fade-and-slide-in-from-top 0.5s forwards cubic-bezier(0.19, 1, 0.22, 1)`                                                         | `StyledWrapper.js:66`                             |
+| Backdrop                      | black at `modal.backdrop.opacity` `0.4`, fade-in `0.1s`                                                                           | `components/Sidebar/StyledWrapper.js:158-170`                        |
+| Enter animation               | `fade-and-slide-in-from-top 0.5s forwards cubic-bezier(0.19, 1, 0.22, 1)`                                                         | `components/Sidebar/StyledWrapper.js:66`                             |
 | Exit animation                | `fade-out` / `fade-and-slide-out-from-top 0.5s`, default `closeModalFadeTimeout` `500 ms`                                         | `:7-12`; `Modal/index.js:99,133-136`              |
-| Textbox                       | radius `border.radius.sm` (`4px`), border `1px input.border`, padding `0.45rem`, background `input.bg`; focus `input.focusBorder` | `StyledWrapper.js:116-133`                        |
+| Textbox                       | radius `border.radius.sm` (`4px`), border `1px input.border`, padding `0.45rem`, background `input.bg`; focus `input.focusBorder` | `components/Sidebar/StyledWrapper.js:116-133`                        |
 | Radio / checkbox accent       | `primary.solid`                                                                                                                   | `:186-195`                                        |
 | Esc                           | closes (`closeModal({type:'esc'})`) unless `disableEscapeKey`                                                                     | `Modal/index.js:117-121`                          |
 | Enter                         | confirms when focus is inside the modal, not on a submit button and not disabled                                                  | `:122-127`                                        |
@@ -49,7 +49,7 @@ Every dialog in this file except the anchored dropdowns is a `Modal` rendered th
 
 ## 2. New Request — `components/Sidebar/NewRequest` (modal)
 
-Layout (`refs/new_request_modal_bruno.png`, source `NewRequest/index.js:312-606`):
+Layout (`refs/new_request_modal_bruno.png`, source `components/Sidebar/NewRequest/index.js:312-606`):
 
 ```text
 ┌ New Request ───────────────────────────────────────────────── ✕ ┐
@@ -71,24 +71,24 @@ Layout (`refs/new_request_modal_bruno.png`, source `NewRequest/index.js:312-606`
 
 | Aspect                   | Value                                                                                                                    | Source                                          |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
-| Type                     | Modal `md`, title `New Request`, `hideFooter` (footer built in the form)                                                 | `NewRequest/index.js:315`                       |
+| Type                     | Modal `md`, title `New Request`, `hideFooter` (footer built in the form)                                                 | `components/Sidebar/NewRequest/index.js:315`                       |
 | Type radios              | `grid grid-cols-3 gap-2`, each column `flex flex-col gap-2`, radio accent `primary.solid`                                | `:325-405`                                      |
 | Radio labels (verbatim)  | `HTTP`, `GraphQL` (col 1); `gRPC`, `WebSocket` (col 2); `From cURL` (col 3)                                              | `:337-400`                                      |
 | Default type             | collection preset or `http-request`                                                                                      | `:79-105,112`                                   |
 | Request Name label       | `Request Name` (`font-medium`)                                                                                           | `:408-410`                                      |
 | Request Name placeholder | `Request Name`                                                                                                           | `:415`                                          |
-| Request Name input       | `.textbox mt-2 w-full`, height `2.1rem`, radius `border.radius.base`                                                     | `:411-428`; `NewRequest/StyledWrapper.js:31-34` |
+| Request Name input       | `.textbox mt-2 w-full`, height `2.1rem`, radius `border.radius.base`                                                     | `:411-428`; `components/Sidebar/NewRequest/StyledWrapper.js:31-34` |
 | Name → filename          | filename auto-derived with `sanitizeName` until the user edits it                                                        | `:422-425`                                      |
 | File Name (advanced)     | label `File Name` + muted `(on filesystem)`; placeholder `File Name`; suffix `.{collection.format}`                      | `:433-492`                                      |
 | URL label                | `URL`                                                                                                                    | `:496-498`                                      |
-| Method selector          | `HttpMethodSelector` with caret, left radius `border.radius.base`, height `2.1rem`                                       | `:500-508`; `StyledWrapper.js:4-15`             |
-| URL editor               | `SingleLineEditor`, placeholder `Request URL`, height `2.1rem`, right radius `border.radius.base`                        | `:509-533`; `StyledWrapper.js:16-29`            |
-| cURL branch              | label `cURL Command`, dropdown `HTTP` / `GraphQL`, textarea placeholder `Enter cURL request here..`, `min-height: 150px` | `:540-578`; `StyledWrapper.js:36-38`            |
-| Options control          | text-link `Options` + caret (`textLink` fill)                                                                            | `:301-310,580-594`; `StyledWrapper.js:47-52`    |
+| Method selector          | `HttpMethodSelector` with caret, left radius `border.radius.base`, height `2.1rem`                                       | `:500-508`; `components/Sidebar/StyledWrapper.js:4-15`             |
+| URL editor               | `SingleLineEditor`, placeholder `Request URL`, height `2.1rem`, right radius `border.radius.base`                        | `:509-533`; `components/Sidebar/StyledWrapper.js:16-29`            |
+| cURL branch              | label `cURL Command`, dropdown `HTTP` / `GraphQL`, textarea placeholder `Enter cURL request here..`, `min-height: 150px` | `:540-578`; `components/Sidebar/StyledWrapper.js:36-38`            |
+| Options control          | text-link `Options` + caret (`textLink` fill)                                                                            | `:301-310,580-594`; `components/Sidebar/StyledWrapper.js:47-52`    |
 | Options item             | `Show Filesystem Name` / `Hide Filesystem Name`                                                                          | `:591`                                          |
 | Footer                   | `Cancel` (`secondary`, `ghost`), `Create` (`primary`)                                                                    | `:596-601`                                      |
 
-Validation (`NewRequest/index.js:117-148`), message text verbatim:
+Validation (`components/Sidebar/NewRequest/index.js:117-148`), message text verbatim:
 
 | Field         | Rule                             | Message                                                                                    |
 | ------------- | -------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -126,7 +126,7 @@ sidebar shortcuts (see `request-tabs.md`).
 
 | Aspect                      | Value                                                        | Source                  |
 | --------------------------- | ------------------------------------------------------------ | ----------------------- |
-| Modal                       | `md`, title `New Folder`, `hideFooter`                       | `NewFolder/index.js:88` |
+| Modal                       | `md`, title `New Folder`, `hideFooter`                       | `components/Sidebar/NewFolder/index.js:88` |
 | Field label                 | `Folder Name`                                                | `:90-92`                |
 | Input                       | `.textbox mt-2 w-full`, no placeholder attribute             | `:93-109`               |
 | Filesystem label (advanced) | `Folder Name` + `(on filesystem)`; placeholder `Folder Name` | `:117-148`              |
@@ -134,7 +134,7 @@ sidebar shortcuts (see `request-tabs.md`).
 | Footer                      | `Cancel`, `Create`                                           | `:185-192`              |
 | Autofocus                   | input focused on mount                                       | `:65-69`                |
 
-Validation (`NewFolder/index.js:33-54`): `folderName` required → `name is required`;
+Validation (`components/Sidebar/NewFolder/index.js:33-54`): `folderName` required → `name is required`;
 min 1 → `must be at least 1 character`. `directoryName` required → `foldername is required`;
 `validateName` → `validateNameError(value)`; at collection root a name containing
 `environments` is rejected with
@@ -145,29 +145,29 @@ min 1 → `must be at least 1 character`. `directoryName` required → `folderna
 
 ## 4. Import Collection — `components/Sidebar/ImportCollection` (modal)
 
-Title `Import Collection`, `md`, `hideFooter` (`ImportCollection/index.js:42`);
-body width `IMPORT_COLLECTION_SELECTION_WIDTH = 600px` (`ImportCollection/StyledWrapper.js:4-8`;
+Title `Import Collection`, `md`, `hideFooter` (`components/Sidebar/ImportCollection/index.js:42`);
+body width `IMPORT_COLLECTION_SELECTION_WIDTH = 600px` (`components/Sidebar/ImportCollection/StyledWrapper.js:4-8`;
 `SelectionList/constants.js:2`).
 
 ### 4.1 Tabs
 
 | #   | id       | Icon                   | Label (verbatim) | Source                            |
 | --- | -------- | ---------------------- | ---------------- | --------------------------------- |
-| 1   | `file`   | `IconFileImport` 18 px | `File`           | `ImportCollection/index.js:46-53` |
+| 1   | `file`   | `IconFileImport` 18 px | `File`           | `components/Sidebar/ImportCollection/index.js:46-53` |
 | 2   | `github` | `IconBrandGit` 18 px   | `Git Repository` | `:54-61`                          |
 | 3   | `url`    | `IconUnlink` 18 px     | `URL`            | `:62-69`                          |
 
 Tab metrics: padding `6px 0`, bottom border `2px transparent`, margin-right `1.25rem`;
 inactive colour `var(--color-tab-inactive)`; active colour `tabs.active.color`
 (`#343434` L / `#cccccc` D) and `2px` `tabs.active.border` (`#d5882a` L / `#e7b85f` D)
-(`ImportCollection/StyledWrapper.js:10-32`; tokens `tabs.active`).
+(`components/Sidebar/ImportCollection/StyledWrapper.js:10-32`; tokens `tabs.active`).
 
 ### 4.2 Error banner
 
 When a tab sets an error: `mb-4 p-2 border rounded-md`, background
 `status.danger.background` (`rgba(206,79,59,.15)` L / `rgba(218,70,47,.15)` D),
 border `status.danger.border`, `text-xs` text in `status.danger.text`, close `IconX` 16 px
-(`ImportCollection/index.js:73-98`; tokens `status.danger.*`).
+(`components/Sidebar/ImportCollection/index.js:73-98`; tokens `status.danger.*`).
 
 ### 4.3 File tab (`ImportCollection/FileTab.js`)
 
@@ -191,7 +191,7 @@ border `status.danger.border`, `text-xs` text in `status.danger.text`, close `Ic
 | Error             | `Please enter a valid git repository URL`                | `:13`    |
 
 On submit the modal closes and `Clone Git Repository` opens pre-filled
-(`Sections/CollectionsSection/index.js:104-108,390-396`).
+(`components/Sidebar/Sections/CollectionsSection/index.js:104-108,390-396`).
 
 ### 4.5 URL tab (`ImportCollection/UrlTab.js`)
 
@@ -216,7 +216,7 @@ Cycling headings every `2000 ms` (`:5-11,20-23`, verbatim):
 ## 5. Import Collection (location) — `components/Sidebar/ImportCollectionLocation` (modal)
 
 Title `Import Collection`, `md`, confirm `Import`, cancel default `Cancel`
-(`ImportCollectionLocation/index.js:217-228`). `footerLeft` = `ImportOptionsMenu`
+(`components/Sidebar/ImportCollectionLocation/index.js:217-228`). `footerLeft` = `ImportOptionsMenu`
 (omitted for `bruno-zip`, `:224-228`).
 
 ```text
@@ -243,16 +243,16 @@ Title `Import Collection`, `md`, confirm `Import`, cancel default `Cancel`
 | Location input             | `.textbox` with cursor pointer; clicking opens directory picker                                                                                                                                                                                                                    | `:245-259`                                               |
 | Browse link                | `Browse`                                                                                                                                                                                                                                                                           | `:265-273`                                               |
 | File Format                | label `File Format`; options `OpenCollection (YAML)` (`yml`), `BRU Format (.bru)` (`bru`)                                                                                                                                                                                          | `:275-300`                                               |
-| Options menu item          | `Show file format` / `Hide file format`                                                                                                                                                                                                                                            | `ImportSettings/ImportOptionsMenu/index.js:16-25`        |
-| Folder arrangement         | label `Folder arrangement`, desc `Select whether to create folders according to the spec's paths or tags.`, options `Tags` / `Paths`                                                                                                                                               | `ImportSettings/FolderArrangementOption/index.js:4-18`   |
-| Check for Spec Updates     | label `Check for Spec Updates`, desc `Stay notified of spec changes and sync your collection with the spec.`; Swagger 2.0 desc `OpenAPI Sync is not supported for Swagger 2.0 specs.` (toggle disabled)                                                                            | `ImportSettings/CheckForSpecUpdatesOption/index.js:4-17` |
-| Advanced (OpenAPI)         | toggle chevron + title `Advanced`                                                                                                                                                                                                                                                  | `ImportSettings/ImportAdvancedSection/index.js:6-23`     |
-| Naming requests            | label `Naming requests`; info `If an operation doesn't have the selected field, Bruno falls back to summary, operationId, description, then method and path.`; desc `How requests in the generated collection are named.`; options `Summary`, `operationId`, `Description`, `Path` | `ImportSettings/RequestNameSourceOption/index.js:5-23`   |
-| Auth placement             | label `Set authentication at collection level`; info `On import, the spec's security scheme is added to the collection. Operations with a different scheme keep their own auth.`; desc `Requests and folders inherit it instead of getting their own copy.`                        | `ImportSettings/AuthPlacementOption/index.js:8-21`       |
-| Preserve scripts (Postman) | label `Preserve scripts`, desc `Import Postman scripts without translating them.`                                                                                                                                                                                                  | `ImportCollectionLocation/index.js:320-331`              |
+| Options menu item          | `Show file format` / `Hide file format`                                                                                                                                                                                                                                            | `components/Sidebar/ImportSettings/ImportOptionsMenu/index.js:16-25`        |
+| Folder arrangement         | label `Folder arrangement`, desc `Select whether to create folders according to the spec's paths or tags.`, options `Tags` / `Paths`                                                                                                                                               | `components/Sidebar/ImportSettings/FolderArrangementOption/index.js:4-18`   |
+| Check for Spec Updates     | label `Check for Spec Updates`, desc `Stay notified of spec changes and sync your collection with the spec.`; Swagger 2.0 desc `OpenAPI Sync is not supported for Swagger 2.0 specs.` (toggle disabled)                                                                            | `components/Sidebar/ImportSettings/CheckForSpecUpdatesOption/index.js:4-17` |
+| Advanced (OpenAPI)         | toggle chevron + title `Advanced`                                                                                                                                                                                                                                                  | `components/Sidebar/ImportSettings/ImportAdvancedSection/index.js:6-23`     |
+| Naming requests            | label `Naming requests`; info `If an operation doesn't have the selected field, Bruno falls back to summary, operationId, description, then method and path.`; desc `How requests in the generated collection are named.`; options `Summary`, `operationId`, `Description`, `Path` | `components/Sidebar/ImportSettings/RequestNameSourceOption/index.js:5-23`   |
+| Auth placement             | label `Set authentication at collection level`; info `On import, the spec's security scheme is added to the collection. Operations with a different scheme keep their own auth.`; desc `Requests and folders inherit it instead of getting their own copy.`                        | `components/Sidebar/ImportSettings/AuthPlacementOption/index.js:8-21`       |
+| Preserve scripts (Postman) | label `Preserve scripts`, desc `Import Postman scripts without translating them.`                                                                                                                                                                                                  | `components/Sidebar/ImportCollectionLocation/index.js:320-331`              |
 | File format help           | `Choose the file format for storing requests in this collection.` + `OpenCollection (YAML):` `Industry-standard YAML format (.yml files)` + `BRU:` `Bruno's native file format (.bru files)`                                                                                       | `:279-288`                                               |
 
-Conditional visibility (`ImportCollectionLocation/index.js:118-124,303-331`):
+Conditional visibility (`components/Sidebar/ImportCollectionLocation/index.js:118-124,303-331`):
 
 | Row                           | Shown for                           |
 | ----------------------------- | ----------------------------------- |
@@ -270,10 +270,10 @@ preserve scripts off (`:111-117`; `bruno-common/src/openapi-sync/index.ts:3,9,11
 
 | Control                       | Value                                                                                                                                                                                                            | Source                                                                                            |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `ImportSettingRow` layout     | label row `gap-1 font-medium` + info icon; description `text-muted text-xs mt-1`; switch rows are `label` elements with `cursor-pointer`                                                                         | `ImportSettings/ImportSettingRow/index.js:7-30`                                                   |
-| `ImportSettingDropdown`       | background `background.surface1` (`#eaeaea` L / `#444444` D), border `1px background.surface2` (`#e5e5e5` L / `#666666` D), radius `4px`, padding `0.3rem 0.6rem`; caret `16px` filled in `colors.text.subtext0` | `ImportSettings/ImportSettingDropdown/StyledWrapper.js:5-13`; `ImportSettingDropdown/index.js:43` |
-| `ImportSettingDropdown` width | reserves the widest option width via hidden sizer spans                                                                                                                                                          | `ImportSettingDropdown/index.js:39-41`; `StyledWrapper.js:17-28`                                  |
-| `ImportAdvancedSection`       | top border `1px border.border1`, chevron `16px` rotating `90deg` in `0.15s ease`, collapsed content `height: 0`                                                                                                  | `ImportSettings/ImportAdvancedSection/StyledWrapper.js:4-15`                                      |
+| `ImportSettingRow` layout     | label row `gap-1 font-medium` + info icon; description `text-muted text-xs mt-1`; switch rows are `label` elements with `cursor-pointer`                                                                         | `components/Sidebar/ImportSettings/ImportSettingRow/index.js:7-30`                                                   |
+| `ImportSettingDropdown`       | background `background.surface1` (`#eaeaea` L / `#444444` D), border `1px background.surface2` (`#e5e5e5` L / `#666666` D), radius `4px`, padding `0.3rem 0.6rem`; caret `16px` filled in `colors.text.subtext0` | `components/Sidebar/ImportSettings/ImportSettingDropdown/StyledWrapper.js:5-13`; `ImportSettingDropdown/index.js:43` |
+| `ImportSettingDropdown` width | reserves the widest option width via hidden sizer spans                                                                                                                                                          | `ImportSettingDropdown/index.js:39-41`; `components/Sidebar/StyledWrapper.js:17-28`                                  |
+| `ImportAdvancedSection`       | top border `1px border.border1`, chevron `16px` rotating `90deg` in `0.15s ease`, collapsed content `height: 0`                                                                                                  | `components/Sidebar/ImportSettings/ImportAdvancedSection/StyledWrapper.js:4-15`                                      |
 | Toggle size                   | `ToggleSwitch size="2xs"`                                                                                                                                                                                        | e.g. `AuthPlacementOption/index.js:18`                                                            |
 
 ---
@@ -281,8 +281,8 @@ preserve scripts off (`:111-117`; `bruno-common/src/openapi-sync/index.ts:3,9,11
 ## 6. Bulk Import — `components/Sidebar/BulkImportCollectionLocation` (modal)
 
 Opened when the file tab receives multiple files or a bulk set
-(`Sections/CollectionsSection/index.js:383-389`). Title `Bulk Import`, `md`
-(`BulkImportCollectionLocation/index.js:612-615`).
+(`components/Sidebar/Sections/CollectionsSection/index.js:383-389`). Title `Bulk Import`, `md`
+(`components/Sidebar/BulkImportCollectionLocation/index.js:612-615`).
 
 Phase A — selection (`:786-962`):
 
@@ -321,7 +321,7 @@ The native directory picker runs first; if several collections are found a modal
 
 | Aspect           | Value                                                                                                | Source                            |
 | ---------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------- |
-| Title            | `Open Collection`; confirm `Open`; footer left `{selected} of {total} selected`                      | `OpenCollection/index.js:165-176` |
+| Title            | `Open Collection`; confirm `Open`; footer left `{selected} of {total} selected`                      | `components/Sidebar/OpenCollection/index.js:165-176` |
 | Description      | `These collections were found inside your selection. Choose which ones to open.`                     | `:179-181`                        |
 | Selection list   | title `Collections`, placeholder `Search Collections`, 8 rows × `60 px`, gap `4`                     | `:184-197`                        |
 | Confirm disabled | nothing selected                                                                                     | `:171`                            |
@@ -336,7 +336,7 @@ The native directory picker runs first; if several collections are found a modal
 
 ## 8. Create Collection — `components/Sidebar/CreateCollection` (modal)
 
-Title `Create Collection`, `md`, `hideFooter` (`CreateCollection/index.js:117`).
+Title `Create Collection`, `md`, `hideFooter` (`components/Sidebar/CreateCollection/index.js:117`).
 
 | Field                  | Label / copy                                                                                                                                                                                                                       | Source     |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
@@ -357,13 +357,13 @@ Success `Collection created!` (`:70`); failure `An error occurred while creating
 plus IPC detail (`:73`).
 
 Reached from the header `Create collection` item, the header `Add new collection` inline
-creator's advanced cog, and the Welcome modal (`Sections/CollectionsSection/index.js:233-237,343-346`).
+creator's advanced cog, and the Welcome modal (`components/Sidebar/Sections/CollectionsSection/index.js:233-237,343-346`).
 
 ---
 
 ## 9. Clone Git Repository — `components/Sidebar/CloneGitRespository` (modal)
 
-Title `Clone Git Repository`, `md` (`CloneGitRespository/index.js:283-293`).
+Title `Clone Git Repository`, `md` (`components/Sidebar/CloneGitRespository/index.js:283-293`).
 If `gitVersion` is missing the modal is replaced by `GitNotFoundModal` (`:277-279`).
 
 Form view (`:295-381`):
@@ -383,10 +383,10 @@ Progress view (`:382-433`): step list with `IconRefresh` spinning in
 step titles `Cloning repository` → `Cloning successful` / `Cloning failed`, then
 `Scanning for Bruno files` → `Scan successful`; log box `.info-box` background
 `background.mantle`, border `1px border.border2`, radius `5px`, width `400px`,
-`max-height: 150px` (`:56-62,117-134`; `CloneGitRespository/StyledWrapper.js:9-20`).
+`max-height: 150px` (`:56-62,117-134`; `components/Sidebar/CloneGitRespository/StyledWrapper.js:9-20`).
 Scan result: `SkippedPathsWarning` + `SelectionList` (`Collections`, `Search Collections`,
 8 × `60 px`) or the warning `No Bruno collections were found in this repository.`
-(`:407-432`; warning style `status.warning.*`, `StyledWrapper.js:47-59`).
+(`:407-432`; warning style `status.warning.*`, `components/Sidebar/StyledWrapper.js:47-59`).
 
 Footer logic (`:249-292`): confirm text `Clone` → `Close` → `Open`
 (`getConfirmText`, `:270-275`); cancel hidden on error or empty scan; footer hidden while
@@ -398,7 +398,7 @@ steps run. Toasts: `Repository cloned successfully`, `Repository scanned success
 
 | Aspect                 | Value                                                                                                                            | Source                          |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| Size / title / confirm | `sm`, `Close Workspace`, `Close`                                                                                                 | `CloseWorkspace/index.js:36-42` |
+| Size / title / confirm | `sm`, `Close Workspace`, `Close`                                                                                                 | `components/Sidebar/CloseWorkspace/index.js:36-42` |
 | Header line            | `IconFolder` 18 px + workspace name (`font-semibold`)                                                                            | `:43-46`                        |
 | Path                   | `text-xs mt-1 break-words`                                                                                                       | `:47-49`                        |
 | Copy                   | `Are you sure you want to close workspace {name}?`                                                                               | `:50-52`                        |
@@ -410,17 +410,17 @@ steps run. Toasts: `Repository cloned successfully`, `Repository scanned success
 ## 11. Postman Package Report — `components/Sidebar/PostmanPackageReport` (modal)
 
 Shown after importing a Postman collection whose scripts reference npm packages or
-unsupported APIs (`Sections/CollectionsSection/index.js:397-404`).
+unsupported APIs (`components/Sidebar/Sections/CollectionsSection/index.js:397-404`).
 
 | Aspect                        | Value                                                                                                                                                                                                                                                                                                         | Source                                                           |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Modal                         | `md`, title `Install packages`; card width forced `600px`                                                                                                                                                                                                                                                     | `PostmanPackageReport/index.js:177-189`; `StyledWrapper.js:8-10` |
+| Modal                         | `md`, title `Install packages`; card width forced `600px`                                                                                                                                                                                                                                                     | `components/Sidebar/PostmanPackageReport/index.js:177-189`; `components/Sidebar/StyledWrapper.js:8-10` |
 | Cancel text                   | `Skip`                                                                                                                                                                                                                                                                                                        | `:181`                                                           |
 | Confirm text                  | `Done` / `Installing…` / `Install N package(s)`                                                                                                                                                                                                                                                               | `:165-172`                                                       |
-| Section card                  | border `1px border.border2`, radius `border.radius.base`, background `background.mantle`, padding `12px 14px`, stacked `10px` apart                                                                                                                                                                           | `StyledWrapper.js:12-23`                                         |
+| Section card                  | border `1px border.border2`, radius `border.radius.base`, background `background.mantle`, padding `12px 14px`, stacked `10px` apart                                                                                                                                                                           | `components/Sidebar/StyledWrapper.js:12-23`                                         |
 | Section title                 | uppercase, `font.size.sm`, weight `500`, `colors.text.muted`, letter-spacing `0.04em`, count pill `min-width: 20px; height: 18px; radius 999px`                                                                                                                                                               | `:33-55`                                                         |
-| Packages section              | `Packages used in scripts` + count; help `These npm packages are referenced by scripts in your imported collection but aren't installed in this collection's folder.`                                                                                                                                         | `index.js:190-202`                                               |
-| Manual command                | label `Or install manually`, command `npm install --save …` prefixed with `$ `, copy button (icon `IconCopy` → `IconCheck`)                                                                                                                                                                                   | `:204-222`; `StyledWrapper.js:185-243`                           |
+| Packages section              | `Packages used in scripts` + count; help `These npm packages are referenced by scripts in your imported collection but aren't installed in this collection's folder.`                                                                                                                                         | `components/Sidebar/PostmanPackageReport/index.js:191-200`                                               |
+| Manual command                | label `Or install manually`, command `npm install --save …` prefixed with `$ `, copy button (icon `IconCopy` → `IconCheck`)                                                                                                                                                                                   | `components/Sidebar/PostmanPackageReport/index.js:204-222`                           |
 | Installing                    | `Installing N package(s)…` with spinner                                                                                                                                                                                                                                                                       | `:224-229`                                                       |
 | Installed                     | `Installed N package(s) into this collection.`                                                                                                                                                                                                                                                                | `:231-239`                                                       |
 | Developer mode block          | title `Scripts use libraries that need Developer Mode`; desc `Your imported scripts call … which need Developer Mode to run.`; trust `Only enable Developer Mode for collections you trust.`; button `Switch to Developer Mode`                                                                               | `:243-268`                                                       |
@@ -428,7 +428,7 @@ unsupported APIs (`Sections/CollectionsSection/index.js:397-404`).
 | Post-install (developer mode) | `This collection runs in Developer Mode - your scripts can use these packages right away.`                                                                                                                                                                                                                    | `:286-294`                                                       |
 | Post-install (safe mode)      | title `External modules require Developer Mode`; desc `Custom npm packages (such as …) are installed, but this collection is currently running in Safe Mode.`                                                                                                                                                 | `:296-320`                                                       |
 | Failure                       | `npm was not found on your PATH. Install Node.js/npm, then retry or run the command manually.`; `npm install timed out. Try running the command manually in a terminal.`; `Could not start npm install. Try running the command manually.`; `npm install failed (exit code N). Try the manual command above.` | `:55-67`                                                         |
-| Package chip                  | monospace `font.size.sm`, background `background.base`, border `border.border2`, radius `border.radius.sm`, padding `3px 8px 3px 6px`                                                                                                                                                                         | `StyledWrapper.js:163-174`                                       |
+| Package chip                  | monospace `font.size.sm`, background `background.base`, border `border.border2`, radius `border.radius.sm`, padding `3px 8px 3px 6px`                                                                                                                                                                         | `components/Sidebar/StyledWrapper.js:163-174`                                       |
 
 The modal auto-closes when nothing is actionable (`:98-102`).
 
@@ -438,9 +438,9 @@ The modal auto-closes when nothing is actionable (`:98-102`).
 
 | Popover                          | Trigger                    | Placement      | Source                                                                   |
 | -------------------------------- | -------------------------- | -------------- | ------------------------------------------------------------------------ |
-| Collections `Add new collection` | `+` in section header      | `bottom-end`   | `Sections/CollectionsSection/index.js:304-314`                           |
+| Collections `Add new collection` | `+` in section header      | `bottom-end`   | `components/Sidebar/Sections/CollectionsSection/index.js:304-314`                           |
 | Collections `More actions`       | `⋮` in section header      | `bottom-end`   | `:316-326`                                                               |
-| API Specs add                    | `+` in section header      | `bottom-end`   | `Sections/ApiSpecsSection/index.js:45-55`                                |
+| API Specs add                    | `+` in section header      | `bottom-end`   | `components/Sidebar/Sections/ApiSpecsSection/index.js:45-55`                                |
 | Row actions                      | `⋮` on row, or right-click | `bottom-start` | `CollectionRow/index.jsx:611-617`; `CollectionItemRow/index.jsx:820-826` |
 | Empty CTA                        | `+ Add request`            | `bottom-start` | `EmptyCtaRow/index.jsx:27-35`                                            |
 
@@ -457,16 +457,16 @@ Popover surface metrics: min-width `160px`, padding `0.25rem`, radius `6px`, ite
 | `Esc` in any modal    | closes (except `disableEscapeKey` dialogs, e.g. confirm-close)       | `Modal/index.js:117-121`                                                                  |
 | `Enter` in a modal    | confirms (skipped when focus is a submit button or confirm disabled) | `:122-127`                                                                                |
 | Click backdrop        | closes (except `disableCloseOnOutsideClick`)                         | `:186-195`                                                                                |
-| Import shortcut       | `importCollection` → `⌘/Ctrl+O` opens Import Collection              | `keyMappings.js:56`; `Sections/CollectionsSection/index.js:66-69`                         |
+| Import shortcut       | `importCollection` → `⌘/Ctrl+O` opens Import Collection              | `keyMappings.js:56`; `components/Sidebar/Sections/CollectionsSection/index.js:66-69`                         |
 | Inline create confirm | `Enter` / click-outside / green check                                | `InlineCollectionCreator/index.js:101-120`                                                |
 | Inline create cancel  | `Esc` / red cross                                                    | `:116-118,164-173`                                                                        |
-| New Folder advanced   | `Options ▾` → `Show Filesystem Name`                                 | `NewFolder/index.js:172-183`                                                              |
-| New Request options   | `Options ▾` → `Show Filesystem Name`                                 | `NewRequest/index.js:582-593`                                                             |
-| New Request paste     | pasting `curl …` switches to `From cURL`                             | `NewRequest/index.js:264-287`                                                             |
-| Import location input | click opens directory picker (`browseDirectory`)                     | `ImportCollectionLocation/index.js:182-193,255`                                           |
-| Import options menu   | `Options ▾` → `Show/Hide file format`                                | `ImportSettings/ImportOptionsMenu/index.js:16-35`                                         |
-| Import advanced       | click `Advanced` toggles; `Esc` returns focus to trigger             | `ImportSettings/ImportAdvancedSection/index.js:11-21`; `ImportOptionsMenu/index.js:10-14` |
-| Clone git             | footer goes `Clone` → `Close`/`Open`; `Back` on error                | `CloneGitRespository/index.js:219-275`                                                    |
+| New Folder advanced   | `Options ▾` → `Show Filesystem Name`                                 | `components/Sidebar/NewFolder/index.js:172-183`                                                              |
+| New Request options   | `Options ▾` → `Show Filesystem Name`                                 | `components/Sidebar/NewRequest/index.js:582-593`                                                             |
+| New Request paste     | pasting `curl …` switches to `From cURL`                             | `components/Sidebar/NewRequest/index.js:264-287`                                                             |
+| Import location input | click opens directory picker (`browseDirectory`)                     | `components/Sidebar/ImportCollectionLocation/index.js:182-193,255`                                           |
+| Import options menu   | `Options ▾` → `Show/Hide file format`                                | `components/Sidebar/ImportSettings/ImportOptionsMenu/index.js:16-35`                                         |
+| Import advanced       | click `Advanced` toggles; `Esc` returns focus to trigger             | `components/Sidebar/ImportSettings/ImportAdvancedSection/index.js:11-21`; `ImportOptionsMenu/index.js:10-14` |
+| Clone git             | footer goes `Clone` → `Close`/`Open`; `Back` on error                | `components/Sidebar/CloneGitRespository/index.js:219-275`                                                    |
 
 ---
 
@@ -488,10 +488,10 @@ these dialogs (`i18n/translation/en.json:1-34`) and no sidebar dialog imports
    or reproduce the literal greys. Flagged, not resolved.
 2. **`refs/new_request_modal_bruno.png` shows a `URL` editor using a plain textbox look**
    with the method dropdown attached on the left; source uses `SingleLineEditor` (CodeMirror)
-   (`NewRequest/index.js:509-533`). A Go port should render a text field with vars
+   (`components/Sidebar/NewRequest/index.js:509-533`). A Go port should render a text field with vars
    autocomplete; appearance may differ slightly from a CodeMirror input.
 3. **`refs/new_folder_modal_bruno.png` input has no visible placeholder**; source agrees
-   (no `placeholder` prop, `NewFolder/index.js:93-109`).
+   (no `placeholder` prop, `components/Sidebar/NewFolder/index.js:93-109`).
 4. **`refs/import_collection_bruno.png`** is the only Import capture; it does not show the
    OpenAPI/Postman rows. Those rows are specified from source only.
 5. **Selection list internals** (`SelectionList`) are specified in `screens/runner.md`;

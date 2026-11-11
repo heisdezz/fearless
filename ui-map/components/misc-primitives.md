@@ -137,7 +137,7 @@ Indeterminate ring spinner, inherits `currentColor`. See
 ## RichTextEditor toolbar (Docs editing)
 
 `src/ui/RichTextEditor` is TipTap-based. The toolbar
-(`components/EditorToolbar/index.js`) renders buttons from
+(`ui/RichTextEditor/components/EditorToolbar/index.js`) renders buttons from
 `utils/editorToolbarConfig.js`; each button's `aria-label`, tooltip and label
 is its tooltip string. Verbatim, in order:
 
@@ -151,7 +151,7 @@ is its tooltip string. Verbatim, in order:
 
 Toolbar icons use Tabler at 16/1.5 (carets 14/1.5 filled). Link edit popover
 fields: **`Text`** (placeholder `Text to display`) and **`URL`** (placeholder
-`https://example.com`) (`components/EditorLinkEditPopover/index.js:78-99`).
+`https://example.com`) (`ui/RichTextEditor/components/EditorLinkEditPopover/index.js:78-99`).
 A tooltip host `ToolHint` is mounted once with id `editor-toolbar-tooltip`
 (`:136`).
 

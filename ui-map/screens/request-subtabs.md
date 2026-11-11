@@ -30,16 +30,16 @@ Vertical rhythm inside the tab: each tab starts immediately below the strip
 ## 2. Vars tab — `RequestPane/Vars/index.js`
 
 Two stacked key/value tables, each under a `text-xs` title in
-`colors.text.subtext0` (`Vars/StyledWrapper.js:4-6`):
+`colors.text.subtext0` (`components/RequestPane/Vars/StyledWrapper.js:4-6`):
 
 | Section title (verbatim) | Table                   | Value column                      | Source                |
 | ------------------------ | ----------------------- | --------------------------------- | --------------------- |
-| `Pre Request`            | request-local variables | `Value` (with data-type selector) | `Vars/index.js:17-19` |
-| `Post Response`          | response-time variables | `Expr` + InfoTip                  | `Vars/index.js:21-23` |
+| `Pre Request`            | request-local variables | `Value` (with data-type selector) | `components/RequestPane/Vars/index.js:17-19` |
+| `Post Response`          | response-time variables | `Expr` + InfoTip                  | `components/RequestPane/Vars/index.js:21-23` |
 
 | Aspect                | Detail                                                                                           | Source                           |
 | --------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------- |
-| Columns               | `Name` (`20%`, sortable), `Value`/`Expr`, `Description` (`25%`)                                  | `Vars/VarsTable/index.js:79-140` |
+| Columns               | `Name` (`20%`, sortable), `Value`/`Expr`, `Description` (`25%`)                                  | `components/RequestPane/Vars/VarsTable/index.js:79-140` |
 | Name placeholder      | `Name`                                                                                           | `:86`                            |
 | Value placeholder     | `Value` (Pre Request) / `Expr` (Post Response)                                                   | `:97,110`                        |
 | Value editor          | `MultiLineEditor`, `{{` autocomplete                                                             | `:99-115`                        |
@@ -47,7 +47,7 @@ Two stacked key/value tables, each under a `text-xs` title in
 | Expr help tooltip     | `You can write any valid JS expression here`                                                     | `:93`                            |
 | Row order             | reorderable; sortable by name                                                                    | `:151-156`                       |
 | Empty add-row present | yes                                                                                              | `EditableTable/index.js:265-289` |
-| Name validation       | `Variable contains invalid characters. Must only contain alphanumeric characters, "-", "_", "."` | `Vars/VarsTable/index.js:66-70`  |
+| Name validation       | `Variable contains invalid characters. Must only contain alphanumeric characters, "-", "_", "."` | `components/RequestPane/Vars/VarsTable/index.js:66-70`  |
 
 Screenshot: `refs/vars_bruno.png`.
 
@@ -78,7 +78,7 @@ Pill styling (`components/Tabs/StyledWrapper.js`):
 
 Editor: `CodeEditor` in `javascript` mode, `showHintsFor` `['req','bru']`
 (pre-request) and `['req','res','bru']` (post-response)
-(`Script/index.js:143-157,161-175`). Error lines are jumped to automatically
+(`components/RequestPane/Script/index.js:143-157,161-175`). Error lines are jumped to automatically
 (`useFocusErrorLine`, `:63-76`).
 
 Default sub-tab on first open: `getActiveScriptTab(scriptPaneTab, requestScript)`
@@ -100,7 +100,7 @@ Screenshot: `refs/scripts_bruno.png` (collection-level equivalent UI).
 | `Description` | `25%`   | multi-line                                       | `descriptionColumn.js:12-27`                  |
 
 Empty add-row default value is `eq ` (with trailing space), so a new assertion
-appears as _operator `equals`_ + empty value (`Assertions/index.js:181-186`).
+appears as _operator `equals`_ + empty value (`components/RequestPane/Assertions/index.js:181-186`).
 
 Operator options, in order, with displayed label (`AssertionOperator/index.js:32-84`):
 
@@ -112,7 +112,7 @@ Operator options, in order, with displayed label (`AssertionOperator/index.js:32
 
 Unary operators (Value cell disabled): `isEmpty`, `isNotEmpty`, `isNull`,
 `isUndefined`, `isDefined`, `isTruthy`, `isFalsy`, `isJson`, `isNumber`,
-`isString`, `isBoolean`, `isArray` (`Assertions/index.js:22-35`).
+`isString`, `isBoolean`, `isArray` (`components/RequestPane/Assertions/index.js:22-35`).
 
 Row storage is a single string `<operator> <value>` parsed on read
 (`parseAssertionOperator`, `:37-60`).
@@ -177,13 +177,13 @@ thumb `h-3 w-3` (12px), checked translate `translate-x-5`, track colour
 
 | Order | Label                               | Description (verbatim)                                                                            | Default       | Source                         |
 | ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------- | ------------- | ------------------------------ |
-| 1     | `URL Encoding`                      | `Automatically encode query parameters in the URL`                                                | off (`false`) | `Settings/index.js:20,145-152` |
+| 1     | `URL Encoding`                      | `Automatically encode query parameters in the URL`                                                | off (`false`) | `components/RequestPane/Settings/index.js:20,145-152` |
 | 2     | `Automatically Follow Redirects`    | `Follow HTTP redirects automatically`                                                             | on (`true`)   | `:21,154-161`                  |
 | 3     | `Forward Authorization on Redirect` | `Send Authorization and Proxy-Authorization headers when a redirect points to a different origin` | on (`true`)   | `:24,163-170`                  |
 | 4     | `Enable App` (HTTP requests only)   | `Show the App tab and app view mode for this request`                                             | off           | `:173-183`                     |
 
 Defaults object: `{ encodeUrl: false, followRedirects: true, maxRedirects: utils.DEFAULT_MAX_REDIRECTS, timeout: 'inherit', forwardAuthorizationHeader: true }`
-(`Settings/index.js:17-23`).
+(`components/RequestPane/Settings/index.js:17-23`).
 
 ### 7.3 Numeric inputs
 
@@ -200,7 +200,7 @@ Timeout control states (`components/InheritableSettingsInput/index.js`):
 | Custom                          | text input (digits only, empty → `0`) with an `×` button, tooltip `Reset to inherit` (`:58-82`)          |
 
 Both inputs also honour `Cmd/Ctrl+S` (save) and `Cmd/Ctrl+Enter` (send) while
-focused (`Settings/index.js:112-120`).
+focused (`components/RequestPane/Settings/index.js:112-120`).
 
 ---
 
@@ -208,7 +208,7 @@ focused (`Settings/index.js:112-120`).
 
 | Tab      | Empty state                             | Indicator                                  | Notes                             |
 | -------- | --------------------------------------- | ------------------------------------------ | --------------------------------- |
-| Vars     | one empty row per table                 | `sup` count of enabled vars (pre + post)   | `HttpRequestPane/index.js:87,112` |
+| Vars     | one empty row per table                 | `sup` count of enabled vars (pre + post)   | `components/RequestPane/HttpRequestPane/index.js:87,112` |
 | Script   | empty JS editor                         | `StatusDot`, error variant on script error | `:113`                            |
 | Assert   | one empty row, operator pre-set to `eq` | `sup` count                                | `:114`                            |
 | Tests    | empty JS editor                         | `StatusDot`, error variant on test error   | `:115`                            |

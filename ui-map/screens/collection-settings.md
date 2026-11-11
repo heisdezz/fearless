@@ -40,8 +40,8 @@ same table chrome (`CollectionSettings/Vars/VarsTable/index.js:129-147`).
 | Content | `mt-4 flex-1 min-h-0 overflow-auto` | `:164` |
 | Count superscript | `<sup class="ml-1 font-medium">` for Headers / Vars | `:122,126` |
 | Active-state dot | `<StatusDot />` (12 px dot, see `components/status-dot.md`) | `:130,134,138,142,146,150,154` |
-| Radio accent | `primary.solid` | `StyledWrapper.js:53-56` |
-| Markdown body | `height:auto`, `overflow-y:visible` | `StyledWrapper.js:4-7` |
+| Radio accent | `primary.solid` | `components/CollectionSettings/StyledWrapper.js:53-56` |
+| Markdown body | `height:auto`, `overflow-y:visible` | `components/CollectionSettings/StyledWrapper.js:4-7` |
 
 ### 1.1 Tab strip (exact order) — `CollectionSettings/index.js:117-155`
 
@@ -102,10 +102,10 @@ Rendered only for `AI_TABS = ['overview', 'script', 'tests']` (`:23`):
 ```
 
 Grid `grid-cols-5 gap-5 h-full`; left `col-span-2` scrolls, right `col-span-3`
-(`Overview/index.js:10-24`). Collection name row: `IconBox` 20 px + name
+(`components/CollectionSettings/Overview/index.js:10-24`). Collection name row: `IconBox` 20 px + name
 `text-lg font-medium` truncated (`:12-17`).
 
-### 2.2 Info rows — `Overview/Info/index.js:45-188`
+### 2.2 Info rows — `components/CollectionSettings/Overview/Info/index.js:45-188`
 
 Each row = 40 px icon box (`p-3`, radius 8px = `rounded-lg`) + `font-medium`
 title + muted value (`:47-59`).
@@ -118,7 +118,7 @@ title + muted value (`:47-59`).
 | 4 | `Requests` | loading → `{total-itemsLoading} out of {total} requests in the collection loaded`; else `{n} request{s} in collection`; if invalid files: ` · {n} invalid` appended | `IconApi`, `rgba(colors.text.purple,.08)` / `.09`, icon purple | `:138-156`, `Info/StyledWrapper.js:37-44` |
 | 5 | `Share` | link `Share Collection` → opens `ShareCollection` modal | `IconShare`, textLink tint | `:158-169`, `Info/StyledWrapper.js:46-53` |
 | 6 | `Documentation` | link `Generate Docs` → opens `GenerateDocumentation` modal | `IconBook`, `rgba(accents.primary,.08)` / `.09`, icon `accents.primary` | `:171-182`, `Info/StyledWrapper.js:64-71` |
-| 7 | `Migration` | see §2.4 (only when `collection.format === 'bru'`) | `IconTransform` 20 px in heading | `Overview/Migration/index.js:26-66` |
+| 7 | `Migration` | see §2.4 (only when `collection.format === 'bru'`) | `IconTransform` 20 px in heading | `components/CollectionSettings/Overview/Migration/index.js:26-66` |
 
 ### 2.3 "Following requests were not loaded" card
 
@@ -137,7 +137,7 @@ title + muted value (`:47-59`).
 
 | Part | Verbatim | Source |
 | --- | --- | --- |
-| Heading | `Migration` with `IconTransform` 20 px, `text-lg font-medium` | `Overview/Migration/index.js:29-32` |
+| Heading | `Migration` with `IconTransform` 20 px, `text-lg font-medium` | `components/CollectionSettings/Overview/Migration/index.js:29-32` |
 | Title | `Migrate to YML file format` | `:39` |
 | Body | `This collection is stored in BRU format. Switch to YML.` + link `Learn More ↗` (U+2197) → `https://blog.usebruno.com/making-yaml-the-default-in-bruno-v3.1` | `:40-51` |
 | Button | `Convert to YML` (`Button size="sm" color="primary"`), opens `MigrateCollectionToYmlModal` | `:52-60`, `:16-24` |
@@ -150,9 +150,9 @@ title + muted value (`:47-59`).
 | --- | --- | --- |
 | Header | `IconFileText` 20 px + `Documentation` (`text-lg font-medium`) | `:53-57` |
 | Preview mode | `DocsEditor` read-only rich text; double-click to edit | `:72-83`; `components/Documentation/DocsEditor/index.js:147-183` |
-| Edit mode controls | `Edit`/`Preview` button lives in the tab-bar right slot (§1.2); inside Docs, `Cancel` (`Button color="secondary"`) and `Save` buttons | `Docs/index.js:59-68` |
+| Edit mode controls | `Edit`/`Preview` button lives in the tab-bar right slot (§1.2); inside Docs, `Cancel` (`Button color="secondary"`) and `Save` buttons | `components/CollectionSettings/Docs/index.js:59-68` |
 | Edit-mode strip | `RichTextEditor.MenuBar` + a `ModeSwitch` (rich ⇄ markdown, `gfm` CodeMirror) | `DocsEditor/index.js:145-161` |
-| Empty preview copy | long Markdown placeholder (`Welcome to your collection documentation! …`) shown only in preview when docs are empty | `Docs/index.js:79,91-113` |
+| Empty preview copy | long Markdown placeholder (`Welcome to your collection documentation! …`) shown only in preview when docs are empty | `components/CollectionSettings/Docs/index.js:79,91-113` |
 | Narrow width | `StyledWrapper` forces `.markdown-body { height:auto; overflow-y:visible }` | `CollectionSettings/StyledWrapper.js:4-7` |
 
 ---
@@ -172,7 +172,7 @@ Intro line (verbatim, `text-xs text-muted`, `mb-4`):
 | checkbox (enabled) | `enabled` | — | — | native checkbox (`accent-color: workspace.accent`) | `EditableTable` | 
 | `Name` | `name` | 20 % | `Name` | `SingleLineEditor`, autocomplete from `know-your-http-well` header list, newlines stripped | `:84-102` |
 | `Value` | `value` | flex | `Value` | `SingleLineEditor`, autocomplete `MimeTypes` | `:103-118` |
-| `Description` | `description` | `70px` (3rd cell) | `Description` | `createDescriptionColumn` | `:119`, `StyledWrapper.js:27-29` |
+| `Description` | `description` | `70px` (3rd cell) | `Description` | `createDescriptionColumn` | `:119`, `components/CollectionSettings/StyledWrapper.js:27-29` |
 | trailing | — | — | — | delete row | `EditableTable` |
 
 Table chrome: `font-weight:500`, `table-layout:fixed`; `thead`/`td`
@@ -205,13 +205,13 @@ Empty state: none — an empty table renders one blank "add" row from `EditableT
 `CollectionSettings/Vars/index.js`; table `Vars/VarsTable/index.js`.
 
 Two stacked tables, each with a `text-xs` caption in `colors.text.subtext0`
-(`Vars/StyledWrapper.js:4-6`):
+(`components/CollectionSettings/Vars/StyledWrapper.js:4-6`):
 
 | # | Caption (verbatim) | `varType` | Data path | Source |
 | --- | --- | --- | --- | --- |
-| 1 | `Pre Request` | `request` | `root.request.vars.req` | `Vars/index.js:25-26` |
-| 2 | `Post Response` | `response` | `root.request.vars.res` | `Vars/index.js:29-30` |
-| 3 | — | — | `Save` `Button size="sm"` at `mt-6` | `Vars/index.js:32-36` |
+| 1 | `Pre Request` | `request` | `root.request.vars.req` | `components/CollectionSettings/Vars/index.js:25-26` |
+| 2 | `Post Response` | `response` | `root.request.vars.res` | `components/CollectionSettings/Vars/index.js:29-30` |
+| 3 | — | — | `Save` `Button size="sm"` at `mt-6` | `components/CollectionSettings/Vars/index.js:32-36` |
 
 ### 4.1 Columns
 
@@ -254,7 +254,7 @@ Selector: `AuthMode` (`Auth/AuthMode/index.js`) — bordered pill, `MenuDropdown
 placement `bottom-start`, `appendTo` body, `hideOnReferenceClip`, tick mark
 (`:88-104`).
 
-### 5.1 Mode menu — `Auth/AuthMode/index.js:24-86`
+### 5.1 Mode menu — `components/CollectionSettings/Auth/AuthMode/index.js:24-86`
 
 | # | id | Menu label | Trigger label (`humanizeRequestAuthMode`) |
 | --- | --- | --- | --- |
@@ -282,17 +282,17 @@ All fields are `SingleLineEditor isCompact`; secrets use `isSecret` + a
 
 | Mode | Fields (order) | Notes | Source |
 | --- | --- | --- | --- |
-| `none` | — | no panel | `Auth/index.js:25-58` (switch has no `none` case) |
-| `basic` | `Username`, `Password`⛨ | | `Auth/BasicAuth/index.js:45-72` |
-| `bearer` | `Token`⛨ | | `Auth/BearerAuth/index.js:32-46` |
-| `digest` | `Username`, `Password`⛨ | | `Auth/DigestAuth/index.js:46-72` |
-| `wsse` | `Username`, `Password`⛨ | | `Auth/WsseAuth/index.js:47-70` |
-| `ntlm` | `Username`, `Password`⛨, `Domain` | | `Auth/NTLMAuth/index.js:64-95` |
-| `apikey` | `Key`, `Value`⛨, `Add To` | `Add To` options `Header` / `Query Params`; missing placement initialised to `header`; trigger at `bottom-end` | `Auth/ApiKeyAuth/index.js:59-110`, `:46-57`, `:87-108` |
-| `awsv4` | `Access Key ID`, `Secret Access Key`⛨, `Session Token`⛨, `Service`, `Region`, `Profile Name` | | `Auth/AwsV4Auth/index.js:133-213` |
-| `oauth1` | `Consumer Key`, `Consumer Secret`⛨, `Token`, `Token Secret`⛨, section `Signature` (`IconShieldLock` 14 px), `Signature Method`, *(conditional)* `Private Key`, `Add Params To`, then collapsible `Callback URL`, `Verifier`, `Timestamp`, `Nonce`, `Version`, `Realm` | `Signature Method` options: `HMAC-SHA1`, `HMAC-SHA256`, `HMAC-SHA512`, `RSA-SHA1`, `RSA-SHA256`, `RSA-SHA512`, `PLAINTEXT` (default label when unset: `HMAC-SHA1`). `Add Params To` options `Header` / `Query Params` / `Body` (default `Header`) | `Auth/Oauth1/index.js:8-22` (wraps `components/RequestPane/Auth/OAuth1/index.js:16-22,126-444`) |
-| `oauth2` | `GrantTypeSelector` + grant-specific body | Grant types in menu order: `Password Credentials`, `Authorization Code`, `Implicit`, `Client Credentials` | `Auth/OAuth2/index.js:42-51`; `components/RequestPane/Auth/OAuth2/GrantTypeSelector/index.js:80-83` |
-| `akamai-edgegrid` | `Access Token`⛨, `Client Token`⛨, `Client Secret`⛨, then `Advanced Settings` (`IconAdjustmentsHorizontal` 16 px): `Base URL`, `Nonce`, `Timestamp`, `Headers to Sign`, `Max Body Size` | Tooltips (verbatim) in table below | `Auth/EdgeGridAuth/index.tsx:36-68,110-155` |
+| `none` | — | no panel | `components/CollectionSettings/Auth/index.js:25-58` (switch has no `none` case) |
+| `basic` | `Username`, `Password`⛨ | | `components/CollectionSettings/Auth/BasicAuth/index.js:45-72` |
+| `bearer` | `Token`⛨ | | `components/CollectionSettings/Auth/BearerAuth/index.js:32-46` |
+| `digest` | `Username`, `Password`⛨ | | `components/CollectionSettings/Auth/DigestAuth/index.js:46-72` |
+| `wsse` | `Username`, `Password`⛨ | | `components/CollectionSettings/Auth/WsseAuth/index.js:47-70` |
+| `ntlm` | `Username`, `Password`⛨, `Domain` | | `components/CollectionSettings/Auth/NTLMAuth/index.js:64-95` |
+| `apikey` | `Key`, `Value`⛨, `Add To` | `Add To` options `Header` / `Query Params`; missing placement initialised to `header`; trigger at `bottom-end` | `components/CollectionSettings/Auth/ApiKeyAuth/index.js:59-110`, `:46-57`, `:87-108` |
+| `awsv4` | `Access Key ID`, `Secret Access Key`⛨, `Session Token`⛨, `Service`, `Region`, `Profile Name` | | `components/CollectionSettings/Auth/AwsV4Auth/index.js:133-213` |
+| `oauth1` | `Consumer Key`, `Consumer Secret`⛨, `Token`, `Token Secret`⛨, section `Signature` (`IconShieldLock` 14 px), `Signature Method`, *(conditional)* `Private Key`, `Add Params To`, then collapsible `Callback URL`, `Verifier`, `Timestamp`, `Nonce`, `Version`, `Realm` | `Signature Method` options: `HMAC-SHA1`, `HMAC-SHA256`, `HMAC-SHA512`, `RSA-SHA1`, `RSA-SHA256`, `RSA-SHA512`, `PLAINTEXT` (default label when unset: `HMAC-SHA1`). `Add Params To` options `Header` / `Query Params` / `Body` (default `Header`) | `components/CollectionSettings/Auth/Oauth1/index.js:8-22` (wraps `components/RequestPane/Auth/OAuth1/index.js:16-22,126-444`) |
+| `oauth2` | `GrantTypeSelector` + grant-specific body | Grant types in menu order: `Password Credentials`, `Authorization Code`, `Implicit`, `Client Credentials` | `components/CollectionSettings/Auth/OAuth2/index.js:42-51`; `components/RequestPane/Auth/OAuth2/GrantTypeSelector/index.js:80-83` |
+| `akamai-edgegrid` | `Access Token`⛨, `Client Token`⛨, `Client Secret`⛨, then `Advanced Settings` (`IconAdjustmentsHorizontal` 16 px): `Base URL`, `Nonce`, `Timestamp`, `Headers to Sign`, `Max Body Size` | Tooltips (verbatim) in table below | `components/CollectionSettings/Auth/EdgeGridAuth/index.tsx:36-68,110-155` |
 
 ⛨ = secret (`isSecret` + `SensitiveFieldWarning`).
 
@@ -317,7 +317,7 @@ Authorization Code / Client Credentials / Implicit additionally render:
 `Implicit/index.js:117-231`). These are shared with the request Auth tab — see
 `screens/request-auth.md`; do not fork the implementation.
 
-#### EdgeGrid tooltips (verbatim) — `Auth/EdgeGridAuth/index.tsx:36-62`
+#### EdgeGrid tooltips (verbatim) — `components/CollectionSettings/Auth/EdgeGridAuth/index.tsx:36-62`
 
 | Field | Tooltip |
 | --- | --- |
@@ -329,7 +329,7 @@ Authorization Code / Client Credentials / Implicit additionally render:
 
 ### 5.3 Save
 
-`Save` `Button size="sm"` at `mt-6` (`Auth/index.js:70-74`). Mode change applies
+`Save` `Button size="sm"` at `mt-6` (`components/CollectionSettings/Auth/index.js:70-74`). Mode change applies
 immediately to the draft; the button persists.
 
 ---
@@ -368,7 +368,7 @@ Single `CodeEditor mode="javascript"`, `showHintsFor ['req','res','bru']` (`:43-
 
 | # | Label | Subtitle (verbatim) | Control | Options / default | Source |
 | --- | --- | --- | --- | --- | --- |
-| 1 | `Default Request Type` | `Selected by default for new requests.` | `SegmentedControl`, `size="sm"` | `HTTP` (`IconApi` 18 px), `GraphQL` (`IconBrandGraphql` 16 px), `gRPC` (`IconCode` 16 px), `WebSocket` (`IconPlugConnected` 16 px); default `DEFAULT_PRESET_REQUEST_TYPE` | `Presets/index.js:71-82`, `constants.jsx:5-30` |
+| 1 | `Default Request Type` | `Selected by default for new requests.` | `SegmentedControl`, `size="sm"` | `HTTP` (`IconApi` 18 px), `GraphQL` (`IconBrandGraphql` 16 px), `gRPC` (`IconCode` 16 px), `WebSocket` (`IconPlugConnected` 16 px); default `DEFAULT_PRESET_REQUEST_TYPE` | `components/CollectionSettings/Presets/index.js:71-82`, `constants.jsx:5-30` |
 | 2 | `Default Base URL` | `Pre-fills the URL field for new requests.` | text input, placeholder **`Request URL`** | empty | `:84-101` |
 | 3 | `Default Environment` | `Selected when this collection is shared and first opened.` | `MenuDropdown` (`bottom-start`, `sameWidth`), trigger shows name or `None`, caret `IconCaretDown` 14 px | first item `None` then each collection environment by name | `:103-124`, `:47-54` |
 | 4 | — | — | `Save` `Button size="sm"` (`type="button"`) | | `:126-131` |
@@ -431,7 +431,7 @@ Preferences tab.
 | Modal intro | **`The certificate and key files are stored as paths relative to the collection.`** | `:332-334` |
 | Modal fields | `Domain` (placeholder `example.org`), `Type` (`Cert & Key` / `PFX`), `Cert file`, `Key file`, `PFX file`, `Passphrase` | `:337-438` |
 
-⚠ Conflict with the Preferences copy (`ClientCertSettings/index.js:314` says
+⚠ Conflict with the Preferences copy (`components/CollectionSettings/ClientCertSettings/index.js:314` says
 "absolute paths… every collection"). See Open Questions §11.5.
 
 ---
@@ -486,7 +486,7 @@ store mid-migration (`:102-104`). Two steps, both `Modal size="md"`.
 | Bullet 3 | `bruno.json will be replaced with opencollection.yml` | `:445` |
 | Bullet 4 | `Open tabs will be closed and the collection will be reloaded` | `:446` |
 | Loading note | `Waiting for the collection to finish loading before migration can start…` | `:448-450` |
-| Backup block title | `Backup` (uppercase, `font.size.sm`, weight 500, `colors.text.muted`, `letter-spacing .04em`) | `:454`, `StyledWrapper.js:19-25` |
+| Backup block title | `Backup` (uppercase, `font.size.sm`, weight 500, `colors.text.muted`, `letter-spacing .04em`) | `:454`, `components/CollectionSettings/StyledWrapper.js:19-25` |
 | Backup help | `Export this collection as a ZIP archive before migrating, in case you want to restore it later.` | `:456-458` |
 | Backup button | `Export Collection` (idle) / `Exporting…`; `Button size="sm" color="secondary" variant="outline"` | `:460-469` |
 | Backup success toast | `Collection backup exported` | `:166` |
@@ -495,7 +495,7 @@ store mid-migration (`:102-104`). Two steps, both `Modal size="md"`.
 | Cancel | `Cancel` (Modal default) → closes; confirm is disabled while collection not mounted | `:407` |
 
 Backup block chrome: `1px solid border.border2`, radius `border.radius.base`,
-bg `background.mantle`, `padding 12px 14px` (`StyledWrapper.js:4-9`).
+bg `background.mantle`, `padding 12px 14px` (`components/CollectionSettings/StyledWrapper.js:4-9`).
 
 ### 12.2 Unsaved-changes step (`:287-389`)
 
@@ -517,14 +517,14 @@ request, env). `Modal size="md" title="Unsaved changes"`, `hideFooter`,
 | Toasts | `Cannot save environment "{name}": invalid variable name(s) — …`, `Cannot save environment "{name}": {message}`, `Failed to save environment "{name}"`, `Failed to save changes` | `:236-259` |
 
 Item list style: transient rows bg `background.surface0`, `1px solid border.border0`,
-radius 4px (`StyledWrapper.js:68-72`).
+radius 4px (`components/MigrateCollectionToYmlModal/StyledWrapper.js:68-72`).
 
 ### 12.3 Progress state (`isMigrating`)
 
 | Part | Verbatim | Source |
 | --- | --- | --- |
 | Confirm text | `Cancel` (danger) while migrating; `Cancelling…` while cancelling | `:403-404` |
-| Progress bar | `role="progressbar"` 0–100, track 6 px radius 3px `background.mantle`, fill `accents.primary`, transition `width .15s ease` | `:417-437`, `StyledWrapper.js:39-57` |
+| Progress bar | `role="progressbar"` 0–100, track 6 px radius 3px `background.mantle`, fill `accents.primary`, transition `width .15s ease` | `:417-437`, `components/MigrateCollectionToYmlModal/StyledWrapper.js:39-57` |
 | Phase labels | `Converting files`, `Writing yml files`, `Removing bru files` rendered as `{Phase}: {current}/{total}` | `:37-41,393-395` |
 | Fallback label | `Preparing…` | `:395` |
 | Cancelling label | `Cancelling and restoring the collection…` | `:435` |
@@ -562,13 +562,13 @@ Group 2 heading **`Other Format`** (`:186`), 2-column grid:
 
 Card chrome: `2px solid border.border0`, radius 6px, `padding 1rem`,
 `min-height:180px`, bg `background.base`, transition `border-color .15s ease`;
-hover `border2`; selected `primary.solid` (`StyledWrapper.js:53-71`).
+hover `border2`; selected `primary.solid` (`components/ShareCollection/StyledWrapper.js:53-71`).
 `Recommended` badge: `padding .125rem .5rem`, `11px`, weight 600, radius 4px,
 bg `colors.text.warning` (`#c67a10` L / `#f6ab79` D), text white
-(`StyledWrapper.js:83-90`) — note the badge is white-on-warning, which is
+(`components/ShareCollection/StyledWrapper.js:83-90`) — note the badge is white-on-warning, which is
 **low contrast in dark theme**. Title `15px/600`; description `13px`
 `colors.text.subtext0`; bullet `13px`; footer italic `12px`
-`colors.text.muted` (`StyledWrapper.js:72-126`).
+`colors.text.muted` (`components/ShareCollection/StyledWrapper.js:72-126`).
 
 ### 13.3 Postman warning
 
@@ -625,8 +625,8 @@ points there for the full group). Option rows carry a hidden radio input
 | Interaction | Result | Source |
 | --- | --- | --- |
 | Switch settings tab | Redux `updateSettingsSelectedTab`, per collection | `CollectionSettings/index.js:29-36` |
-| `Save` in any tab | `saveCollectionSettings(collection.uid)` | e.g. `Headers/index.js:59`, `Vars/index.js:16`, `Auth/index.js:23` |
-| `Cmd/Ctrl+S` in a table editor | Saves (each `SingleLineEditor` has `onSave`) | `Headers/index.js:95,111`; `keyMappings.js:9` |
+| `Save` in any tab | `saveCollectionSettings(collection.uid)` | e.g. `components/CollectionSettings/Headers/index.js:59`, `components/CollectionSettings/Vars/index.js:16`, `components/CollectionSettings/Auth/index.js:23` |
+| `Cmd/Ctrl+S` in a table editor | Saves (each `SingleLineEditor` has `onSave`) | `components/CollectionSettings/Headers/index.js:95,111`; `keyMappings.js:9` |
 | Header/Vars rows | Add via trailing blank row; delete via row trash | `components/EditableTable` |
 | Vars rows | Drag to reorder when sort = default; column widths resizable & persisted | `VarsTable/index.js:47-49,136-145` |
 | Overview version row | Opens `ChangeCollectionVersion` | `Info/index.js:62-94` |
@@ -634,7 +634,7 @@ points there for the full group). Option rows carry a hidden radio input
 | Share | Opens ShareCollection modal (no API key in current build — purely export) | `ShareCollection/index.js` |
 
 Inheritance coupling: collection Auth feeds request/folder `Inherit`
-(`Auth/index.js:62-65`); collection Vars/Headers/Script/Tests are applied to every
+(`components/CollectionSettings/Auth/index.js:62-65`); collection Vars/Headers/Script/Tests are applied to every
 request (copy says so in each tab intro).
 
 ---
@@ -644,10 +644,10 @@ request (copy says so in each tab intro).
 1. **`collection.settingsSelectedTab` default** is not set in this component —
    confirm which tab opens first (likely `overview`) by reading
    `providers/ReduxStore/slices/collections`.
-2. **`none` mode has no editor panel** (`Auth/index.js:25-58`), but the intro
+2. **`none` mode has no editor panel** (`components/CollectionSettings/Auth/index.js:25-58`), but the intro
    paragraph still shows. Should the port hide the intro for `No Auth`?
 3. **`Akamai EdgeGrid` is behind the Beta flag** but is always present in the
-   menu (`Auth/AuthMode/index.js:71-80`). Confirm whether the port gates it.
+   menu (`components/CollectionSettings/Auth/AuthMode/index.js:71-80`). Confirm whether the port gates it.
 4. **Collection auth lacks `Inherit`** by design (there is nothing above a
    collection), yet the intro copy references Inherit — that is about *requests*
    inheriting from the collection. Wording is correct but easy to misread.

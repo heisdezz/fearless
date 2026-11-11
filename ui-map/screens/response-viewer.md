@@ -13,15 +13,15 @@ Go port needs one implementation:
 | Host                | Where                                          | Selector shown?                               | File:line                                              |
 | ------------------- | ---------------------------------------------- | --------------------------------------------- | ------------------------------------------------------ |
 | Main response pane  | ResponsePane → `QueryResult`                   | in the tab bar's right content                | `components/ResponsePane/index.js:249-264`, `:162-176` |
-| Timeline entry body | `TimelineItem/Common/Body` → `QueryResponse`   | only for responses, hidden for request bodies | `Timeline/TimelineItem/Common/Body/index.js:26-36`     |
+| Timeline entry body | `TimelineItem/Common/Body` → `QueryResponse`   | only for responses, hidden for request bodies | `components/ResponsePane/Timeline/TimelineItem/Common/Body/index.js:26-36`     |
 | Runner result       | `RunnerResults/ResponsePane` → `QueryResponse` | yes                                           | `RunnerResults/ResponsePane/index.js:44-55`            |
 
 `QueryResponse` is a thin wrapper: it owns local `selectedFormat` /
 `selectedTab` / `filter` state (initially `'raw'` / `'editor'` / `''`)
 and renders the type selector in a right-aligned toolbar plus
-`QueryResult` (`QueryResponse/index.js:21-31`, `:33-70`). The wrapper is
+`QueryResult` (`components/ResponsePane/QueryResponse/index.js:21-31`, `:33-70`). The wrapper is
 `border-radius:4px; border:1px solid table.border`; `.result-type-selector`
-has `border-bottom:1px solid table.border` (`QueryResponse/StyledWrapper.js:3-13`).
+has `border-bottom:1px solid table.border` (`components/ResponsePane/QueryResponse/StyledWrapper.js:3-13`).
 
 ---
 
@@ -57,7 +57,7 @@ editor fills the pane; PDF pages get `margin-top:10px` and a
 
 ## 2. Format model
 
-`selectedFormat` is one of the ids below (`QueryResult/index.js:11-29`).
+`selectedFormat` is one of the ids below (`components/ResponsePane/QueryResult/index.js:11-29`).
 `selectedTab` is `'editor'` or `'preview'` (`:101`).
 
 | id           | Label        | Tabler icon           | CodeMirror mode       | Options group            |
@@ -71,23 +71,23 @@ editor fills the pane; PDF pages get `margin-top:10px` and a
 | `hex`        | `Hex`        | `IconHexagons`        | `text/plain`          | raw                      |
 | `base64`     | `Base64`     | `IconBinaryTree`      | `text/plain`          | raw                      |
 
-Sources: option tables `QueryResult/index.js:12-29`; icon map
+Sources: option tables `components/ResponsePane/QueryResult/index.js:12-29`; icon map
 `QueryResultTypeSelector/index.jsx:9-17`.
 
 - Binary content types (`image`, `video`, `audio`, `pdf`, `zip`, but **not**
-  `svg`) get **only** the raw options (`QueryResult/index.js:61-90`).
+  `svg`) get **only** the raw options (`components/ResponsePane/QueryResult/index.js:61-90`).
   Content type is resolved from the base64 sniff first, then the
   `content-type` header (`:73-78`).
 - Default format/tab come from `getDefaultResponseFormat(contentType)`;
   `null` until both the sniff and the header are known
-  (`QueryResult/index.js:45-58`; `utils/response`). Until then the pane
+  (`components/ResponsePane/QueryResult/index.js:45-58`; `utils/response`). Until then the pane
   falls back to `raw` / `editor` (`components/ResponsePane/index.js:58-59`).
 - The selection is persisted per tab in Redux and reset when `content-type`
   changes (`components/ResponsePane/index.js:61-77`).
 
 ### 2.1 Format → preview mode
 
-`QueryResult/index.js:147-167`:
+`components/ResponsePane/QueryResult/index.js:147-167`:
 
 | `selectedFormat`                 | `previewMode`   |
 | -------------------------------- | --------------- |
@@ -124,13 +124,13 @@ Note the asymmetry: `JSON`/`HTML`/`XML`/`JavaScript` also decide the
 | ------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | Button base               | `h-7 rounded-[6px] border px-2 text-xs`, overridden `h-[22px] text-[10px]`                      | `QueryResultTypeSelector/index.jsx:19-39`, `:37`                            |
 | Prefix icon               | `IconEye` 14/2 in preview mode, format icon 14/1.5 in editor mode                               | `:77-86`                                                                    |
-| Prefix colour             | active tab → `primary.text`; inactive → `colors.text.muted`                                     | `:34`, `StyledWrapper.js:21-27`                                             |
+| Prefix colour             | active tab → `primary.text`; inactive → `colors.text.muted`                                     | `:34`, `components/ResponsePane/StyledWrapper.js:21-27`                                             |
 | Caret                     | `IconCaretDown` 12/2, `ml-0.5`, shown only when `isActiveTab`                                   | `:37`                                                                       |
-| Caret colour / fill       | `app.collection.toolbar.environmentSelector.caret` (`#b0b0b0` / `#aaa`)                         | `StyledWrapper.js:3-7`                                                      |
-| Border                    | `workspace.border` (`#e5e5e5` / `#444`); hover `environmentSelector.hoverBorder`                | `StyledWrapper.js:9-13`, `components/ResponsePane/StyledWrapper.js:101-118` |
+| Caret colour / fill       | `app.collection.toolbar.environmentSelector.caret` (`#b0b0b0` / `#aaa`)                         | `components/ResponsePane/StyledWrapper.js:3-7`                                                      |
+| Border                    | `workspace.border` (`#e5e5e5` / `#444`); hover `environmentSelector.hoverBorder`                | `components/ResponsePane/StyledWrapper.js:9-13`, `components/ResponsePane/StyledWrapper.js:101-118` |
 | Active-tab border         | `environmentSelector.border` (`#e5e5e5` / `#444`)                                               | `components/ResponsePane/StyledWrapper.js:112-118`                          |
-| Divider                   | `dropdown.separator`, `height:1px`, `margin:4px 0`                                              | `StyledWrapper.js:15-19`                                                    |
-| Menu header               | `flex; justify-between; gap .75rem; py .35rem; px .6rem`; label `Preview` at `0.8125rem`, muted | `index.jsx:102-104`, `StyledWrapper.js:29-31`                               |
+| Divider                   | `dropdown.separator`, `height:1px`, `margin:4px 0`                                              | `components/ResponsePane/StyledWrapper.js:15-19`                                                    |
+| Menu header               | `flex; justify-between; gap .75rem; py .35rem; px .6rem`; label `Preview` at `0.8125rem`, muted | `index.jsx:102-104`, `components/ResponsePane/StyledWrapper.js:29-31`                               |
 | Selection tick            | `showTickMark` with `selectedItemId={formatValue}`                                              | `index.jsx:124-127`                                                         |
 | First click when inactive | selects the editor tab instead of opening the menu                                              | `index.jsx:54-62`                                                           |
 
@@ -143,7 +143,7 @@ The selector's `title` on the toggle is exactly
 
 ### 3.1 Editor (pretty) — `selectedTab === 'editor'`
 
-Read-only `CodeEditor` (`QueryResult/QueryResultPreview/index.js:60-79`)
+Read-only `CodeEditor` (`components/ResponsePane/QueryResult/QueryResultPreview/index.js:60-79`)
 with `mode = codeMirrorMode`, `value = formatResponse(data, dataBuffer,
 selectedFormat, filter)`, the user's `font.codeFont` / `font.codeFontSize`
 and the active display theme. Editor chrome and syntax colours are in
@@ -206,7 +206,7 @@ Centred (`flex flex-col items-center justify-center h-full text-center`),
 ### 3.4 Raw
 
 `Raw`, `Hex` and `Base64` all use `preview-text` in preview mode and
-`text/plain` highlighting in editor mode (`QueryResult/index.js:12-16`,
+`text/plain` highlighting in editor mode (`components/ResponsePane/QueryResult/index.js:12-16`,
 `:152`, `:169-174`). `Hex`/`Base64` in preview mode upgrade to an image,
 PDF, audio or video player when the sniffed type allows (§2.1).
 
@@ -215,7 +215,7 @@ PDF, audio or video player when the sniffed type allows (§2.1).
 ## 4. Filter — `QueryResultFilter`
 
 Shown only when `codeMirrorMode.includes('json') && selectedFormat === 'json'
-&& selectedTab === 'editor'` (`QueryResult/index.js:176`, `:222-230`).
+&& selectedTab === 'editor'` (`components/ResponsePane/QueryResult/index.js:176`, `:222-230`).
 
 ```text
 div.response-filter (absolute bottom-2 right-0 w-full, flex row items-center gap-2 py-4 px-2, pointer-events-none)
@@ -225,7 +225,7 @@ div.response-filter (absolute bottom-2 right-0 w-full, flex row items-center gap
 
 | Property         | Value                                                                                            | Source                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| Placement        | `absolute; bottom:0; width:100%` (`StyledWrapper.js`) / `absolute bottom-2 right-0 … py-4 px-2`  | `QueryResult/StyledWrapper.js:47-61`, `QueryResultFilter/index.js:55-57` |
+| Placement        | `absolute; bottom:0; width:100%` (`StyledWrapper.js`) / `absolute bottom-2 right-0 … py-4 px-2`  | `components/ResponsePane/QueryResult/StyledWrapper.js:47-61`, `QueryResultFilter/index.js:55-57` |
 | Input box        | `block ml-14 p-2 py-1 transition-all duration-200 ease-in-out border border-gray-300 rounded-md` | `QueryResultFilter/index.js:70-72`                                       |
 | Collapsed        | `w-[0] opacity-0`, `pointer-events-none`                                                         | `:70-72`                                                                 |
 | Expanded         | `w-full opacity-100 pointer-events-auto`                                                         | `:70-72`                                                                 |
@@ -251,13 +251,13 @@ div.table-wrapper (1px solid table.border, radius 4px, font.size.sm)
 
 | Property      | Value                                                         | Source                                   |
 | ------------- | ------------------------------------------------------------- | ---------------------------------------- |
-| Header labels | `Name`, `Value`                                               | `ResponseHeaders/index.js:18-19`         |
-| Cell padding  | `4px 8px`; outer left/right borders removed                   | `ResponseHeaders/StyledWrapper.js:25-35` |
+| Header labels | `Name`, `Value`                                               | `components/ResponsePane/ResponseHeaders/index.js:18-19`         |
+| Cell padding  | `4px 8px`; outer left/right borders removed                   | `components/ResponsePane/ResponseHeaders/StyledWrapper.js:25-35` |
 | Row borders   | `1px solid table.border`; last row's bottom border removed    | `:26`, `:47-49`                          |
 | Zebra         | `tr:nth-child(odd)` → `table.striped` (`#f1f1f1` / `#1e1e1e`) | `:42-45`                                 |
-| Sorted?       | No — `Object.entries(headers)` order                          | `index.js:7`                             |
-| Empty         | Renders header row only, **no** empty-state text              | `index.js:32`                            |
-| Scroll        | persisted `response-headers-scroll-{uid}`                     | `index.js:9`                             |
+| Sorted?       | No — `Object.entries(headers)` order                          | `components/ResponsePane/index.js:7`                             |
+| Empty         | Renders header row only, **no** empty-state text              | `components/ResponsePane/index.js:32`                            |
+| Scroll        | persisted `response-headers-scroll-{uid}`                     | `components/ResponsePane/index.js:9`                             |
 
 Tab indicator: `Headers` gains `<sup>` with the header count when > 0
 (`components/ResponsePane/index.js:132`).
@@ -265,7 +265,7 @@ Tab indicator: `Headers` gains `<sup>` with the header count when > 0
 ### 5.1 Timeline entry headers (different component)
 
 Inside a Timeline entry the `Headers` block is a different table
-(`Timeline/TimelineItem/Common/Headers/index.js:12-50`):
+(`components/ResponsePane/Timeline/TimelineItem/Common/Headers/index.js:12-50`):
 
 - Section header button `Headers` + `({count})` in `tl-block-count`
   (11 px, muted, `opacity .65`), chevron 12 toggle (`:19-31`).
@@ -300,16 +300,16 @@ transition: background-color .08s ease` (`TimelineItem/StyledWrapper.js:9-21`).
 
 | Cell    | Content                                                                                         | Style                                                    | Source                                                    |
 | ------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------- |
-| chevron | `IconChevronRight` / `IconChevronDown` 14/2                                                     | `colors.text.muted`, `opacity .7`                        | `TimelineItem/index.js:150-152`, `StyledWrapper.js:36-43` |
-| status  | numeric code, or `statusText`, or `Error`                                                       | see §6.2                                                 | `index.js:66-76`, `:153-155`                              |
+| chevron | `IconChevronRight` / `IconChevronDown` 14/2                                                     | `colors.text.muted`, `opacity .7`                        | `TimelineItem/index.js:150-152`, `components/ResponsePane/StyledWrapper.js:36-43` |
+| status  | numeric code, or `statusText`, or `Error`                                                       | see §6.2                                                 | `components/ResponsePane/index.js:66-76`, `:153-155`                              |
 | method  | uppercase verb                                                                                  | `request.methods[verb]` else `text`, `font.size.xs`, 500 | `Common/Method/index.js:4-16`                             |
-| url     | raw URL, `title` = URL                                                                          | 13 px, `text`, ellipsis                                  | `index.js:159`, `StyledWrapper.js:64-67`                  |
-| badge   | `request` / `oauth2.0` / `sendRequest` / `runRequest`                                           | see §6.3                                                 | `index.js:160-162`, `entryMeta.js:3-8`                    |
+| url     | raw URL, `title` = URL                                                                          | 13 px, `text`, ellipsis                                  | `components/ResponsePane/index.js:159`, `components/ResponsePane/StyledWrapper.js:64-67`                  |
+| badge   | `request` / `oauth2.0` / `sendRequest` / `runRequest`                                           | see §6.3                                                 | `components/ResponsePane/index.js:160-162`, `entryMeta.js:3-8`                    |
 | time    | relative, 1 s tick (`Intl.RelativeTimeFormat('en', {numeric:'auto'})`), `title` = locale string | 11 px, muted, right-aligned                              | `Common/Time/index.js:4-48`                               |
 
 Row states: hover `rgba(text,.04)`, expanded `rgba(text,.06)`,
 keyboard focus `2px solid textLink` with `outline-offset:-2px`
-(`StyledWrapper.js:22-31`). First row has no top border (`:32-34`).
+(`components/ResponsePane/StyledWrapper.js:22-31`). First row has no top border (`:32-34`).
 The row is a `role="button" tabIndex=0` that toggles with `Enter`/`Space`
 (`TimelineItem/index.js:50-55`, `:141-149`).
 
@@ -332,22 +332,22 @@ letter-spacing:.02em` (`:18-34`).
 
 | Kind  | Badge label   | Chip label      | Background / colour                | Source                                     |
 | ----- | ------------- | --------------- | ---------------------------------- | ------------------------------------------ |
-| main  | `request`     | `Request`       | `colors.text.green @14%` / green   | `entryMeta.js:4`, `StyledWrapper.js:85-88` |
+| main  | `request`     | `Request`       | `colors.text.green @14%` / green   | `entryMeta.js:4`, `components/ResponsePane/StyledWrapper.js:85-88` |
 | oauth | `oauth2.0`    | `OAuth`         | `textLink @12%` / textLink         | `entryMeta.js:5`, `:89-92`                 |
 | pre   | `sendRequest` | `Pre-Request`   | `colors.text.yellow @12%` / yellow | `entryMeta.js:6`, `:93-96`                 |
 | post  | `runRequest`  | `Post-Response` | `colors.text.purple @14%` / purple | `entryMeta.js:7`, `:97-100`                |
 
 Badge base: 10 px, 600, `padding 2px 8px`, `border-radius:10px`,
-`letter-spacing .02em` (`StyledWrapper.js:75-84`).
+`letter-spacing .02em` (`components/ResponsePane/StyledWrapper.js:75-84`).
 
 ### 6.4 Filter chips
 
 - Visibility: the bar renders only when `entries.length > 0` and at least
-  one `pre`, `post` or `oauth` entry exists (`Timeline/index.js:71-72`);
+  one `pre`, `post` or `oauth` entry exists (`components/ResponsePane/Timeline/index.js:71-72`);
   a chip is shown only when its count > 0 (`:70`). Order: `All`, `Request`,
   `Pre-Request`, `Post-Response`, `OAuth` (`entryMeta.js:10-16`).
 - Bar: `gap:6px; padding:10px 0; border-bottom:1px solid border.border1;
-margin-bottom:4px` (`StyledWrapper.js:13-21`).
+margin-bottom:4px` (`components/ResponsePane/StyledWrapper.js:13-21`).
 - Chip: `padding 4px 10px`, `radius 4px`, transparent, 12 px, 500,
   muted; hover `text` + `rgba(255,255,255,.04)`; active `text` +
   `rgba(255,255,255,.06)`; transition `color .1s, background-color .1s`
@@ -355,7 +355,7 @@ margin-bottom:4px` (`StyledWrapper.js:13-21`).
 - Count chip: 11 px, 500, muted, `opacity .6`, tabular figures; active chip
   count takes `tabs.active.border` at full opacity (`:49-60`).
 - Selecting a filter hides rows of other kinds; if the active chip becomes
-  empty it resets to `all` (`Timeline/index.js:74-78`, `:105`).
+  empty it resets to `all` (`components/ResponsePane/Timeline/index.js:74-78`, `:105`).
 
 Ordering: newest first by timestamp (`buildEntries.js:68`). OAuth entries are
 expanded into one row per sub-call and anchored to the paired main request's
@@ -365,19 +365,19 @@ timestamp; they are dropped when they have no sub-calls
 ### 6.5 Expanded detail
 
 - `.tl-detail` `border-top: 1px dashed border.border1; margin-top: 4px`
-  (`StyledWrapper.js:102-105`).
+  (`components/ResponsePane/StyledWrapper.js:102-105`).
 - Header: `padding:10px 12px 10px 28px; gap:12px`; `METHOD url` in mono
   13 px with the verb 600 uppercase + 6 px gap; source link mono 11 px,
   `max-width:260px`, muted, `↗` in `textLink`, `title="Open {file}"` when
-  navigable (`StyledWrapper.js:107-151`, `index.js:172-189`).
+  navigable (`components/ResponsePane/StyledWrapper.js:107-151`, `components/ResponsePane/index.js:172-189`).
 - Tabs: `padding: 0 12px 0 14px; border-bottom:1px solid border.border1`;
   each `padding: 9px 14px`, 12 px, muted; active `tabs.active.color` with a
   2 px underline (left/right 14 px). Labels: `Request`, `Response`, and
   `Network` only when `response.timeline.length > 0`
-  (`StyledWrapper.js:155-188`, `index.js:132-136`, `:191-203`).
+  (`components/ResponsePane/Timeline/TimelineItem/index.js:132-136`).
 - Panel `padding: 12px 12px 14px 28px`; blocks are collapsible with a
   11 px uppercase 600 header, chevron 12, optional `({count})`
-  (`StyledWrapper.js:23-24`, `:43-84`).
+  (`components/ResponsePane/StyledWrapper.js:23-24`, `:43-84`).
 
 Response tab content (`TimelineItem/Response/index.js`):
 
@@ -397,7 +397,7 @@ The Timeline tab's actions slot shows `Clear Timeline`
 ### 6.7 Runner timeline
 
 `RunnerTimeline` reuses `TimelineItem` with `hideTimestamp` and builds
-entries from the runner item only (`RunnerTimeline/index.js:8-39`) —
+entries from the runner item only (`components/ResponsePane/RunnerTimeline/index.js:8-39`) —
 main request, then OAuth debug entries, then scripted entries, sorted
 newest-first. There is **no** filter bar.
 
@@ -407,7 +407,7 @@ newest-first. There is **no** filter bar.
 
 ### 7.1 Tab label
 
-`TestResultsLabel` (`TestResultsLabel/index.js:4-38`):
+`TestResultsLabel` (`components/ResponsePane/TestResultsLabel/index.js:4-38`):
 
 - No results in any of the four buckets → plain text `Tests`.
 - Otherwise `Tests` + `<sup>` where the sup is **failed count in
@@ -430,7 +430,7 @@ TestResults (flex column, text)
 
 | Property          | Value                                                                                   | Source                              |
 | ----------------- | --------------------------------------------------------------------------------------- | ----------------------------------- |
-| Empty state       | `No tests found` (plain div, 13 px body)                                                | `TestResults/index.js:121-123`      |
+| Empty state       | `No tests found` (plain div, 13 px body)                                                | `components/ResponsePane/TestResults/index.js:121-123`      |
 | Section titles    | exactly `Pre-Request Tests`, `Post-Response Tests`, `Tests`, `Assertions`               | `:128`, `:137`, `:146`, `:155`      |
 | Section summary   | `{title} ({results.length}), Passed: {passed}, Failed: {failed}`                        | `:72`                               |
 | Summary row       | `font-medium`, `hover:bg-gray-500/10`, `rounded`, `py-2`, `mb-4`; chevron 18/1.5 `mr-2` | `:60-70`                            |
@@ -440,9 +440,9 @@ TestResults (flex column, text)
 | Fail icon         | `IconCircleX` 14, colour `colors.text.danger`, `aria-label="Test failed"`               | `:12-23`                            |
 | Row text          | test → `result.description`; assertion → `{lhsExpr}: {rhsExpr}`                         | `:34-44`                            |
 | Error text        | `role="alert"`, `pl-8`, `colors.text.muted`, on a new line                              | `:25-32`                            |
-| Section hover     | `sidebar.collection.item.hoverBg`                                                       | `TestResults/StyledWrapper.js:6-13` |
+| Section hover     | `sidebar.collection.item.hoverBg`                                                       | `components/ResponsePane/TestResults/StyledWrapper.js:6-13` |
 | Transitions       | summary `background-color .2s`; list `all .3s ease`                                     | `:6-8`, `:35-37`                    |
-| Scroll            | persisted `response-tests-scroll-{uid}`                                                 | `index.js:95`                       |
+| Scroll            | persisted `response-tests-scroll-{uid}`                                                 | `components/ResponsePane/index.js:95`                       |
 
 Screenshot `refs/tests_bruno.png` shows the _request_ Tests editor, not this
 panel — no capture of the response Tests tab exists.
@@ -530,11 +530,11 @@ Toasts: `Failed to try example` (error, on try failure)
 | Toggle preview (shortcut)      | first click on selector while inactive   | activates the tab                                                      | `:54-62`                                                                             |
 | Expand/collapse timeline entry | click row, `Enter`, `Space`              | toggles; expansion persisted per timestamp (`timeline-{timestamp}`)    | `TimelineItem/index.js:41-55`                                                        |
 | Switch entry tab               | click `Request` / `Response` / `Network` | lazy-mounts tabs on first visit                                        | `:61-64`, `:191-203`                                                                 |
-| Filter timeline                | chip click                               | client-side kind filter                                                | `Timeline/index.js:87-98`                                                            |
+| Filter timeline                | chip click                               | client-side kind filter                                                | `components/ResponsePane/Timeline/index.js:87-98`                                                            |
 | Open link in body              | click underlined link / JSON value       | sends that URL as a new request (same request type)                    | `QueryResultPreview/index.js:54-58`                                                  |
-| Expand test section            | click summary row                        | show/hide rows                                                         | `TestResults/index.js:61-64`                                                         |
+| Expand test section            | click summary row                        | show/hide rows                                                         | `components/ResponsePane/TestResults/index.js:61-64`                                                         |
 | Toggle filter                  | filter icon                              | expand/collapse and clear on close                                     | `QueryResultFilter/index.js:9-22`                                                    |
-| Clear timeline                 | `Clear Timeline`                         | wipes `collection.timeline` for this item                              | `ClearTimeline/index.js:9-21`                                                        |
+| Clear timeline                 | `Clear Timeline`                         | wipes `collection.timeline` for this item                              | `components/ResponsePane/ClearTimeline/index.js:9-21`                                                        |
 | Jump to source                 | `↗` in timeline header                   | opens the script/tests tab of the owning collection, folder or request | `TimelineItem/index.js:98-130`                                                       |
 
 No keyboard shortcut is bound inside the viewer except the global
@@ -546,7 +546,7 @@ No keyboard shortcut is bound inside the viewer except the global
 
 1. **XML filter in the main pane.** `QueryResultFilter` supports XPath
    (`QueryResultFilter/index.js:35-37`) but `QueryResult` only mounts it for
-   JSON (`QueryResult/index.js:176`). Unclear whether XPath filtering is
+   JSON (`components/ResponsePane/QueryResult/index.js:176`). Unclear whether XPath filtering is
    reachable from the response pane at all.
 2. **Hex/Base64 in editor mode.** The editor shows the raw text for these
    formats (`text/plain`) while preview upgrades to a media player; whether

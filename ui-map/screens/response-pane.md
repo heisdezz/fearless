@@ -21,8 +21,8 @@ default `'horizontal'`.
 
 | Orientation            | Request pane                                                                                         | Response pane                                                                            | Dragbar                                                                                     |
 | ---------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `horizontal` (default) | left, fixed width `max(leftPaneWidth, 350px)` (`components/RequestTabPanel/index.js:55`, `:698-700`) | right, `flex-grow`, `min-width: 0` (`components/RequestTabPanel/StyledWrapper.js:16-18`) | vertical bar, `12px` wide, 1 px left border (`StyledWrapper.js:39-62`)                      |
-| `vertical`             | top, height `max(topPaneHeight, 150px)`, `width: 100%` (`index.js:57`, `:693-697`)                   | bottom                                                                                   | horizontal bar, `12px` high, `padding: 0 1rem`, 1 px top border (`StyledWrapper.js:81-101`) |
+| `horizontal` (default) | left, fixed width `max(leftPaneWidth, 350px)` (`components/RequestTabPanel/index.js:55`, `:698-700`) | right, `flex-grow`, `min-width: 0` (`components/RequestTabPanel/StyledWrapper.js:16-18`) | vertical bar, `12px` wide, 1 px left border (`components/ResponsePane/StyledWrapper.js:39-62`)                      |
+| `vertical`             | top, height `max(topPaneHeight, 150px)`, `width: 100%` (`components/ResponsePane/index.js:57`, `:693-697`)                   | bottom                                                                                   | horizontal bar, `12px` high, `padding: 0 1rem`, 1 px top border (`components/ResponsePane/StyledWrapper.js:81-101`) |
 
 - Pane minimums: left `350px`, right `490px`, top `150px`, bottom `150px`,
   collapse threshold `80px`, expand threshold `100px`, click-expand for the
@@ -33,9 +33,9 @@ default `'horizontal'`.
   (`components/RequestTabPanel/index.js:673-683`): gRPC → `GrpcResponsePane`,
   WebSocket → `WSResponsePane`, everything else → `ResponsePane`.
 - The response pane's parent section is `section.response-pane.flex-grow.overflow-x-auto`
-  (`index.js:746-750`).
+  (`components/RequestTabPanel/index.js:746`, `RequestTabPanel/StyledWrapper.js:16`).
 - Horizontal: `request-pane` gets `padding-bottom: 0.5rem` and `response-pane`
-  `padding-top: 0.5rem` in vertical layout only (`StyledWrapper.js:64-79`).
+  `padding-top: 0.5rem` in vertical layout only (`components/ResponsePane/StyledWrapper.js:64-79`).
 - While dragging, a fixed full-window overlay sets `cursor: col-resize`
   (`row-resize` in vertical) and `user-select: none`
   (`components/RequestTabPanel/index.js:761-771`).
@@ -111,14 +111,14 @@ Container metrics (`components/ResponsePane/StyledWrapper.js`):
   (`ui/ResponsiveTabs/StyledWrapper.js:51-55`; tokens `tokens.json`).
 - Hover (inactive): `tabs.active.color` (`:47-49`).
 - `sup` inside a tab: `line-height:1; vertical-align:baseline; margin-left:0`
-  (`StyledWrapper.js:75-81`).
+  (`components/ResponsePane/StyledWrapper.js:75-81`).
 - Overflow: tabs are measured against container width; the active tab is
   always kept visible by evicting the last visible tab
   (`ui/ResponsiveTabs/index.js:47-82`). The overflow trigger is
   `IconChevronsRight` 18 px, colour `colors.text.subtext0`
-  (`index.js:263-274`, `StyledWrapper.js:14-21`); the menu is a
+  (`components/ResponsePane/index.js:263-274`, `components/ResponsePane/StyledWrapper.js:14-21`); the menu is a
   `MenuDropdown` with `placement="bottom-start"`, active tab marked with
-  `selectedItemId` (`index.js:264-269`).
+  `selectedItemId` (`components/ResponsePane/index.js:264-269`).
 - Right-content "expandable" mode: whether the inline action buttons or the
   ⋯ menu is shown is decided by `ResponsiveTabs` (`rightContentExpandedWidth`
   = `135`, `components/ResponsePane/index.js:32`, `:301`). The gap reserved
@@ -134,36 +134,36 @@ actions block (`components/ResponsePane/index.js:266-288`).
 
 | Element             | Text                                                                             | Typography                                                                          | Colour token                                                                                                                                                  | File:line                                                                                          |
 | ------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `StatusCode`        | `{status} {statusText \|\| phrase}` and, when streaming, ` - STREAMING` appended | `font.size.sm` (12 px), **600**, `white-space: nowrap`                              | 1xx/2xx `requestTabPanel.responseOk` (`#2e8a54` / `#73e89a`); 3xx/4xx/5xx `requestTabPanel.responseError` (`#ce4f3b` / `#da462f`); no class → inherits `text` | `StatusCode/index.js:7-23`, `StatusCode/StyledWrapper.js:3-15`                                     |
-| `ResponseTime`      | `formatDuration(duration)` → `123ms` under 1 s, else `1.23s` (2 dp)              | `font.size.sm`, **500**                                                             | `requestTabPanel.responseStatus` (`#838383` / `#ccc`)                                                                                                         | `ResponseTime/index.js:6-12`, `utils/common/index.js:227-233`, `ResponseTime/StyledWrapper.js:3-7` |
-| `ResponseStopWatch` | `12.3s` (1 dp, ticks every 100 ms)                                               | `font.size.sm`, **500**, `text-align:center`, width `chars × 0.4rem` to stop reflow | `requestTabPanel.responseStatus`                                                                                                                              | `ResponseStopWatch/index.js:4-28`, `StyledWrapper.js:3-8`                                          |
-| `ResponseSize`      | `formatSize(size, 2)` → `512B` / `1.20KB` / `3.00MB`; `title` = `"1,234,567B"`   | `font.size.sm`, **500**                                                             | `requestTabPanel.responseStatus`                                                                                                                              | `ResponseSize/index.js:5-17`, `utils/common/index.js:206-224`, `StyledWrapper.js:3-7`              |
+| `StatusCode`        | `{status} {statusText \|\| phrase}` and, when streaming, ` - STREAMING` appended | `font.size.sm` (12 px), **600**, `white-space: nowrap`                              | 1xx/2xx `requestTabPanel.responseOk` (`#2e8a54` / `#73e89a`); 3xx/4xx/5xx `requestTabPanel.responseError` (`#ce4f3b` / `#da462f`); no class → inherits `text` | `components/ResponsePane/StatusCode/index.js:7-23`, `components/ResponsePane/StatusCode/StyledWrapper.js:3-15`                                     |
+| `ResponseTime`      | `formatDuration(duration)` → `123ms` under 1 s, else `1.23s` (2 dp)              | `font.size.sm`, **500**                                                             | `requestTabPanel.responseStatus` (`#838383` / `#ccc`)                                                                                                         | `components/ResponsePane/ResponseTime/index.js:6-12`, `utils/common/index.js:227-233`, `components/ResponsePane/ResponseTime/StyledWrapper.js:3-7` |
+| `ResponseStopWatch` | `12.3s` (1 dp, ticks every 100 ms)                                               | `font.size.sm`, **500**, `text-align:center`, width `chars × 0.4rem` to stop reflow | `requestTabPanel.responseStatus`                                                                                                                              | `components/ResponsePane/ResponseStopWatch/index.js:4-28`, `components/ResponsePane/StyledWrapper.js:3-8`                                          |
+| `ResponseSize`      | `formatSize(size, 2)` → `512B` / `1.20KB` / `3.00MB`; `title` = `"1,234,567B"`   | `font.size.sm`, **500**                                                             | `requestTabPanel.responseStatus`                                                                                                                              | `components/ResponsePane/ResponseSize/index.js:5-17`, `utils/common/index.js:206-224`, `components/ResponsePane/StyledWrapper.js:3-7`              |
 
 Spacing: `ResponseTime`, `ResponseStopWatch` and `ResponseSize` all carry
 `ml-2` (8 px); StatusCode has no left margin, so the seam begins flush at
 the tab bar's right edge. `ResponseTime`/`ResponseSize` render `null` when
-the value is not a finite number (`ResponseTime/index.js:7-9`,
-`ResponseSize/index.js:6-8`); `ResponseStopWatch` shows `0.0s` for missing
-timestamps (`ResponseStopWatch/index.js:18-21`).
+the value is not a finite number (`components/ResponsePane/ResponseTime/index.js:7-9`,
+`components/ResponsePane/ResponseSize/index.js:6-8`); `ResponseStopWatch` shows `0.0s` for missing
+timestamps (`components/ResponsePane/ResponseStopWatch/index.js:18-21`).
 
 Size derivation: `response.size` if numeric, else decoded base64 buffer
 length, else `0` (`components/ResponsePane/index.js:105-119`).
 
-`StatusCode` phrase map (`StatusCode/get-status-code-phrase.js:2-66`) — keep
+`StatusCode` phrase map (`components/ResponsePane/StatusCode/get-status-code-phrase.js:2-66`) — keep
 this table as data; unknown codes render `{status} {statusText || phrase}`
-with an undefined phrase (`index.js:20`) — see Open Questions #1.
+with an undefined phrase (`components/ResponsePane/index.js:20`) — see Open Questions #1.
 
 ### 2.3 Status seam states
 
 | Pane state                                      | Seam shows                                                                                           | Line                                     |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| Never sent, no timeline                         | no tab bar at all (`Placeholder`)                                                                    | `index.js:219-225`                       |
-| Sending/queued, no response                     | no tab bar (`Overlay` only)                                                                          | `index.js:211-217`                       |
-| Sending/queued, previous response still present | full bar, `rightContent` is `null` while loading (no format selector, status, actions)               | `index.js:243` (`!isLoading ? … : null`) |
-| Streaming                                       | StopWatch replaces ResponseTime; `- STREAMING` suffix; no format selector                            | `index.js:246`, `:267-271`               |
-| Response settled                                | StatusCode + ResponseTime + ResponseSize, actions visible                                            | `index.js:243-289`                       |
-| Response has `error`                            | status seam still renders; `ResponsePaneActions` hidden (`item?.response && !item?.response?.error`) | `index.js:276-287`                       |
-| Skipped                                         | whole pane replaced by `SkippedRequest`                                                              | `index.js:203-209`                       |
+| Never sent, no timeline                         | no tab bar at all (`Placeholder`)                                                                    | `components/ResponsePane/index.js:219-225`                       |
+| Sending/queued, no response                     | no tab bar (`Overlay` only)                                                                          | `components/ResponsePane/index.js:211-217`                       |
+| Sending/queued, previous response still present | full bar, `rightContent` is `null` while loading (no format selector, status, actions)               | `components/ResponsePane/index.js:243` (`!isLoading ? … : null`) |
+| Streaming                                       | StopWatch replaces ResponseTime; `- STREAMING` suffix; no format selector                            | `components/ResponsePane/index.js:246`, `:267-271`               |
+| Response settled                                | StatusCode + ResponseTime + ResponseSize, actions visible                                            | `components/ResponsePane/index.js:243-289`                       |
+| Response has `error`                            | status seam still renders; `ResponsePaneActions` hidden (`item?.response && !item?.response?.error`) | `components/ResponsePane/index.js:276-287`                       |
+| Skipped                                         | whole pane replaced by `SkippedRequest`                                                              | `components/ResponsePane/index.js:203-209`                       |
 
 ---
 
@@ -179,49 +179,49 @@ Order left→right: **Copy, Bookmark, Download, Clear, LayoutToggle**
 (`24×24` box, `padding:0`, `border-radius:4px`,
 `transition: all 0.15s ease` — `ui/ActionIcon/StyledWrapper.js:3-35`), wrapped
 with `ActionIcon className="p-1"` (4 px padding) giving a **32×32** hit box.
-Gap between buttons: `2px` (`ResponsePaneActions/index.js:160`).
+Gap between buttons: `2px` (`components/ResponsePane/ResponsePaneActions/index.js:160`).
 
 | Button   | Icon (Tabler)                                                           | Stroke | Tooltip (`title`) verbatim                                                                                                                                                                       | Disabled when                                                                         | File:line                                     |
 | -------- | ----------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | --------------------------------------------- |
-| Copy     | `IconCopy` → after click `IconCheck` for 2 s                            | 2      | `Copy response to clipboard`                                                                                                                                                                     | `!data` (also `aria-disabled`, `opacity-50 cursor-not-allowed`)                       | `ResponseCopy/index.js:53-91`                 |
-| Bookmark | `IconBookmark`                                                          | 2      | `Save current response as example`; when streaming `Response Examples aren't supported in streaming responses yet.`; when size ≥ 5 MB `Response size exceeds 5MB limit. Cannot save as example.` | HTTP only (hidden for GraphQL); disabled if `response.stream` or `size ≥ 5*1024*1024` | `ResponseBookmark/index.js:17-47`, `:139-167` |
-| Download | `IconDownload`                                                          | 2      | `Save response to file`                                                                                                                                                                          | `!response.dataBuffer \|\| response.stream?.running`                                  | `ResponseDownload/index.js:9-59`              |
-| Clear    | `IconEraser`                                                            | 2      | `Clear response`                                                                                                                                                                                 | never (`isDisabled: false`)                                                           | `ResponseClear/index.js:25-45`                |
-| Layout   | `IconLayoutRows`, or `IconLayoutColumns` when orientation is `vertical` | 2      | `Switch to vertical layout` / `Switch to horizontal layout`                                                                                                                                      | never                                                                                 | `ResponseLayoutToggle/index.js:74-105`        |
+| Copy     | `IconCopy` → after click `IconCheck` for 2 s                            | 2      | `Copy response to clipboard`                                                                                                                                                                     | `!data` (also `aria-disabled`, `opacity-50 cursor-not-allowed`)                       | `components/ResponsePane/ResponseCopy/index.js:53-91`                 |
+| Bookmark | `IconBookmark`                                                          | 2      | `Save current response as example`; when streaming `Response Examples aren't supported in streaming responses yet.`; when size ≥ 5 MB `Response size exceeds 5MB limit. Cannot save as example.` | HTTP only (hidden for GraphQL); disabled if `response.stream` or `size ≥ 5*1024*1024` | `components/ResponsePane/ResponseBookmark/index.js:17-47`, `:139-167` |
+| Download | `IconDownload`                                                          | 2      | `Save response to file`                                                                                                                                                                          | `!response.dataBuffer \|\| response.stream?.running`                                  | `components/ResponsePane/ResponseDownload/index.js:9-59`              |
+| Clear    | `IconEraser`                                                            | 2      | `Clear response`                                                                                                                                                                                 | never (`isDisabled: false`)                                                           | `components/ResponsePane/ResponseClear/index.js:25-45`                |
+| Layout   | `IconLayoutRows`, or `IconLayoutColumns` when orientation is `vertical` | 2      | `Switch to vertical layout` / `Switch to horizontal layout`                                                                                                                                      | never                                                                                 | `components/ResponsePane/ResponseLayoutToggle/index.js:74-105`        |
 
 Icon colours: `dropdown.iconColor` (`#666` / `#bbb`) on a transparent face; hover
 face `workspace.button.bg` (`#f8f8f8` / `#3d3d3d`) and glyph `text`
-(`#343434` / `#ccc`) (`ResponseCopy/StyledWrapper.js:3-12`,
-`ResponseClear/StyledWrapper.js:3-12`, `ResponseDownload/StyledWrapper.js`,
-`ResponseBookmark/StyledWrapper.js:3-13`, `ResponseLayoutToggle/StyledWrapper.js:3-19`).
+(`#343434` / `#ccc`) (`components/ResponsePane/ResponseCopy/StyledWrapper.js:3-12`,
+`components/ResponsePane/ResponseClear/StyledWrapper.js:3-12`, `ResponseDownload/StyledWrapper.js`,
+`components/ResponsePane/ResponseBookmark/StyledWrapper.js:3-13`, `components/ResponsePane/ResponseLayoutToggle/StyledWrapper.js:3-19`).
 Disabled: `opacity-50 cursor-not-allowed` on the wrapper
-(`ResponseCopy/index.js:80-84`), plus `ActionIcon:disabled { opacity:0.5; cursor:not-allowed }`
+(`components/ResponsePane/ResponseCopy/index.js:80-84`), plus `ActionIcon:disabled { opacity:0.5; cursor:not-allowed }`
 (`ui/ActionIcon/StyledWrapper.js:41-44`).
 
 Toasts raised by these actions (copy exactly):
 
 | Toast                                                      | Kind    | Source                          |
 | ---------------------------------------------------------- | ------- | ------------------------------- |
-| `Response copied to clipboard`                             | success | `ResponseCopy/index.js:39`      |
-| `Failed to copy response`                                  | error   | `ResponseCopy/index.js:42`      |
-| `Response downloaded to file`                              | success | `ResponseDownload/index.js:29`  |
-| `Something went wrong!` (or the IPC error message)         | error   | `ResponseDownload/index.js:34`  |
-| `No valid response to save as example`                     | error   | `ResponseBookmark/index.js:51`  |
-| `Response size exceeds 5MB limit. Cannot save as example.` | error   | `ResponseBookmark/index.js:58`  |
-| `Example "{name}" created successfully`                    | success | `ResponseBookmark/index.js:131` |
+| `Response copied to clipboard`                             | success | `components/ResponsePane/ResponseCopy/index.js:39`      |
+| `Failed to copy response`                                  | error   | `components/ResponsePane/ResponseCopy/index.js:42`      |
+| `Response downloaded to file`                              | success | `components/ResponsePane/ResponseDownload/index.js:29`  |
+| `Something went wrong!` (or the IPC error message)         | error   | `components/ResponsePane/ResponseDownload/index.js:34`  |
+| `No valid response to save as example`                     | error   | `components/ResponsePane/ResponseBookmark/index.js:51`  |
+| `Response size exceeds 5MB limit. Cannot save as example.` | error   | `components/ResponsePane/ResponseBookmark/index.js:58`  |
+| `Example "{name}" created successfully`                    | success | `components/ResponsePane/ResponseBookmark/index.js:131` |
 
 Copy semantics: `preview` tab copies the raw text, `editor` tab copies
 `formatResponse(data, dataBuffer, selectedFormat, null)`; otherwise
-`JSON.stringify(data, null, 2)` (`ResponseCopy/index.js:10-20`).
+`JSON.stringify(data, null, 2)` (`components/ResponsePane/ResponseCopy/index.js:10-20`).
 
 Bookmark opens `CreateExampleModal` titled `Save Response as Example`
-(`ResponseBookmark/index.js:161-167`).
+(`components/ResponsePane/ResponseBookmark/index.js:161-167`).
 
 ### 3.2 Narrow: `⋯` menu
 
 - Trigger: `div.actions-dropdown` → `MenuDropdown` `placement="bottom-end"`,
   trigger glyph `IconDots` 16 px `strokeWidth 1.5`, `title="More actions"`
-  (`ResponsePaneActions/index.js:13-37`, `:151-159`).
+  (`components/ResponsePane/ResponsePaneActions/index.js:13-37`, `:151-159`).
 - Trigger box: `height 1.25rem` (20 px), `width 1.5rem` (24 px), `1px solid
 workspace.border` (`#e5e5e5` / `#444`), `border-radius 4px`, colour
   `dropdown.iconColor`; hover border
@@ -233,7 +233,7 @@ workspace.border` (`#e5e5e5` / `#444`), `border-radius 4px`, colour
   (`getKeybindingDisplayText('changeLayout')`, default `Ctrl + J` on Linux/Windows,
   `⌘ + J` on macOS — `providers/Hotkeys/keyMappings.js:43`).
 - GraphQL drops `Save response` and shows the `gqlMenuItems` set
-  (`ResponsePaneActions/index.js:56-94`, `:153`).
+  (`components/ResponsePane/ResponsePaneActions/index.js:56-94`, `:153`).
 
 ### 3.3 Clear Timeline (Timeline tab only)
 
@@ -241,7 +241,7 @@ When the active pane tab is `timeline`, the actions slot swaps to
 `ClearTimeline` (`components/ResponsePane/index.js:275-276`): a text button
 `Clear Timeline`, `title="Clear Timeline"`, `font-size: font.size.base`
 (13 px), colour `requestTabPanel.responseStatus`, link colour + underline on
-hover (`ClearTimeline/index.js:17-23`, `StyledWrapper.js:3-6`).
+hover (`components/ResponsePane/ClearTimeline/index.js:17-23`, `components/ResponsePane/StyledWrapper.js:3-6`).
 
 ---
 
@@ -252,9 +252,9 @@ hover (`ClearTimeline/index.js:17-23`, `StyledWrapper.js:3-6`).
 `isLoading = ['queued','sending'].includes(item.requestState)`
 (`components/ResponsePane/index.js:38`).
 
-- No response yet: the pane is only the `Overlay` (`index.js:211-217`).
+- No response yet: the pane is only the `Overlay` (`components/ResponsePane/index.js:211-217`).
 - Previous response present: overlay covers the content, the tab bar and
-  seam keep rendering (`index.js:305`).
+  seam keep rendering (`components/ResponsePane/index.js:305`).
 
 ```text
 div.response-pane-content
@@ -267,13 +267,13 @@ div.response-pane-content
 
 | Property        | Value                                                                                                                                              | Source                                                                             |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Backdrop        | `requestTabPanel.responseOverlayBg` — `rgba(255,255,255,.6)` / `rgba(26,26,26,.8)`                                                                 | `Overlay/StyledWrapper.js:8`                                                       |
+| Backdrop        | `requestTabPanel.responseOverlayBg` — `rgba(255,255,255,.6)` / `rgba(26,26,26,.8)`                                                                 | `components/ResponsePane/Overlay/StyledWrapper.js:8`                                                       |
 | Size            | `position:absolute; height:100%; width:calc(100% - 0.75rem); z-index:1`                                                                            | `:4-8`                                                                             |
 | Content         | `flex column; align-items:center; padding-top:20%; text-align:center`                                                                              | `:10-19`                                                                           |
 | Vertical layout | content centred vertically, `padding:1rem`                                                                                                         | `:28-33`                                                                           |
-| Stopwatch block | `margin-bottom:15px`, inline `font-size:20px`, `margin 0 5px`                                                                                      | `Overlay/index.js:21-25`                                                           |
-| Spinner         | `IconRefresh size={24}`, animation `rotateCounterClockwise 1s linear infinite` (`0%: scaleY(-1) rotate(360deg)` → `100%: scaleY(-1) rotate(0deg)`) | `Overlay/index.js:26`, `Overlay/StyledWrapper.js:20-23`, `globalStyles.js:180-188` |
-| Cancel          | `Button color="secondary" size="sm"`, `className="mt-4"` — label `Cancel Request`                                                                  | `Overlay/index.js:27-34`                                                           |
+| Stopwatch block | `margin-bottom:15px`, inline `font-size:20px`, `margin 0 5px`                                                                                      | `components/ResponsePane/Overlay/index.js:21-25`                                                           |
+| Spinner         | `IconRefresh size={24}`, animation `rotateCounterClockwise 1s linear infinite` (`0%: scaleY(-1) rotate(360deg)` → `100%: scaleY(-1) rotate(0deg)`) | `components/ResponsePane/Overlay/index.js:26`, `components/ResponsePane/Overlay/StyledWrapper.js:20-23`, `globalStyles.js:180-188` |
+| Cancel          | `Button color="secondary" size="sm"`, `className="mt-4"` — label `Cancel Request`                                                                  | `components/ResponsePane/Overlay/index.js:27-34`                                                           |
 
 `StopWatch` (`components/StopWatch/index.js`): renders `Loading...` when
 `startTime` is falsy or elapsed < 250 ms, else `{s.toFixed(1)}s`, ticking at
@@ -282,15 +282,15 @@ div.response-pane-content
 ### 4.2 Cancelled
 
 There is **no dedicated cancelled view**. Cancelling dispatches
-`cancelRequest` (`Overlay/index.js:14-16`), the item returns to idle and the
+`cancelRequest` (`components/ResponsePane/Overlay/index.js:14-16`), the item returns to idle and the
 pane falls through to whichever state applies: no response → `Placeholder`
-(`index.js:219-225`); a partial/last response → normal pane. A cancelled send
+(`components/ResponsePane/index.js:219-225`); a partial/last response → normal pane. A cancelled send
 also loses `requestUid`, which the error-card persistence keys on
 (`hooks/useResponsePaneErrors/index.js:11-13`).
 
 ### 4.3 Empty (`Placeholder`)
 
-Shown when `!item.response && !requestTimeline.length` (`index.js:219-225`),
+Shown when `!item.response && !requestTimeline.length` (`components/ResponsePane/index.js:219-225`),
 wrapped in `HeightBoundContainer`.
 
 ```text
@@ -302,50 +302,50 @@ Placeholder (padding-top:20%, width:100%)
 ```
 
 - Icon size: 150 px horizontal, 80 px vertical; wrapper font-size
-  200/100 px (`Placeholder/index.js:25`, `:32`).
+  200/100 px (`components/ResponsePane/Placeholder/index.js:25`, `:32`).
 - Icon colour `background.surface2` (`#e5e5e5` / `#666`
-  — `Placeholder/StyledWrapper.js:9-11`).
+  — `components/ResponsePane/Placeholder/StyledWrapper.js:9-11`).
 - Rows: `px-1 py-2` (4 px horizontal, 8 px vertical), labels right-aligned
-  in the left column (`index.js:35-49`).
+  in the left column (`components/ResponsePane/index.js:35-49`).
 - Shortcuts are user-rebindable and resolved at render
-  (`getKeyBindingDisplayTextByOS`, `index.js:17-23`). Defaults
+  (`getKeyBindingDisplayTextByOS`, `components/ResponsePane/index.js:17-23`). Defaults
   (`providers/Hotkeys/keyMappings.js:42`, `:58`, `:57`): Send Request
   `Ctrl + Enter` / `⌘ + ↩`; New Request `Ctrl + N` / `⌘ + N`; Edit
   Environments `Ctrl + E` / `⌘ + E`.
 - Vertical layout: `padding:1rem; justify-content:center`, no `padding-top:20%`
-  (`StyledWrapper.js:13-16`).
+  (`components/ResponsePane/StyledWrapper.js:13-16`).
 
 `refs/api_screen_bruno.png` captures exactly this state.
 
 ### 4.4 Skipped request
 
 When `item.response && item.status === 'skipped'` the whole pane becomes
-`SkippedRequest` (`index.js:203-209`):
+`SkippedRequest` (`components/ResponsePane/index.js:203-209`):
 
 - `IconCircleOff` 150 px, `strokeWidth 1`, colour `background.surface2`,
   `padding-top:20%`.
 - Text `Request skipped`, `margin-top:1rem` (16 px), inline `font-size:25px`,
   centred.
 
-(`SkippedRequest/index.js:5-16`, `StyledWrapper.js:3-9`.)
+(`components/ResponsePane/SkippedRequest/index.js:5-16`, `components/ResponsePane/StyledWrapper.js:3-9`.)
 
 ### 4.5 Error responses (HTTP error body)
 
 `QueryResult` renders the error string in `div.error` (`color:
 colors.text.danger`, `white-space: pre-line`) after stripping the prefix
 `Error invoking remote method 'send-http-request':`
-(`QueryResult/index.js:31-42`, `:184-196`). Empty error → `Something went
+(`components/ResponsePane/QueryResult/index.js:31-42`, `:184-196`). Empty error → `Something went
 wrong`. If the message contains `self signed certificate`, a hint appears
 below `mt-6 muted text-xs` (colour `colors.text.muted`):
 
 > You can disable SSL verification in the Preferences.
 > To open the Preferences, click on the gear icon in the bottom left corner.
 
-(`QueryResult/index.js:190-195`.)
+(`components/ResponsePane/QueryResult/index.js:190-195`.)
 
 If a script error exists (`preRequestScriptErrorMessage` /
 `postResponseScriptErrorMessage`) the inline error text is suppressed because
-`ResponseErrorsCard` already shows it (`QueryResult/index.js:177`, `:186`).
+`ResponseErrorsCard` already shows it (`components/ResponsePane/QueryResult/index.js:177`, `:186`).
 
 ### 4.6 Network error — `NetworkError`
 
@@ -355,7 +355,7 @@ via `toast.custom` for `5000` ms:
 
 | Property  | Value                                                                                                                         | Source                         |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| Container | `max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex bg-red-100` (Tailwind defaults; red-100 is `#fee2e2`) | `NetworkError/index.js:5`      |
+| Container | `max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex bg-red-100` (Tailwind defaults; red-100 is `#fee2e2`) | `components/ResponsePane/NetworkError/index.js:5`      |
 | Padding   | `p-4` (16 px)                                                                                                                 | `:6`                           |
 | Title     | `Network Error`, `font-medium text-red-800` (`#991b1b`)                                                                       | `:9`                           |
 | Close     | `Close`, `p-4`, `font-medium`, transparent border, right-rounded                                                              | `:14-19`                       |
@@ -368,7 +368,7 @@ Tailwind's build — treat the surface as `#fee2e2`.
 ### 4.7 Large response warning — `LargeResponseWarning`
 
 Triggered inside `QueryResult` when `responseSize > 10 * 1024 * 1024`
-(`QueryResult/index.js:125`, `:197-202`).
+(`components/ResponsePane/QueryResult/index.js:125`, `:197-202`).
 
 ```text
 LargeResponseWarning (flex column, align-items:center)
@@ -389,12 +389,12 @@ LargeResponseWarning (flex column, align-items:center)
 
 | Detail              | Value                                                                                                | Source                                                    |
 | ------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Thresholds          | warn above `10 MB`; download-only above `50 MB` (`MAX_RENDERABLE_RESPONSE_BYTES = 50 * 1024 * 1024`) | `QueryResult/index.js:125`, `utils/common/constants.js:6` |
-| Icon colour         | `colors.text.yellow` (`#bb931b` / `#fad075`)                                                         | `LargeResponseWarning/StyledWrapper.js:18-21`             |
+| Thresholds          | warn above `10 MB`; download-only above `50 MB` (`MAX_RENDERABLE_RESPONSE_BYTES = 50 * 1024 * 1024`) | `components/ResponsePane/QueryResult/index.js:125`, `utils/common/constants.js:6` |
+| Icon colour         | `colors.text.yellow` (`#bb931b` / `#fad075`)                                                         | `components/ResponsePane/LargeResponseWarning/StyledWrapper.js:18-21`             |
 | Highlight chips     | `padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.8rem`                                  | `:32-36`                                                  |
 | Current size chip   | `colors.text.danger` on `…danger 15` (8-digit hex alpha)                                             | `:38-41`                                                  |
 | Supported size chip | `colors.text.yellow` on `…yellow 15`                                                                 | `:43-46`                                                  |
-| View disabled       | when download-only                                                                                   | `LargeResponseWarning/index.js:78`                        |
+| View disabled       | when download-only                                                                                   | `components/ResponsePane/LargeResponseWarning/index.js:78`                        |
 | Download disabled   | `!response.dataBuffer && !response.storedRequestUid`                                                 | `:90`                                                     |
 | Copy disabled       | download-only or `!response.data`                                                                    | `:102`                                                    |
 
@@ -407,7 +407,7 @@ the warning.
 
 Rendered by `ResponseAlertsSection` for every non-loading Response-tab view
 when `item.unresolvedVariables.length > 0` and the errors card is not
-full-pane (`ResponseAlertsSection/index.js:10`, `:27`).
+full-pane (`components/ResponsePane/ResponseAlertsSection/index.js:10`, `:27`).
 
 ```text
 UnresolvedVariablesInfo (role=status)
@@ -422,16 +422,16 @@ UnresolvedVariablesInfo (role=status)
 
 | Property     | Value                                                                                                                                | Source                                          |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
-| Box          | `flex; align-items:flex-start; gap .5rem; padding .75rem`                                                                            | `UnresolvedVariablesInfo/StyledWrapper.js:3-11` |
+| Box          | `flex; align-items:flex-start; gap .5rem; padding .75rem`                                                                            | `components/ResponsePane/UnresolvedVariablesInfo/StyledWrapper.js:3-11` |
 | Surface      | `background.base`, `1px solid border.subtle`, `radius.base`                                                                          | `:8-10`                                         |
-| Threshold    | `MAX_INLINE_NAMES_LENGTH = 40` on `names.join(', ')`                                                                                 | `UnresolvedVariablesInfo/index.js:10`, `:80`    |
+| Threshold    | `MAX_INLINE_NAMES_LENGTH = 40` on `names.join(', ')`                                                                                 | `components/ResponsePane/UnresolvedVariablesInfo/index.js:10`, `:80`    |
 | Singular     | `1 variable` / plural `variables`                                                                                                    | `:39`                                           |
-| Code chip    | mono, `0.85em`, padding `.15em .35em`, bg `sidebar.bg` in light / transparent in dark, border `border.border0`                       | `StyledWrapper.js:25-33`                        |
+| Code chip    | mono, `0.85em`, padding `.15em .35em`, bg `sidebar.bg` in light / transparent in dark, border `border.border0`                       | `components/ResponsePane/StyledWrapper.js:25-33`                        |
 | Count link   | `textLink`, underlined, `text-underline-offset:2px`                                                                                  | `:35-44`                                        |
-| Popover      | `place=bottom-start`, no arrow, `opacity 1`, clickable; header `Unresolved variables` + copy icon (`Copied` / `Copy variable names`) | `index.js:41-69`, `StyledWrapper.js:46-65`      |
-| Popover size | `max-height 11.125rem; min-width 14rem; max-width min(32rem, 100vw-1.875rem)`                                                        | `StyledWrapper.js:67-90`                        |
+| Popover      | `place=bottom-start`, no arrow, `opacity 1`, clickable; header `Unresolved variables` + copy icon (`Copied` / `Copy variable names`) | `components/ResponsePane/index.js:41-69`, `components/ResponsePane/StyledWrapper.js:46-65`      |
+| Popover size | `max-height 11.125rem; min-width 14rem; max-width min(32rem, 100vw-1.875rem)`                                                        | `components/ResponsePane/StyledWrapper.js:67-90`                        |
 | Header size  | `font.size.xs`, padding `.375rem .625rem .125rem .875rem`                                                                            | `:57-65`                                        |
-| Dismiss      | dispatches `dismissUnresolvedVariables`, persisted per item                                                                          | `index.js:82-84`                                |
+| Dismiss      | dispatches `dismissUnresolvedVariables`, persisted per item                                                                          | `components/ResponsePane/index.js:82-84`                                |
 
 ### 4.9 Response errors card — `ResponseErrorsCard`
 
@@ -468,12 +468,12 @@ ResponseErrorsCard (role=region, aria-label=title)
 
 | Row          | Content                                                                                                                                                                          | Source                                                                          |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Source       | `source.label` (`Collection` / `Folder` / `Folder: {name}` / `Request`) uppercase, `font.size.xs`, 600, `letter-spacing .05em`, muted                                            | `:17-24`, `utils/response-pane-errors/index.js:21-40`, `StyledWrapper.js:17-23` |
-| Location     | `filePath:line`, mono 11 px, muted; clickable (`navigable`) when a target tab exists, `title="Open {location}"`, trailing `IconExternalLink` 12                                  | `:20-30`, `StyledWrapper.js:25-46`                                              |
+| Source       | `source.label` (`Collection` / `Folder` / `Folder: {name}` / `Request`) uppercase, `font.size.xs`, 600, `letter-spacing .05em`, muted                                            | `:17-24`, `utils/response-pane-errors/index.js:21-40`, `components/ResponsePane/StyledWrapper.js:17-23` |
+| Location     | `filePath:line`, mono 11 px, muted; clickable (`navigable`) when a target tab exists, `title="Open {location}"`, trailing `IconExternalLink` 12                                  | `:20-30`, `components/ResponsePane/StyledWrapper.js:25-46`                                              |
 | Code         | `CodeSnippet variant="error"` — mono `font.size.xs`, line-height 1.4, `radius.base`, highlight row `danger @10%` with 3 px left border; gutter `min-width 2.5rem`, right-aligned | `:32`, `CodeSnippet/StyledWrapper.js:5-47`                                      |
-| Message      | mono `font.size.sm`, 500, `pre-wrap`, `break-word`, `colors.text.danger`                                                                                                         | `:33-35`, `StyledWrapper.js:48-55`                                              |
+| Message      | mono `font.size.sm`, 500, `pre-wrap`, `break-word`, `colors.text.danger`                                                                                                         | `:33-35`, `components/ResponsePane/StyledWrapper.js:48-55`                                              |
 | Stack toggle | `Show stack trace` / `Hide stack trace` (verbatim `{Show\|Hide} {detailsHeading.toLowerCase()}`, heading `Stack trace`) + chevron 14                                             | `:36-47`, `utils/response-pane-errors/index.js:52-54`                           |
-| Stack        | `<pre>` mono `font.size.xs`, line-height 1.4, `break-all`, muted                                                                                                                 | `StyledWrapper.js:77-84`                                                        |
+| Stack        | `<pre>` mono `font.size.xs`, line-height 1.4, `break-all`, muted                                                                                                                 | `components/ResponsePane/StyledWrapper.js:77-84`                                                        |
 
 Card chrome (`ResponseErrorsCard/StyledWrapper.js`): surface `background.base`,
 `1px solid border.subtle`, `radius.base`; row hover =
@@ -500,13 +500,13 @@ Behaviour (`hooks/useResponsePaneErrors/index.js`):
 `IconAlertCircle` 16/1.5 + `<sup>` count, `height 1.5rem`, `padding 0 .25rem`,
 `gap .125rem`, `radius.sm`, colour `colors.text.danger`, font `font.size.sm`;
 tooltip `Show {n} error(s)` via `ToolHint place="bottom"`
-(`index.js:12-24`, `StyledWrapper.js:3-12`).
+(`components/ResponsePane/index.js:12-24`, `components/ResponsePane/StyledWrapper.js:3-12`).
 
 ### 4.10 Alert stacking
 
 `ResponseAlertsSection` is a flex column with `gap .5rem`, `margin-bottom
 .5rem`; `full-pane` grows and drops the margin
-(`ResponseAlertsSection/StyledWrapper.js:3-15`). Order: errors card, then
+(`components/ResponsePane/ResponseAlertsSection/StyledWrapper.js:3-15`). Order: errors card, then
 unresolved-variables info.
 
 ---
@@ -535,20 +535,20 @@ unresolved-variables info.
 | Action                         | Trigger                                               | Effect                                                                                                                     | Source                                                                                           |
 | ------------------------------ | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | Switch pane tab                | click tab / overflow menu item                        | `updateResponsePaneTab`                                                                                                    | `components/ResponsePane/index.js:91-98`                                                         |
-| Change layout                  | `ResponseLayoutToggle` click, or `Ctrl`+`J` / `⌘`+`J` | flips `layout.responsePaneOrientation`, persisted via `savePreferences`                                                    | `ResponseLayoutToggle/index.js:54-72`, `providers/Hotkeys/index.js:386-400`, `keyMappings.js:43` |
-| Copy                           | click/Enter/Space on Copy                             | clipboard + toast                                                                                                          | `ResponseCopy/index.js:35-98`                                                                    |
-| Save as example                | click Bookmark                                        | opens modal                                                                                                                | `ResponseBookmark/index.js:49-71`                                                                |
-| Download                       | click Download                                        | IPC `renderer:save-response-to-file`                                                                                       | `ResponseDownload/index.js:20-38`                                                                |
-| Clear                          | click Clear                                           | `responseCleared` (response → null)                                                                                        | `ResponseClear/index.js:9-23`                                                                    |
-| Clear timeline                 | `Clear Timeline` text button                          | `clearRequestTimeline`                                                                                                     | `ClearTimeline/index.js:9-21`                                                                    |
-| Cancel request                 | `Cancel Request` in overlay                           | `cancelRequest`                                                                                                            | `Overlay/index.js:14-16`                                                                         |
-| Reveal large response          | `View`                                                | permits formatting; warning removed                                                                                        | `QueryResult/index.js:197-202`                                                                   |
+| Change layout                  | `ResponseLayoutToggle` click, or `Ctrl`+`J` / `⌘`+`J` | flips `layout.responsePaneOrientation`, persisted via `savePreferences`                                                    | `components/ResponsePane/ResponseLayoutToggle/index.js:54-72`, `providers/Hotkeys/index.js:386-400`, `keyMappings.js:43` |
+| Copy                           | click/Enter/Space on Copy                             | clipboard + toast                                                                                                          | `components/ResponsePane/ResponseCopy/index.js:35-98`                                                                    |
+| Save as example                | click Bookmark                                        | opens modal                                                                                                                | `components/ResponsePane/ResponseBookmark/index.js:49-71`                                                                |
+| Download                       | click Download                                        | IPC `renderer:save-response-to-file`                                                                                       | `components/ResponsePane/ResponseDownload/index.js:20-38`                                                                |
+| Clear                          | click Clear                                           | `responseCleared` (response → null)                                                                                        | `components/ResponsePane/ResponseClear/index.js:9-23`                                                                    |
+| Clear timeline                 | `Clear Timeline` text button                          | `clearRequestTimeline`                                                                                                     | `components/ResponsePane/ClearTimeline/index.js:9-21`                                                                    |
+| Cancel request                 | `Cancel Request` in overlay                           | `cancelRequest`                                                                                                            | `components/ResponsePane/Overlay/index.js:14-16`                                                                         |
+| Reveal large response          | `View`                                                | permits formatting; warning removed                                                                                        | `components/ResponsePane/QueryResult/index.js:197-202`                                                                   |
 | Close error card               | `Close`                                               | persisted closed + new-send reset                                                                                          | `useResponsePaneErrors/index.js:19-27`                                                           |
 | Expand error card              | `Expand to full pane` / `Restore height`              | hides tab content                                                                                                          | `:29`                                                                                            |
-| Expand all / collapse all      | card action (multi-error only)                        | all rows                                                                                                                   | `ResponseErrorsCard/index.js:28`, `:56-58`                                                       |
+| Expand all / collapse all      | card action (multi-error only)                        | all rows                                                                                                                   | `components/ResponsePane/ResponseErrorsCard/index.js:28`, `:56-58`                                                       |
 | Toggle stack trace             | `Show stack trace` / `Hide stack trace`               | pre block                                                                                                                  | `ErrorDetails/index.js:38-50`                                                                    |
-| Jump to error source           | click file path                                       | opens the collection/folder/request settings tab with the script pane focused (`getErrorSourceTabUid` resolves the target) | `ResponseErrorsCard/ErrorDetails/index.js:20-24`, `utils/response-pane-errors/index.js:6-14`     |
-| Dismiss unresolved info        | `×`                                                   | persisted per item                                                                                                         | `UnresolvedVariablesInfo/index.js:82-84`                                                         |
+| Jump to error source           | click file path                                       | opens the collection/folder/request settings tab with the script pane focused (`getErrorSourceTabUid` resolves the target) | `components/ResponsePane/ResponseErrorsCard/ErrorDetails/index.js:20-24`, `utils/response-pane-errors/index.js:6-14`     |
+| Dismiss unresolved info        | `×`                                                   | persisted per item                                                                                                         | `components/ResponsePane/UnresolvedVariablesInfo/index.js:82-84`                                                         |
 | Context menu "set as variable" | right-click on the tab content                        | `setAsVariable.openFromDomSelection`                                                                                       | `components/ResponsePane/index.js:310`                                                           |
 
 Keyboard: only `Ctrl`/`⌘`+`J` is wired directly. `Alt`+`Shift`+`F` (Prettify)
@@ -562,7 +562,7 @@ Persistence keys (Go port should keep equivalent state):
 | `tabs[uid].responseFormat` / `.responseViewTab`                                                  | body format + editor/preview | `:54-59`                                                                        |
 | `tabs[uid].responseFilter` / `.responseFilterExpanded`                                           | JSONPath/XPath filter        | `:172-175`                                                                      |
 | `response-body-scroll-{uid}`                                                                     | body scroll                  | `QueryResultPreview/index.js:37`                                                |
-| `response-headers-scroll-{uid}`, `response-tests-scroll-{uid}`, `response-timeline-scroll-{uid}` | panel scroll                 | `ResponseHeaders/index.js:9`, `TestResults/index.js:95`, `Timeline/index.js:52` |
+| `response-headers-scroll-{uid}`, `response-tests-scroll-{uid}`, `response-timeline-scroll-{uid}` | panel scroll                 | `components/ResponsePane/ResponseHeaders/index.js:9`, `components/ResponsePane/TestResults/index.js:95`, `components/ResponsePane/Timeline/index.js:52` |
 
 ---
 
@@ -571,39 +571,39 @@ Persistence keys (Go port should keep equivalent state):
 `GrpcResponsePane` and `WSResponsePane` share this shell (tabs + status seam
 
 - actions) but use their own tabs — gRPC: `Response`, `Metadata`, `Trailers`,
-  `Timeline`, test label (`GrpcResponsePane/index.js:65-90`); WS: `Messages`,
-  … (`WsResponsePane/index.js:44-50`) — and are not detailed here.
+  `Timeline`, test label (`components/ResponsePane/GrpcResponsePane/index.js:65-90`); WS: `Messages`,
+  … (`components/ResponsePane/WsResponsePane/index.js:44-50`) — and are not detailed here.
 
 ---
 
 ## Open Questions
 
 1. **Unknown status code text.** `StatusCode` renders
-   `{status} {statusText || phrase}` (`StatusCode/index.js:20`). For a code
+   `{status} {statusText || phrase}` (`components/ResponsePane/StatusCode/index.js:20`). For a code
    absent from the phrase map and without `statusText`, React prints
    nothing for the expression but the literal survives as
    `"200 undefined"`. Unverified what React actually emits; a Go port should
    print just the number.
 2. **1xx rendering.** 1xx and 2xx both map to `text-ok`
-   (`StatusCode/index.js:10-11`); 3xx is `text-error` (`:12`). The Timeline
+   (`components/ResponsePane/StatusCode/index.js:10-11`); 3xx is `text-error` (`:12`). The Timeline
    status badge instead colours 3xx with `colors.text.warning` and 1xx as
-   muted (`Timeline/TimelineItem/Common/Status/index.js:9-16`). Pick one;
+   muted (`components/ResponsePane/Timeline/TimelineItem/Common/Status/index.js:9-16`). Pick one;
    this file follows `StatusCode`.
 3. **`NetworkError` surface colour.** The class list sets both `bg-white` and
-   `bg-red-100` (`NetworkError/index.js:5`); the rendered colour depends on
+   `bg-red-100` (`components/ResponsePane/NetworkError/index.js:5`); the rendered colour depends on
    Tailwind's cascade order, not read from a built stylesheet here.
 4. **`5 MB` vs `5*1024*1024`.** The bookmark tooltip says "5MB"
-   (`ResponseBookmark/index.js:23`), the check is 5 MiB (`:35`).
-5. **`width: calc(100% - 0.75rem)` on Overlay** (`Overlay/StyledWrapper.js:6`)
+   (`components/ResponsePane/ResponseBookmark/index.js:23`), the check is 5 MiB (`:35`).
+5. **`width: calc(100% - 0.75rem)` on Overlay** (`components/ResponsePane/Overlay/StyledWrapper.js:6`)
    has no cited rationale; with `position:absolute` inside a
    `padding:0 1rem` container it is 12 px narrower than the container. A Go
    port should simply fill the content box.
 6. **Size mismatch between panes.** `ResponsePane` decodes the base64 buffer
    for `responseSize` (`components/ResponsePane/index.js:105-119`) while
    `QueryResult` falls back to `floor(dataBuffer.length * 0.75)`
-   (`QueryResult/index.js:112-123`). The same response can therefore show two
+   (`components/ResponsePane/QueryResult/index.js:112-123`). The same response can therefore show two
    different sizes if `response.size` is absent.
 7. **Streaming + errors.** While streaming, `rightContent` omits the actions
-   block entirely (`index.js:243`) but `ResponseAlertsSection` still renders
+   block entirely (`components/ResponsePane/index.js:243`) but `ResponseAlertsSection` still renders
    when `!isLoading` (`:235`); unverified whether a stream can have script
    errors before ending.

@@ -25,7 +25,7 @@ Sources: `components/WelcomeModal/` (`index.js`, `WelcomeStep/`, `ThemeStep/`,
 
 ## Steps (4 total)
 
-Heading by step (`index.js:108-112`): step 1 **"Welcome to Bruno"**, step 4
+Heading by step (`components/WelcomeModal/index.js:108-112`): step 1 **"Welcome to Bruno"**, step 4
 **"Ready to go!"**, steps 2–3 **"Set up Bruno"**. Tagline (step 1 only):
 **"A fast, Git-friendly, and open-source API client."**
 
@@ -76,8 +76,8 @@ Source `GetStartedStep/index.js:7-47`.
 ## Footer
 
 - Progress dots (one per step, `aria-label="Go to step N"`,
-  `aria-current="step"`) — clicking jumps to that step (`index.js:127-135`).
-- Buttons (`index.js:137-158`): **`Skip`**, **`Back`** (steps > 1),
+  `aria-current="step"`) — clicking jumps to that step (`components/WelcomeModal/index.js:127-135`).
+- Buttons (`components/WelcomeModal/index.js:137-158`): **`Skip`**, **`Back`** (steps > 1),
   **`Get Started`** (step 1) / **`Next`** (steps 2–3), and on the last step
   **`I'll explore on my own`**.
 
@@ -88,7 +88,7 @@ With no collection open, `RequestTabPanel` mounts **`WorkspaceOverview`**
 `EmptyAppState` is a different surface (the App/webview feature, deferred).
 
 Workspace overview layout: stats row, quick actions, collections list, and the
-workspace docs pane on the right (`index.js:140-200`).
+workspace docs pane on the right (`components/WelcomeModal/index.js:140-200`).
 
 | Part          | Copy                                                                                                                                                                       |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -109,7 +109,7 @@ Collections list empty state (verbatim): **`No collections yet`** /
 
 - Entire flow is keyboard navigable; dots and cards are real `<button>`s.
 - `Skip` and `I'll explore on my own` dismiss and persist
-  (`handleSaveAndDismiss`, `index.js:52-56`).
+  (`handleSaveAndDismiss`, `components/WelcomeModal/index.js:52-56`).
 
 ## Open Questions
 

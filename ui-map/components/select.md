@@ -10,11 +10,11 @@ Two related primitives: `src/ui/Select/` (form select) and
 Trigger is an `InputWrapper` (field shell) with a caret (`IconCaretDown`),
 optional left section, optional clear (`IconX`), optional loading
 (`IconLoader2`). Popup is a tippy-based `Dropdown` whose width matches the
-trigger (`sameWidthModifier`, `index.js:33-45`).
+trigger (`sameWidthModifier`, `ui/Select/index.js:33-45`).
 
 | Prop                                     | Default                | Notes                                                        |
 | ---------------------------------------- | ---------------------- | ------------------------------------------------------------ |
-| `data`                                   | —                      | `string[]` or `{value,label,disabled?}[]` (`index.js:20-31`) |
+| `data`                                   | —                      | `string[]` or `{value,label,disabled?}[]` (`ui/Select/index.js:20-31`) |
 | `value` / `onChange`                     | —                      | controlled, value is a string                                |
 | `placeholder`                            | **`Select...`**        | shown when empty                                             |
 | `searchable`                             | false                  | type-to-filter                                               |
@@ -39,7 +39,7 @@ The trigger is `width: 100%`, ellipsised, placeholder at opacity `0.5`; when
 open the border becomes `input.focusBorder` (`input.focusBorder`).
 
 Keyboard: `ArrowDown/ArrowUp/Home/End` move the active option, `Enter` selects,
-`Escape` closes (`index.js:8-18`). Active option keys wrap cyclically.
+`Escape` closes (`ui/Select/index.js:8-18`). Active option keys wrap cyclically.
 
 ## Dropdown (`components/Dropdown/`)
 

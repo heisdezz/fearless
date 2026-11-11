@@ -31,12 +31,12 @@ Selector chrome (`RequestPane/Auth/AuthMode/StyledWrapper.js`):
 `1px solid input.border` (`#cccccc` L / `#444444` D), `input.bg`
 (`#ffffff` L / `transparent` D); label text `primary.text`, horizontal padding
 `0 0.5rem`; caret `IconCaretDown` 14px in `colors.text.muted` (`:11-24`,
-`AuthMode/index.js:103-110`).
+`components/RequestPane/Auth/AuthMode/index.js:103-110`).
 
 Compact field rows (`Auth/*/index.js`, e.g. `BasicAuth:52-65`):
 `label.block.mb-1` then `.single-line-editor-wrapper` with
 `padding: 0.15rem 0.4rem`, radius `3px`, `1px solid input.border`,
-`input.bg`, `max-width: 400px` (OAuth styling, `OAuth2/StyledWrapper.js:7-13`);
+`input.bg`, `max-width: 400px` (OAuth styling, `components/RequestPane/Auth/OAuth2/StyledWrapper.js:7-13`);
 `SingleLineEditor isCompact` → height `1.375rem` (22px),
 CodeMirror font `font.size.base` (13px) (`components/SingleLineEditor/StyledWrapper.js:5,20`).
 
@@ -64,9 +64,9 @@ label shown after selection (`humanizeRequestAuthMode`,
 | 12  | `none`            | `No Auth`                                                                | `No Auth`                  |
 
 Note the case difference between the menu item `AWS Sig v4` and the trigger
-`AWS Sig V4` (`AuthMode/index.js:33` vs `utils/collections/index.js:1023`).
+`AWS Sig V4` (`components/RequestPane/Auth/AuthMode/index.js:33` vs `utils/collections/index.js:1023`).
 Dropdown: placement `bottom-start`, `appendTo` `document.body`,
-`hideOnReferenceClip`, tick mark enabled (`AuthMode/index.js:93-101`).
+`hideOnReferenceClip`, tick mark enabled (`components/RequestPane/Auth/AuthMode/index.js:93-101`).
 The Beta badge uses `status.info` — bg `rgba(52,106,178,.15)` L /
 `rgba(139,194,249,.15)` D, text/border `#346ab2` L / `#8bc2f9` D
 (design-system §1.4).
@@ -104,38 +104,38 @@ Screenshot: `refs/auth_bruno.png` shows `Inherit` with
 
 | Order | Label    | Input    | Notes                                                                                                                                             | Source                                             |
 | ----- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| 1     | `Key`    | text     | —                                                                                                                                                 | `ApiKeyAuth/index.js:70-83`                        |
+| 1     | `Key`    | text     | —                                                                                                                                                 | `components/RequestPane/Auth/ApiKeyAuth/index.js:70-83`                        |
 | 2     | `Value`  | secret   | masked                                                                                                                                            | `:85-100`                                          |
 | 3     | `Add To` | dropdown | options `Header` / `Query Param`; default `header` auto-set on mount. Trigger shows `Header` or `Query Params` (`humanizeRequestAPIKeyPlacement`) | `:102-125`, `utils/collections/index.js:1069-1082` |
 
 No placeholders. Missing `placement` is initialised to `header`
-(`ApiKeyAuth/index.js:53-67`).
+(`components/RequestPane/Auth/ApiKeyAuth/index.js:53-67`).
 
 ### 3.4 Basic Auth — `basic`
 
 | Label      | Input  | Notes  | Source                     |
 | ---------- | ------ | ------ | -------------------------- |
-| `Username` | text   | —      | `BasicAuth/index.js:52-65` |
+| `Username` | text   | —      | `components/RequestPane/Auth/BasicAuth/index.js:52-65` |
 | `Password` | secret | masked | `:67-79`                   |
 
 ### 3.5 Bearer Token — `bearer`
 
 | Label   | Input  | Notes  | Source                      |
 | ------- | ------ | ------ | --------------------------- |
-| `Token` | secret | masked | `BearerAuth/index.js:39-54` |
+| `Token` | secret | masked | `components/RequestPane/Auth/BearerAuth/index.js:39-54` |
 
 ### 3.6 Digest Auth — `digest`
 
 | Label      | Input  | Notes  | Source                      |
 | ---------- | ------ | ------ | --------------------------- |
-| `Username` | text   | —      | `DigestAuth/index.js:52-65` |
+| `Username` | text   | —      | `components/RequestPane/Auth/DigestAuth/index.js:52-65` |
 | `Password` | secret | masked | `:67-79`                    |
 
 ### 3.7 NTLM — `ntlm`
 
 | Label      | Input  | Notes  | Source                    |
 | ---------- | ------ | ------ | ------------------------- |
-| `Username` | text   | —      | `NTLMAuth/index.js:70-83` |
+| `Username` | text   | —      | `components/RequestPane/Auth/NTLMAuth/index.js:70-83` |
 | `Password` | secret | masked | `:85-100`                 |
 | `Domain`   | text   | —      | `:102-115`                |
 
@@ -143,7 +143,7 @@ No placeholders. Missing `placement` is initialised to `header`
 
 | Order | Label               | Input  | Notes  | Source                       |
 | ----- | ------------------- | ------ | ------ | ---------------------------- |
-| 1     | `Access Key ID`     | text   | —      | `AwsV4Auth/index.js:133-146` |
+| 1     | `Access Key ID`     | text   | —      | `components/RequestPane/Auth/AwsV4Auth/index.js:133-146` |
 | 2     | `Secret Access Key` | secret | masked | `:148-164`                   |
 | 3     | `Session Token`     | secret | masked | `:166-181`                   |
 | 4     | `Service`           | text   | —      | `:183-196`                   |
@@ -154,12 +154,12 @@ No placeholders. Missing `placement` is initialised to `header`
 
 | Label      | Input  | Notes  | Source                    |
 | ---------- | ------ | ------ | ------------------------- |
-| `Username` | text   | —      | `WsseAuth/index.js:53-66` |
+| `Username` | text   | —      | `components/RequestPane/Auth/WsseAuth/index.js:53-66` |
 | `Password` | secret | masked | `:68-80`                  |
 
 ### 3.10 Akamai EdgeGrid (Beta) — `akamai-edgegrid`
 
-Field config at `EdgeGridAuth/index.tsx:44-70`; rendered by
+Field config at `components/RequestPane/Auth/EdgeGridAuth/index.tsx:44-70`; rendered by
 `renderField` (`:110-146`).
 
 | Group    | Label             | Input                                                      | Tooltip (verbatim)                                                                                                |
@@ -174,9 +174,9 @@ Field config at `EdgeGridAuth/index.tsx:44-70`; rendered by
 | Advanced | `Max Body Size`   | text (numeric; invalid → null)                             | `Maximum message body size to include in the signature, in bytes. Defaults to 131072.`                            |
 
 Group header text `Advanced Settings` with `IconAdjustmentsHorizontal` 16px
-(`EdgeGridAuth/index.tsx:149-155`). Tooltips are rendered as an
+(`components/RequestPane/Auth/EdgeGridAuth/index.tsx:149-155`). Tooltips are rendered as an
 `IconInfoCircle` 16px after the label (`:116-122`). Labels: weight 500
-(`EdgeGridAuth/StyledWrapper.js:9`), group header weight 600 (`:36`).
+(`components/RequestPane/Auth/EdgeGridAuth/StyledWrapper.js:9`), group header weight 600 (`:36`).
 
 ### 3.11 OAuth 1.0 — `oauth1`
 
@@ -201,14 +201,14 @@ Sections with icons (no collapse except Advanced). Source: `OAuth1/index.js`.
 |                                                                            | 15    | `Realm`             | text                     | `:444-457`                                                                                                                                                    |
 
 Labels are `min-w-[140px]`, `font.size.sm`, colour `colors.text.subtext1`
-(`OAuth1/StyledWrapper.js:9-12`); section labels in `text`.
+(`components/RequestPane/Auth/OAuth1/StyledWrapper.js:9-12`); section labels in `text`.
 Uploading a file as a typed value is rejected with toast
 `File references should be added using the "Upload File" button below`
-(`OAuth1/index.js:62-68`).
+(`components/RequestPane/Auth/OAuth1/index.js:62-68`).
 
 ### 3.12 OAuth 2.0 — `oauth2`
 
-First control is the **Grant Type** selector (`OAuth2/GrantTypeSelector/index.js:58-90`),
+First control is the **Grant Type** selector (`components/RequestPane/Auth/OAuth2/GrantTypeSelector/index.js:58-90`),
 with `Grant Type` section label + `IconKey`:
 
 | id                   | Label                  | Default                                          |
@@ -218,7 +218,7 @@ with `Grant Type` section label + `IconKey`:
 | `implicit`           | `Implicit`             |                                                  |
 | `client_credentials` | `Client Credentials`   |                                                  |
 
-Unknown grant type renders the body text `TBD` (`OAuth2/index.js:41`).
+Unknown grant type renders the body text `TBD` (`components/RequestPane/Auth/OAuth2/index.js:41`).
 
 #### 3.12.1 Authorization Code (default)
 
@@ -302,8 +302,8 @@ OAuth2 field styling: label `font.size.base`; editor box max 400px, radius 3px,
 
 | Interaction           | Result                                                                                                                                                                                         | Source                                           |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ------------------------------ |
-| Change mode           | `updateRequestAuthMode`                                                                                                                                                                        | `AuthMode/index.js:19-30`                        |
-| Edit field            | `updateAuth({ mode, content })` on each keystroke                                                                                                                                              | e.g. `BasicAuth/index.js:24-49`                  |
+| Change mode           | `updateRequestAuthMode`                                                                                                                                                                        | `components/RequestPane/Auth/AuthMode/index.js:19-30`                        |
+| Edit field            | `updateAuth({ mode, content })` on each keystroke                                                                                                                                              | e.g. `components/RequestPane/Auth/BasicAuth/index.js:24-49`                  |
 | `Enter` in field      | send request                                                                                                                                                                                   | `SingleLineEditor/index.js:75`                   |
 | `Cmd/Ctrl + S`        | save                                                                                                                                                                                           | `keyMappings.js:9`                               |
 | `Get Access Token`    | `fetchOauth2Credentials`; toasts `Token fetched successfully!` / `Token refreshed successfully!` / `Cleared cache successfully` / `Authorization cancelled` / `Failed to cancel authorization` | `Oauth2ActionButtons/index.js:69-166`            |
@@ -324,7 +324,7 @@ Screenshot: `refs/auth_bruno.png` (inherit state on a folder).
 ## 7. Open Questions
 
 1. **EdgeGrid "Advanced Settings"** is rendered unconditionally in the current
-   source (`EdgeGridAuth/index.tsx:147-159`) — the `BASIC_FIELDS` /
+   source (`components/RequestPane/Auth/EdgeGridAuth/index.tsx:147-159`) — the `BASIC_FIELDS` /
    `ADVANCED_FIELDS` split suggests a collapse was intended. Treat as
    always-expanded unless the running build shows otherwise.
 2. **OAuth2 `Add token to` trigger shows `Headers` (plural) while the menu
@@ -335,7 +335,7 @@ Screenshot: `refs/auth_bruno.png` (inherit state on a folder).
    `NTLM`) and AWS (`AWS Sig v4` vs `AWS Sig V4`). Both strings are in source;
    a Go port must choose per-surface.
 4. **API Key "Add To" trigger** says `Query Params` (plural) while the menu
-   option is `Query Param` (`ApiKeyAuth/index.js:117-121`).
+   option is `Query Param` (`components/RequestPane/Auth/ApiKeyAuth/index.js:117-121`).
 5. **Password Credentials** repeats the Authorization Code strings
    (`Automatically fetch token if not found`, `Auto refresh token (with refresh URL)`)
    with identical tooltip text (`PasswordCredentials/index.js:278-284,300-306`),

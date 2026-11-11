@@ -57,18 +57,18 @@ Screenshots: `refs/side_bar_bruno.png`, `refs/sidebar_plus_options.png`,
 | Aspect | Value | Source |
 | --- | --- | --- |
 | Min / max width | `220` / `600` px | `components/Sidebar/index.js:16-17` |
-| Width source | `state.app.leftSidebarWidth`, persisted to `localStorage` under `SIDEBAR_WIDTH_KEY` | `index.js:8,42,79-90` |
-| Resize increment guard | ignore moves < `3` px | `index.js:70` |
-| Width transition | `width 0.2s ease-in-out` (disabled while dragging) | `index.js:124` |
-| Collapsed width | `0` | `index.js:61` |
-| Background | `sidebar.bg` → `#f8f8f8` L / `#222224` D | `StyledWrapper.js:51`; tokens `tokens.json` `sidebar.bg` |
-| Text colour | `sidebar.color` → `#343434` L / `#cccccc` D | `StyledWrapper.js:5` |
-| Drag handle | width `6px`, offset `right: -3px`, `cursor: col-resize`, `transition: opacity 0.2s ease` | `StyledWrapper.js:148-157` |
-| Drag handle line | `2px` box, `border-left: solid 1px sidebar.dragbar.border` (`#e5e5e5` L / `#333333` D) | `StyledWrapper.js:159-163`; tokens `sidebar.dragbar.border` |
-| Drag handle hover line | `1px` `sidebar.dragbar.activeBorder` (`#e5e5e5` L / `#444444` D) | `StyledWrapper.js:165-167` |
-| Section content scroll | `overflow-y: auto`, `overflow-x: hidden` | `SidebarSection/StyledWrapper.js:105-113` |
+| Width source | `state.app.leftSidebarWidth`, persisted to `localStorage` under `SIDEBAR_WIDTH_KEY` | `components/Sidebar/index.js:8,42,79-90` |
+| Resize increment guard | ignore moves < `3` px | `components/Sidebar/index.js:70` |
+| Width transition | `width 0.2s ease-in-out` (disabled while dragging) | `components/Sidebar/index.js:124` |
+| Collapsed width | `0` | `components/Sidebar/index.js:61` |
+| Background | `sidebar.bg` → `#f8f8f8` L / `#222224` D | `components/Sidebar/StyledWrapper.js:51`; tokens `tokens.json` `sidebar.bg` |
+| Text colour | `sidebar.color` → `#343434` L / `#cccccc` D | `components/Sidebar/StyledWrapper.js:5` |
+| Drag handle | width `6px`, offset `right: -3px`, `cursor: col-resize`, `transition: opacity 0.2s ease` | `components/Sidebar/StyledWrapper.js:148-157` |
+| Drag handle line | `2px` box, `border-left: solid 1px sidebar.dragbar.border` (`#e5e5e5` L / `#333333` D) | `components/Sidebar/StyledWrapper.js:159-163`; tokens `sidebar.dragbar.border` |
+| Drag handle hover line | `1px` `sidebar.dragbar.activeBorder` (`#e5e5e5` L / `#444444` D) | `components/Sidebar/StyledWrapper.js:165-167` |
+| Section content scroll | `overflow-y: auto`, `overflow-x: hidden` | `components/Sidebar/SidebarSection/StyledWrapper.js:105-113` |
 
-The drag handle is only rendered when the sidebar is not collapsed (`index.js:138`).
+The drag handle is only rendered when the sidebar is not collapsed (`components/Sidebar/index.js:138`).
 
 ---
 
@@ -76,7 +76,7 @@ The drag handle is only rendered when the sidebar is not collapsed (`index.js:13
 
 | Aspect | Value | Source |
 | --- | --- | --- |
-| Height | `28px` (`min-height: 28px; height: 28px`) | `SidebarSection/StyledWrapper.js:33-34` |
+| Height | `28px` (`min-height: 28px; height: 28px`) | `components/Sidebar/SidebarSection/StyledWrapper.js:33-34` |
 | Padding | `6px 4px 6px 8px` | `:32` |
 | Header gap | `16px` | `:31` |
 | Left cluster gap | `6px` | `:43` |
@@ -84,18 +84,18 @@ The drag handle is only rendered when the sidebar is not collapsed (`index.js:13
 | Background transition | `background-color 0.15s ease` | `:36` |
 | Title | `12px`, weight `600`, `sidebar.color`, single line + ellipsis | `:88-95` |
 | Icon wrapper | `24 × 24px` | `:66-73` |
-| Section icon | `14px`, stroke `1.5`, `sidebar.muted` (`#838383` L / `#aaa` D) | `SidebarSection/index.js:62`; `StyledWrapper.js:79-86` |
-| Caret (icon swap) | `IconChevronRight` `12px` collapsed → `IconChevronDown` `12px` expanded, stroke `1.5` | `SidebarSection/index.js:56-60` |
-| Caret visibility | hidden by default; only shown on header-left hover, which also hides the section icon and paints the caret `dropdown.hoverBg` | `StyledWrapper.js:49-63,75-77` |
-| Action icons | `ActionIcon` `size="sm"` (22 px button), gap `1px` | `StyledWrapper.js:97-102`; `ui/ActionIcon/StyledWrapper.js` `sizeMap.sm = 22` |
+| Section icon | `14px`, stroke `1.5`, `sidebar.muted` (`#838383` L / `#aaa` D) | `components/Sidebar/SidebarSection/index.js:62`; `components/Sidebar/StyledWrapper.js:79-86` |
+| Caret (icon swap) | `IconChevronRight` `12px` collapsed → `IconChevronDown` `12px` expanded, stroke `1.5` | `components/Sidebar/SidebarSection/index.js:56-60` |
+| Caret visibility | hidden by default; only shown on header-left hover, which also hides the section icon and paints the caret `dropdown.hoverBg` | `components/Sidebar/StyledWrapper.js:49-63,75-77` |
+| Action icons | `ActionIcon` `size="sm"` (22 px button), gap `1px` | `components/Sidebar/StyledWrapper.js:97-102`; `ui/ActionIcon/StyledWrapper.js` `sizeMap.sm = 22` |
 
 ### 3.1 Section titles and header actions (verbatim)
 
 | Section | id | Title | Icon | Header actions | Source |
 | --- | --- | --- | --- | --- | --- |
-| Collections | `collections` | `Collections` | `IconBox` | `Search requests`, `Add new collection`, `More actions` | `Sections/CollectionsSection/index.js:294-332,405-410` |
-| API Specs (deferred) | `api-specs` | `API Specs` | `IconFileCode` | `Add new API Spec` | `Sections/ApiSpecsSection/index.js:43-57,66-70` |
-| Mock Servers (deferred, beta) | `mock-servers` | `Mock Servers` | `IconServer` | `Create mock server` | `Sections/MockServersSection/index.js:11-19,26-31` |
+| Collections | `collections` | `Collections` | `IconBox` | `Search requests`, `Add new collection`, `More actions` | `components/Sidebar/Sections/CollectionsSection/index.js:294-332,405-410` |
+| API Specs (deferred) | `api-specs` | `API Specs` | `IconFileCode` | `Add new API Spec` | `components/Sidebar/Sections/ApiSpecsSection/index.js:43-57,66-70` |
+| Mock Servers (deferred, beta) | `mock-servers` | `Mock Servers` | `IconServer` | `Create mock server` | `components/Sidebar/Sections/MockServersSection/index.js:11-19,26-31` |
 
 Deferred sections (`ApiSpecs`, `MockServers` trees) are out of v1 UI scope per
 `ui-map/overview.md:188-193`; only their header contract is specified here.
@@ -103,11 +103,11 @@ Deferred sections (`ApiSpecs`, `MockServers` trees) are out of v1 UI scope per
 ### 3.2 Collections header menus
 
 `Add new collection` (`IconPlus`, 14 px, stroke 1.5) opens `MenuDropdown` `placement="bottom-end"`.
-Order (`Sections/CollectionsSection/index.js:239-265`):
+Order (`components/Sidebar/Sections/CollectionsSection/index.js:239-265`):
 
 | # | id | Left icon | Label (verbatim) | Shortcut hint | Action |
 | --- | --- | --- | --- | --- | --- |
-| 1 | `create` | `IconPlus` | `Create collection` | — | inline creator (`index.js:244-246`) |
+| 1 | `create` | `IconPlus` | `Create collection` | — | inline creator (`components/Sidebar/Sections/CollectionsSection/index.js:243`) |
 | 2 | `open` | `IconFolder` | `Open collection` | — | `setIsOpeningCollection(true)` (`:252-254`) |
 | 3 | `import` | `IconDownload` | `Import collection` | `importCollection` binding (`Cmd/Ctrl+O`) | open Import modal (`:260-263`) |
 
@@ -134,9 +134,9 @@ Sort cycle: `default → alphabetical → reverseAlphabetical → default`
 
 | Aspect | Value | Source |
 | --- | --- | --- |
-| Row height | `1.6rem` (= `25.6px` at a 16 px root; Virtuoso default item height `26`) | `SidebarRowStyles/index.js:4`; `Collections/CollectionItem/CollectionItemRow/StyledWrapper.js:24`; `Collections/index.js:141` |
-| Cursor / selection | `cursor: pointer`, `user-select: none` | `SidebarRowStyles/index.js:5-6` |
-| Left border | `4px solid transparent` (collection rows) / `3px solid transparent` (item rows) | `SidebarRowStyles/index.js:7`; `CollectionItemRow/StyledWrapper.js:28` |
+| Row height | `1.6rem` (= `25.6px` at a 16 px root; Virtuoso default item height `26`) | `components/Sidebar/SidebarRowStyles/index.js:4`; `Collections/CollectionItem/CollectionItemRow/StyledWrapper.js:24`; `components/Sidebar/Collections/index.js:141` |
+| Cursor / selection | `cursor: pointer`, `user-select: none` | `components/Sidebar/SidebarRowStyles/index.js:5-6` |
+| Left border | `4px solid transparent` (collection rows) / `3px solid transparent` (item rows) | `components/Sidebar/SidebarRowStyles/index.js:7`; `CollectionItemRow/StyledWrapper.js:28` |
 | Indent unit | `16px` per depth level, each cell is an `.indent-block` of `width: 16px; min-width: 16px; height: 100%` | `CollectionItemRow/index.jsx:409,764-776`; `ExampleItem/index.jsx:73,236-246` |
 | Indent guide | `border-right: 1px solid sidebar.collection.item.indentBorder` (`#e5e5e5` L / `#26292b` D) | `CollectionItemRow/StyledWrapper.js:19-21` |
 | Content padding-left | `8px` on the inner flex row | `CollectionItemRow/index.jsx:779` |
@@ -190,7 +190,7 @@ Sidebar request rows do **not** use `ui/MethodBadge`. They render
 | Font size | `font.size.xs` = `0.6875rem` (11 px) | `RequestMethod/StyledWrapper.js:4` |
 | Transform | `uppercase` | `RequestMethod/index.js:48-50` |
 | Colour per verb | `request.methods.get/post/put/delete/patch/options/head` | `RequestMethod/StyledWrapper.js:16-36` |
-| gRPC / WS / GraphQL | `request.grpc` / `request.ws` / `request.gql`, text `grpc` / `ws` / `gql` | `RequestMethod/index.js:11-18`; `StyledWrapper.js:37-45` |
+| gRPC / WS / GraphQL | `request.grpc` / `request.ws` / `request.gql`, text `grpc` / `ws` / `gql` | `RequestMethod/index.js:11-18`; `components/Sidebar/StyledWrapper.js:37-45` |
 | Long verbs | truncated to first 3 characters (`method.substring(0, 3)`) | `RequestMethod/index.js:15-17` |
 | Unknown verb | no colour class → inherits row text colour (**inference**; no fallback rule exists in this component) | `RequestMethod/index.js:20-34` |
 
@@ -219,21 +219,21 @@ Note: `design-system.md` §1.5 lists DELETE dark as `#e06552`; `tokens.json` res
 ### 4.5 Row states (exact values)
 
 Applies to item rows (`CollectionItemRow/StyledWrapper.js:107-149`) and collection rows
-(`SidebarRowStyles/index.js:13-38`, `Collections/StyledWrapper.js:8-48`).
+(`components/Sidebar/SidebarRowStyles/index.js:13-38`, `components/Sidebar/Collections/StyledWrapper.js:8-48`).
 
 | State | Background | Border | Other | Source |
 | --- | --- | --- | --- | --- |
 | Default | transparent | `3px` left transparent | menu hidden | `CollectionItemRow/StyledWrapper.js:28` |
 | Hover | `sidebar.collection.item.hoverBg` (`#eaeaea` L / `#222224` D) | — | menu becomes visible; menu background forced transparent | `CollectionItemRow/StyledWrapper.js:108-117` |
 | Drop-hover target | `sidebar.collection.item.hoverBg` | — | `.item-hovered` shares the hover rule | `:109-110` |
-| Focus-within | same as hover | — | — | `SidebarRowStyles/index.js:13-21` |
-| Keyboard focus | unchanged | `1px` top + `1px` bottom `sidebar.collection.item.focusBorder` (`#cccccc` L / `#444444` D), `outline: none` | — | `CollectionItemRow/StyledWrapper.js:145-149`; `SidebarRowStyles/index.js:34-38` |
-| Selected in tab (active) | `sidebar.collection.item.bg` (`#eaeaea` L / `#26292b` D); hover forced to same | `3px` left `primary.solid` (`#d37f17` L / `#e4ae49` D) | - item: `.item-focused-in-tab`; - collection: `.collection-focused-in-tab` | `CollectionItemRow/StyledWrapper.js:133-143`; `Collections/StyledWrapper.js:17-20` |
-| Collection selected (active) | `sidebar.collection.item.bg`; `box-shadow: inset 3px 0 0 0 primary.solid`; `padding-left: 8px`; left border width forced 0 | — | avoids mitered corners with drop borders | `Collections/StyledWrapper.js:24-28` |
-| Multi-selected `collection-item-selected` | `rgba(primary.text, 0.1)` (hover `rgba(primary.text, 0.16)`) | `3px` left `primary.solid` | — | `Collections/StyledWrapper.js:8-20` (L `#c07a26`/D `#e7b85f` at 10 % / 16 %) |
-| Multi-selected collection | `rgba(primary.text, 0.1)` / hover `0.16` | `inset 3px 0 0 0 primary.solid` | — | `Collections/StyledWrapper.js:8-28` |
-| Keyboard focus + selected | `rgba(primary.text, 0.1)` (hover `0.16`) | as selected | `.collection-keyboard-focused` / `.item-keyboard-focused` | `Collections/StyledWrapper.js:31-38` |
-| Tab focus + selected | `rgba(primary.text, 0.16)` (hover also `0.16`) | as selected | `.collection-focused-in-tab` / `.item-focused-in-tab` on selected row | `Collections/StyledWrapper.js:41-48` |
+| Focus-within | same as hover | — | — | `components/Sidebar/SidebarRowStyles/index.js:13-21` |
+| Keyboard focus | unchanged | `1px` top + `1px` bottom `sidebar.collection.item.focusBorder` (`#cccccc` L / `#444444` D), `outline: none` | — | `CollectionItemRow/StyledWrapper.js:145-149`; `components/Sidebar/SidebarRowStyles/index.js:34-38` |
+| Selected in tab (active) | `sidebar.collection.item.bg` (`#eaeaea` L / `#26292b` D); hover forced to same | `3px` left `primary.solid` (`#d37f17` L / `#e4ae49` D) | - item: `.item-focused-in-tab`; - collection: `.collection-focused-in-tab` | `CollectionItemRow/StyledWrapper.js:133-143`; `components/Sidebar/Collections/StyledWrapper.js:17-20` |
+| Collection selected (active) | `sidebar.collection.item.bg`; `box-shadow: inset 3px 0 0 0 primary.solid`; `padding-left: 8px`; left border width forced 0 | — | avoids mitered corners with drop borders | `components/Sidebar/StyledWrapper.js:24-28` |
+| Multi-selected `collection-item-selected` | `rgba(primary.text, 0.1)` (hover `rgba(primary.text, 0.16)`) | `3px` left `primary.solid` | — | `components/Sidebar/Collections/StyledWrapper.js:8-20` (L `#c07a26`/D `#e7b85f` at 10 % / 16 %) |
+| Multi-selected collection | `rgba(primary.text, 0.1)` / hover `0.16` | `inset 3px 0 0 0 primary.solid` | — | `components/Sidebar/Collections/StyledWrapper.js:8-28` |
+| Keyboard focus + selected | `rgba(primary.text, 0.1)` (hover `0.16`) | as selected | `.collection-keyboard-focused` / `.item-keyboard-focused` | `components/Sidebar/StyledWrapper.js:31-38` |
+| Tab focus + selected | `rgba(primary.text, 0.16)` (hover also `0.16`) | as selected | `.collection-focused-in-tab` / `.item-focused-in-tab` on selected row | `components/Sidebar/StyledWrapper.js:41-48` |
 | Drag disabled | cursor `not-allowed` while pressed | — | `.drag-disabled:active` | `CollectionItemRow/StyledWrapper.js:35-37`; `CollectionRow/StyledWrapper.js:17-19` |
 | Ghost (git) row | `sidebar.muted` text at `opacity: 0.7`; hover `sidebar.collection.item.hoverBg` at `opacity: 0.9` | — | — | `GitRemoteCollectionRow/StyledWrapper.js:11-12,33-42` |
 | Empty CTA row | text `sidebar.muted`, `font.size.sm`, link `textLink` | — | `+ Add request` in `#346ab2` L / `#8bc2f9` D | `EmptyCtaRow/StyledWrapper.js:4-14` |
@@ -257,15 +257,15 @@ Additional legacy classes present but not used by the v1 states above:
 
 | Aspect | Value | Source |
 | --- | --- | --- |
-| Trigger | header `Search requests` button, or `sidebarSearch` binding (`Ctrl/Cmd+F`) unless focus is inside `.CodeMirror` | `Sidebar/index.js:51-56`; `Sections/CollectionsSection/index.js:132-134` |
+| Trigger | header `Search requests` button, or `sidebarSearch` binding (`Ctrl/Cmd+F`) unless focus is inside `.CodeMirror` | `Sidebar/index.js:51-56`; `components/Sidebar/Sections/CollectionsSection/index.js:132-134` |
 | Wrapper margins | `4px 10px 8px 10px` | `CollectionSearch/StyledWrapper.js:4` |
 | Input height | `32px`, padding `0 32px 0 32px`, font `12px`, radius `6px`, background `sidebar.collection.item.hoverBg` | `:16-24` |
-| Placeholder | `Search requests...` in `sidebar.muted` | `CollectionSearch/index.js:12`; `StyledWrapper.js:28-30` |
-| Placeholder opacity | default input placeholder opacity is **not** applied here (no `opacity` rule) | `StyledWrapper.js:28-30` |
+| Placeholder | `Search requests...` in `sidebar.muted` | `CollectionSearch/index.js:12`; `components/Sidebar/StyledWrapper.js:28-30` |
+| Placeholder opacity | default input placeholder opacity is **not** applied here (no `opacity` rule) | `components/Sidebar/StyledWrapper.js:28-30` |
 | Hover / focus | border `input.border` (`#cccccc` L / `#444444` D); focus also swaps background to `input.bg` (`#ffffff` L / `transparent` D) | `:32-39` |
-| Search icon | `IconSearch` `14px` stroke `1.5`, absolute at `left: 10px`, `sidebar.muted` | `CollectionSearch/index.js:7`; `StyledWrapper.js:7-14` |
-| Clear icon | `IconX` `14px` in an `18 × 18` box, radius `4px`, only when text non-empty | `CollectionSearch/index.js:22-26`; `StyledWrapper.js:42-61` |
-| Debounce | `300 ms`, empty queries skip debounce | `Collections/index.js:24` |
+| Search icon | `IconSearch` `14px` stroke `1.5`, absolute at `left: 10px`, `sidebar.muted` | `CollectionSearch/index.js:7`; `components/Sidebar/StyledWrapper.js:7-14` |
+| Clear icon | `IconX` `14px` in an `18 × 18` box, radius `4px`, only when text non-empty | `CollectionSearch/index.js:22-26`; `components/Sidebar/StyledWrapper.js:42-61` |
+| Debounce | `300 ms`, empty queries skip debounce | `components/Sidebar/Collections/index.js:24` |
 | Matching | case-insensitive on lower-cased input; folders expand to show matching descendants | `CollectionSearch/index.js:20`; `flattenSidebarTree.js:85-88` |
 | No results | collection-level rows are filtered out one by one; **no** empty-state message is rendered by the list | `CollectionRow/index.jsx:540-544`; `CollectionItemRow/index.jsx:701-711` |
 
@@ -276,7 +276,7 @@ Screenshot: `refs/sidebar_search_bar_open.png`.
 | Aspect | Value | Source |
 | --- | --- | --- |
 | Trigger | `CountBadge variant="danger"` shown when `count > 0` | `InvalidFilesBadge/index.js:28-32` |
-| Placement | after name, `flex-shrink-0 mx-1`, radius `9999px` | `InvalidFilesBadge/index.js:29`; `StyledWrapper.js:7-9` |
+| Placement | after name, `flex-shrink-0 mx-1`, radius `9999px` | `InvalidFilesBadge/index.js:29`; `components/Sidebar/StyledWrapper.js:7-9` |
 | Tooltip | `You have N invalid file(s).` + button `See here`, placed `bottom-start` | `InvalidFilesBadge/index.js:44-48` |
 | Action | opens collection settings → overview and scrolls to the not-loaded list | `InvalidFilesBadge/index.js:20-26` |
 
@@ -287,7 +287,7 @@ Screenshot: `refs/sidebar_search_bar_open.png`.
 ### 5.1 Empty state
 
 When there are no entries the section body shows `CreateOrOpenCollection`
-(`Collections/index.js:101-114`):
+(`components/Sidebar/Collections/index.js:101-114`):
 
 ```text
 No collections found.
@@ -297,13 +297,13 @@ Create or Open Collection.
 - `No collections found.` then, on a second line (`mt-2`), `Create` (link) ` or ` `Open` (link) ` Collection.`
   (`CreateOrOpenCollection/index.js:37-40`).
 - Text `text-xs`, centred, `colors.text.muted`; links underlined in `textLink`
-  (`CreateOrOpenCollection/index.js:21-31`; `StyledWrapper.js:4`).
+  (`CreateOrOpenCollection/index.js:21-31`; `components/Sidebar/StyledWrapper.js:4`).
 - `Create` starts the inline creator; `Open` sets `isOpeningCollection` (`:16-18,29`).
 
 ### 5.2 InlineCollectionCreator
 
 Rendered in place of the list while `state.app.isCreatingCollection` is true
-(`Collections/index.js:104-110,122-128`).
+(`components/Sidebar/Collections/index.js:104-110,122-128`).
 
 | Aspect | Value | Source |
 | --- | --- | --- |
@@ -311,10 +311,10 @@ Rendered in place of the list while `state.app.isCreatingCollection` is true
 | Input wrapper | border `1px input.border`, radius `3px`, background `input.bg`; focus-within border `input.focusBorder` | `:13-25` |
 | Input | `13px`, padding `1px 4px`, transparent, `color: text` | `:27-36` |
 | Default value | `Untitled Collection` (replaced by an IPC-suggested unique name when a default location exists) | `InlineCollectionCreator/index.js:44-51,131` |
-| Cog button | `20px` wide, `IconSettings` `13px` stroke `1.5`, opacity `0.5` → `1` on hover, tooltip `Advanced options` | `:139-151`; `StyledWrapper.js:38-54` |
-| Save button | `20 × 20`, radius `3px`, `IconCheck` `14px` stroke `2`, `colors.text.green`, tooltip `Create` | `:154-163`; `StyledWrapper.js:63-81` |
-| Cancel button | same box, `IconX` `14px` stroke `2`, `colors.text.danger`, tooltip `Cancel` | `:164-173`; `StyledWrapper.js:83-85` |
-| Hover background of action buttons | `sidebar.collection.item.hoverBg` | `StyledWrapper.js:75-77` |
+| Cog button | `20px` wide, `IconSettings` `13px` stroke `1.5`, opacity `0.5` → `1` on hover, tooltip `Advanced options` | `:139-151`; `components/Sidebar/StyledWrapper.js:38-54` |
+| Save button | `20 × 20`, radius `3px`, `IconCheck` `14px` stroke `2`, `colors.text.green`, tooltip `Create` | `:154-163`; `components/Sidebar/StyledWrapper.js:63-81` |
+| Cancel button | same box, `IconX` `14px` stroke `2`, `colors.text.danger`, tooltip `Cancel` | `:164-173`; `components/Sidebar/StyledWrapper.js:83-85` |
+| Hover background of action buttons | `sidebar.collection.item.hoverBg` | `components/Sidebar/StyledWrapper.js:75-77` |
 
 Validation toasts (verbatim): `Collection name is required`
 (`InlineCollectionCreator/index.js:69`), `validateNameError(name)` (`:75`),
@@ -439,10 +439,10 @@ Multi-selection replaces the row menu with `BulkActionsMenu`
 | Collection-above indicator | `border-top` `2px` line, `margin-top: -2px`, transparent background | `CollectionRow/StyledWrapper.js:33-39` |
 | Collection-below indicator | `border-bottom` `2px` line, `margin-bottom: -2px` | `CollectionRow/StyledWrapper.js:41-47` |
 | Collection hovered line | top + bottom `2px` (`border-bottom` transparent) | `CollectionRow/StyledWrapper.js:12-15` |
-| Drag preview | floating label `p-2`, inner box `border rounded-md px-2 py-1`, background `sidebar.collection.item.hoverBg`, border `border.border2`, icon `16px`; multi-drag label `"N folders, M requests and K apps"` with `and` before the last part | `CollectionItemDragPreview/index.js:23-52,98-104`; `StyledWrapper.js:4-7` |
+| Drag preview | floating label `p-2`, inner box `border rounded-md px-2 py-1`, background `sidebar.collection.item.hoverBg`, border `border.border2`, icon `16px`; multi-drag label `"N folders, M requests and K apps"` with `and` before the last part | `CollectionItemDragPreview/index.js:23-52,98-104`; `components/Sidebar/StyledWrapper.js:4-7` |
 | Drag leaving rows | getEmptyImage preview hides the native ghost | `CollectionRow/index.jsx:372`; `CollectionItemRow/index.jsx:289` |
 | Disabled drag cursor | `dnd-blocked-cursor` class after a `4px` move threshold | `utils/dragBlockedCursor.js:9-31` |
-| Blocked combinations | examples never drag alone; collections cannot be dragged with their own children; examples can drag only together with their parent request | `Collections/index.js:68-78`; `ExampleItem/index.jsx:53-63` |
+| Blocked combinations | examples never drag alone; collections cannot be dragged with their own children; examples can drag only together with their parent request | `components/Sidebar/Collections/index.js:68-78`; `ExampleItem/index.jsx:53-63` |
 
 ---
 
@@ -454,9 +454,9 @@ Multi-selection replaces the row menu with `BulkActionsMenu`
 | `Cmd`/`Ctrl` + click | toggle multi-selection | `useSidebarSelectionClick/index.js:12-20` |
 | `Shift` + click | range selection over visible rows | `:22-27` |
 | Double click | make the tab permanent (leave preview state) | `CollectionRow/index.jsx:179-181`; `CollectionItemRow/index.jsx:574-576` |
-| Click on empty list background | clear selection | `Collections/index.js:95-99` |
+| Click on empty list background | clear selection | `components/Sidebar/Collections/index.js:95-99` |
 | `Tab` focus | row gains keyboard-focus border, sets `focusedSidebarPath` | `CollectionRow/index.jsx:267-275`; `CollectionItemRow/index.jsx:690-699` |
-| `Enter` / `Space` on section icon | toggle section | `SidebarSection/index.js:49-53` |
+| `Enter` / `Space` on section icon | toggle section | `components/Sidebar/SidebarSection/index.js:49-53` |
 
 Row-level shortcuts, active only while that row has keyboard focus
 (`CollectionRow/index.jsx:246-265`; `CollectionItemRow/index.jsx:145-169`):
@@ -482,14 +482,14 @@ handler `providers/Hotkeys/index.js:267-278`).
 
 | Location | Text (verbatim) | Source |
 | --- | --- | --- |
-| Section title | `Collections` | `Sections/CollectionsSection/index.js:407` |
-| Section title | `API Specs` | `Sections/ApiSpecsSection/index.js:68` |
-| Section title | `Mock Servers` | `Sections/MockServersSection/index.js:28` |
-| Header tooltip | `Search requests` | `Sections/CollectionsSection/index.js:298` |
+| Section title | `Collections` | `components/Sidebar/Sections/CollectionsSection/index.js:407` |
+| Section title | `API Specs` | `components/Sidebar/Sections/ApiSpecsSection/index.js:68` |
+| Section title | `Mock Servers` | `components/Sidebar/Sections/MockServersSection/index.js:28` |
+| Header tooltip | `Search requests` | `components/Sidebar/Sections/CollectionsSection/index.js:298` |
 | Header tooltip | `Add new collection` | `:310` |
 | Header tooltip | `More actions` | `:322` |
-| Header tooltip | `Add new API Spec` | `Sections/ApiSpecsSection/index.js:51` |
-| Header tooltip | `Create mock server` | `Sections/MockServersSection/index.js:13` |
+| Header tooltip | `Add new API Spec` | `components/Sidebar/Sections/ApiSpecsSection/index.js:51` |
+| Header tooltip | `Create mock server` | `components/Sidebar/Sections/MockServersSection/index.js:13` |
 | Empty list | `No collections found.` | `CreateOrOpenCollection/index.js:37` |
 | Empty list | `Create or Open Collection.` | `:39` |
 | Search placeholder | `Search requests...` | `CollectionSearch/index.js:12` |
@@ -511,19 +511,19 @@ strings in the cited source lines.
 1. Dragging the right edge expands the sidebar between 220 and 600 px; the width is committed
    on mouse-up and stored in `localStorage` (`components/Sidebar/index.js:66-105`).
 2. Clicking a section header toggles it; only one expanded section fills the body, several
-   expanded sections split the body equally (`SidebarContent.js:26-51`; `Collections/index.js` styles in `StyledWrapper.js`).
-3. Clicking any header action auto-expands the section first (`SidebarSection/index.js:66-78`).
+   expanded sections split the body equally (`components/Sidebar/SidebarContent.js:26-51`; `Collections/index.js` styles in `StyledWrapper.js`).
+3. Clicking any header action auto-expands the section first (`components/Sidebar/SidebarSection/index.js:66-78`).
 4. `+ Add request` opens the HTTP / GraphQL / gRPC / WebSocket menu
    (`utils/collections/emptyStateRequest.js:53-81`).
 5. `Remove` / `Close all` open `RemoveCollections`, which blocks on unsaved drafts
-   (`Collections/Collection/RemoveCollections/index.js:27-31`).
+   (`components/Sidebar/Collections/Collection/RemoveCollections/index.js:27-31`).
 6. Dragging a request onto another request shows above/inside/below indicators based on the
    pointer position (`CollectionItemRow/index.jsx:192-198,305-314`).
 7. Dragging a collection over a collection shows only the above line; dropping an item over a
    collection shows the full highlight (`CollectionRow/index.jsx:297-308,374-384`).
 8. After a successful move, the multi-selection is cleared (`CollectionRow/index.jsx:337-339,356-358`).
 9. The active tab scrolls into view with `behavior: 'smooth'` when a sidebar row is revealed
-   (`hooks/useSidebarAutoReveal` used at `Collections/index.js:90`).
+   (`hooks/useSidebarAutoReveal` used at `components/Sidebar/Collections/index.js:90`).
 
 ---
 
