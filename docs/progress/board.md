@@ -49,22 +49,22 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 ## Phase 2
 
-| Package           | State   | Agent | Claimed (UTC)     | Updated (UTC)     | Notes                                 |
-| ----------------- | ------- | ----- | ----------------- | ----------------- | ------------------------------------- |
-| `UI-THEME`        | Claimed | kilo  | 2026-11-11T03:38Z | 2026-11-11T03:38Z | Starting theme system implementation  |
-| `UI-LAYOUT`       | Claimed | kilo  | 2026-11-11T04:35Z | 2026-11-11T04:35Z | Starting layout system implementation |
-| `UI-WIDGETS`      | Ready   | —     | —                 | —                 | Single owner; may need splitting      |
-| `UI-PRESENT-REQ`  | Ready   | —     | —                 | —                 |                                       |
-| `UI-PRESENT-NAV`  | Ready   | —     | —                 | —                 |                                       |
-| `UI-PRESENT-SET`  | Ready   | —     | —                 | —                 |                                       |
-| `UI-SCREEN-REQ`   | Ready   | —     | —                 | —                 |                                       |
-| `UI-SCREEN-RESP`  | Ready   | —     | —                 | —                 |                                       |
-| `UI-SCREEN-NAV`   | Ready   | —     | —                 | —                 |                                       |
-| `UI-SCREEN-SHELL` | Ready   | —     | —                 | —                 |                                       |
-| `UI-SCREEN-SET`   | Ready   | —     | —                 | —                 |                                       |
-| `UI-DIALOGS`      | Ready   | —     | —                 | —                 |                                       |
-| `UI-APP`          | Ready   | —     | —                 | —                 |                                       |
-| `PLATFORM`        | Ready   | —     | —                 | —                 |                                       |
+| Package           | State    | Agent | Claimed (UTC)     | Updated (UTC)     | Notes                                                                     |
+| ----------------- | -------- | ----- | ----------------- | ----------------- | ------------------------------------------------------------------------- |
+| `UI-THEME`        | Claimed  | kilo  | 2026-11-11T03:38Z | 2026-11-11T03:38Z | Starting theme system implementation                                      |
+| `UI-LAYOUT`       | InReview | kilo  | 2026-11-11T04:35Z | 2026-11-11T05:15Z | Layout system with splits, sidebar, console dock, 6.4% cov (UI-dependent) |
+| `UI-WIDGETS`      | Ready    | —     | —                 | —                 | Single owner; may need splitting                                          |
+| `UI-PRESENT-REQ`  | Ready    | —     | —                 | —                 |                                                                           |
+| `UI-PRESENT-NAV`  | Ready    | —     | —                 | —                 |                                                                           |
+| `UI-PRESENT-SET`  | Ready    | —     | —                 | —                 |                                                                           |
+| `UI-SCREEN-REQ`   | Ready    | —     | —                 | —                 |                                                                           |
+| `UI-SCREEN-RESP`  | Ready    | —     | —                 | —                 |                                                                           |
+| `UI-SCREEN-NAV`   | Ready    | —     | —                 | —                 |                                                                           |
+| `UI-SCREEN-SHELL` | Ready    | —     | —                 | —                 |                                                                           |
+| `UI-SCREEN-SET`   | Ready    | —     | —                 | —                 |                                                                           |
+| `UI-DIALOGS`      | Ready    | —     | —                 | —                 |                                                                           |
+| `UI-APP`          | Ready    | —     | —                 | —                 |                                                                           |
+| `PLATFORM`        | Ready    | —     | —                 | —                 |                                                                           |
 
 ## Phase 4
 
@@ -76,7 +76,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `AUTH-OAUTH2`   | Ready      | —           | —                 | —                 | Needs `PLATFORM`                                                                            |
 | `AUTH-AWSV4`    | InProgress | zed-agent-1 | 2026-11-11T03:40Z | 2026-11-11T03:40Z | SigV4 against AWS golden vectors                                                            |
 | `AUTH-EDGEGRID` | Ready      | —           | —                 | —                 |                                                                                             |
-| `ENV-FILES`     | Ready      | —           | —                 | —                 |                                                                                             |
+| `ENV-FILES`     | InProgress | zed-agent-1 | 2026-11-11T05:50Z | 2026-11-11T05:50Z | Environment loading, `extends` chains, secrets, `.env`                                      |
 
 ## Phase 5
 
