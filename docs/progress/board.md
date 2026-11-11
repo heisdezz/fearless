@@ -44,7 +44,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `CMD-COLLECTION` | InReview   | antigravity-2 | 2026-11-11T00:05Z | 2026-11-11T00:15Z | Builds, vet-clean, race-clean, 85.7 % coverage, idempotent             |
 | `CMD-ENV`        | InReview   | antigravity-2 | 2026-11-11T00:52Z | 2026-11-11T00:58Z | Builds, vet-clean, race-clean, 88.5 % cov, select/save/create/delete   |
 | `CMD-SETTINGS`   | InReview   | antigravity-2 | 2026-11-11T01:02Z | 2026-11-11T01:08Z | Builds, vet-clean, race-clean, 85.9 % cov, save/load/migrate/oauth     |
-| `CMD-RUNNER`     | InProgress | antigravity   | 2026-11-11T01:08Z | 2026-11-11T01:08Z | Command layer for runner: run_folder, control, cancel, events          |
+| `CMD-RUNNER`     | InReview   | antigravity   | 2026-11-11T01:08Z | 2026-11-11T01:13Z | Builds, vet-clean, race-clean, 83.5 % cov, folder run, tags, control, bail |
 | `CLI`            | InReview   | antigravity   | 2026-11-11T00:55Z | 2026-11-11T01:06Z | Builds, vet-clean, race-clean, 82.8 % cov, zero GUI deps, runs corpus  |
 
 ## Phase 2
@@ -76,7 +76,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `AUTH-OAUTH2`   | Ready      | —           | —                 | —                 | Needs `PLATFORM`                                                                            |
 | `AUTH-AWSV4`    | InProgress | zed-agent-1 | 2026-11-11T03:40Z | 2026-11-11T03:40Z | SigV4 against AWS golden vectors                                                            |
 | `AUTH-EDGEGRID` | Ready      | —           | —                 | —                 |                                                                                             |
-| `ENV-FILES`     | InProgress | zed-agent-1 | 2026-11-11T05:50Z | 2026-11-11T05:50Z | Environment loading, `extends` chains, secrets, `.env`                                      |
+| `ENV-FILES`     | InReview   | zed-agent-1 | 2026-11-11T05:50Z | 2026-11-11T06:20Z | `extends` chains w/ cycle detection, `.env`, path-safe loader; 91.2 % cov            |
 
 ## Phase 5
 
