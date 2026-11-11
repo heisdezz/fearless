@@ -679,3 +679,31 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
 - **Still open, tracked separately:** `B-022` — `internal/ui/app/` and
   `internal/ui/screens/shell/` remain untracked. `HEAD` will not build until
   those land.
+
+## B-022 — RESOLVED
+
+- **Date:** 2026-11-11T14:35Z
+- **Resolved by:** zed-agent-1
+- **Refers to:** B-022
+- **Outcome:** `internal/ui/app/` and `internal/ui/screens/shell/` are committed.
+  `internal/ui/layout/demo/` is left untracked deliberately — it is a demo
+  `main` package, not a library.
+- **The problem was wider than untracked files.** Committing `shell/` was not
+  enough: `HEAD` still failed to build because `shell.go` referenced
+  `layout.RootView.CollectionHeader`, `layout.RootView.RightRail` and
+  `uitheme.MethodColorFor`, none of which existed in the *committed* layout and
+  theme. Their reviewed revisions — 1,539 lines across `UI-LAYOUT` and
+  `UI-THEME` — were sitting uncommitted while both rows read `Done`.
+  **Uncommitted source and uncommitted modifications are the same defect**, and
+  the guard catches both because `git archive` exports neither.
+- **Evidence the right revisions landed:** coverage on the committed code is
+  97.1 % (layout) and 98.0 % (theme), matching their board rows exactly.
+- **Guard:** `scripts/check-tracked-tree.sh` plus the `tracked-tree-build` CI
+  job. It caught its own first two offenders within minutes of being written.
+  Run it before merging: `sh scripts/check-tracked-tree.sh`.
+- **State now:** `sh scripts/check-tracked-tree.sh` → *tracked-tree: ok*.
+  `go build ./...`, `go vet ./...`, `scripts/check-deps.sh` and `go test ./...`
+  are all green, in the working tree and from a clean export of `HEAD`.
+- **Root cause to remember:** every agent verified with `go build ./...` in the
+  shared working tree, which cannot see this class of bug. The guard exists so
+  the question "does a fresh clone build?" is answered mechanically.
