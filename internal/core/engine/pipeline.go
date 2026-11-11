@@ -1,10 +1,13 @@
 package engine
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"fearless/internal/core/engine/auth"
@@ -114,6 +117,19 @@ func runPipeline(ctx context.Context, in Input) (*model.Result, error) {
 			q.Add(qp.Name, qp.Value)
 		}
 		built.HTTPRequest.URL.RawQuery = q.Encode()
+	}
+	// A provider may replace the payload, as OAuth1 does for body placement where
+	// the signed parameters become the form body.
+	if authPrep.Body != nil {
+		built.Body = authPrep.Body
+		built.ContentLength = int64(len(authPrep.Body))
+		built.HTTPRequest.Body = io.NopCloser(bytes.NewReader(authPrep.Body))
+		built.HTTPRequest.ContentLength = built.ContentLength
+		built.HTTPRequest.GetBody = func() (io.ReadCloser, error) {
+			return io.NopCloser(bytes.NewReader(authPrep.Body)), nil
+		}
+		built.HTTPRequest.Header.Set("Content-Length", strconv.Itoa(len(authPrep.Body)))
+		built.Headers.Set("Content-Length", strconv.Itoa(len(authPrep.Body)))
 	}
 
 	// Resolve timeout

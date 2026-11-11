@@ -191,3 +191,21 @@ The property that matters is that no information is lost, and that guarantee hol
 **Rationale:** every deferred item either needs a subsystem with its own risk profile (gRPC/WS transports, mock server) or was excluded by the Go-only constraint (terminal, AI, Chromium-rendered previews). Deferring them keeps the compatibility work — both codecs, scripting, auth — on the critical path rather than diluted.
 
 - **Action required:** `board.md` Phase 7 items stay `Ready` but must not block any Phase 1–6 milestone; the roadmap's acceptance gates are the definition of v1.
+
+### D-012 — OAuth1 `oauth_body_hash` is appended after signing (RFC-literal)
+
+Bruno pushes `oauth_body_hash` into its parameter set _before_ calling `authorize`, so the hash appears in the signature base string. RFC draft-eaton-oauth-bodyhash-00 §3.2 defines the parameter but leaves its participation in the base string ambiguous.
+
+**Decision:** `oauth1Sign` appends the hash _after_ the signature is computed, so it is sent but not signed.
+
+**Rationale:** the opt-in `includeBodyHash` path is rare, and the RFC-literal reading is the defensible one. Signing a value derived from a body we have finalised adds nothing an attacker could not recompute.
+
+**Reversibility:** the change is local to `oauth1Provider.Prepare`. If replay compatibility with Bruno-signed body-hash requests ever matters, pass the hash into `oauth1Input.BodyParams` instead. No other package is affected.
+
+### D-013 — `auth.Prepared` may carry a replacement body
+
+OAuth1's `body` placement rewrites the payload (the signed parameters _become_ the form body). `Prepared` gained a `Body []byte` field where `nil` means "leave the request body alone".
+
+**Rationale:** the alternative — a second `TransportProvider`-style hook — would put payload mutation in the transport layer, after signing, which is the wrong order. Keeping it in `Prepared` means every provider composes the request in one place.
+
+**Constraint for future providers:** "no body" must be an empty non-nil slice, never `nil`, or the override will be ignored.

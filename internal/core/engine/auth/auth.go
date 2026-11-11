@@ -40,6 +40,11 @@ type Prepared struct {
 	Headers []Header
 	// QueryParams to append to the URL.
 	QueryParams []QueryParam
+	// Body, when non-nil, replaces the payload the pipeline would otherwise send.
+	// OAuth1 uses this for body placement, where the signed parameters become the
+	// form body. A nil Body means "leave the request body alone", so a provider
+	// that intentionally sends an empty body must use an empty but non-nil slice.
+	Body []byte
 	// Transport, when non-nil, wraps the underlying round tripper. Digest and
 	// NTLM use this to retry after a challenge.
 	Transport TransportProvider
