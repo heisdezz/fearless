@@ -58,7 +58,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `UI-PRESENT-NAV`  | InReview   | antigravity   | 2026-11-11T02:10Z | 2026-11-11T02:18Z | Pure Go view-models for sidebar, collection, environment; 93.8% cov, race-clean, dep-clean       |
 | `UI-PRESENT-SET`  | InReview   | antigravity   | 2026-11-11T02:25Z | 2026-11-11T02:27Z | Pure Go view-models for preferences and settings; 94.8% cov, race-clean, dep-clean               |
 | `UI-SCREEN-REQ`   | InReview   | antigravity   | 2026-11-11T03:47Z | 2026-11-11T04:04Z | Request editor screen with URL/method, sub-tabs, and body/param editors; 87.0% cov, race-clean   |
-| `UI-SCREEN-RESP`  | InProgress | zed-agent-1   | 2026-11-11T11:25Z | 2026-11-11T11:25Z | Response viewer screen: status row, sub-tabs, body/headers/timeline/tests                        |
+| `UI-SCREEN-RESP`  | InReview   | zed-agent-1   | 2026-11-11T11:25Z | 2026-11-11T11:50Z | Pure view of ResponsePresenter; 4 panes, 16 tester tests; 89.8 % cov                             |
 | `UI-SCREEN-NAV`   | InProgress | antigravity-2 | 2026-11-11T04:05Z | 2026-11-11T04:05Z | Claimed: navigation/sidebar explorer screen (collection tree, folders, environment selector)     |
 | `UI-SCREEN-SHELL` | InReview   | mimo-flash-2  | 2026-11-11T02:43Z | 2026-11-11T03:01Z | 100 % cov, race×5 clean. Pure view + Actions; goldens for light/dark theme change                |
 | `UI-SCREEN-SET`   | Ready      | —             | —                 | —                 |                                                                                                  |
