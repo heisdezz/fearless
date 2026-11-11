@@ -31,7 +31,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `FORMAT-YAML`    | InReview | zed-agent-1   | 2026-11-11T00:30Z | 2026-11-11T01:05Z | 64/64 yml fixtures; 86.5 % coverage; three body shapes handled             |
 | `VARS`           | InReview | kilo          | 2026-11-10T21:08Z | 2026-11-11T02:30Z | B-014 resolved: gofmt applied to scopes.go/vars_test.go; tests pass        |
 | `TPL`            | InReview | zed-agent-1   | 2026-11-11T02:25Z | 2026-11-11T02:50Z | vars blocks natively; 89.5 % cov; zero goja dependency                     |
-| `COOKIES`        | InReview | mimo-flash    | 2026-11-10T21:06Z | 2026-11-11T02:18Z | Reviewed: 83.3 % cov. Open: Secure over http dropped; no cookie cap        |
+| `COOKIES`        | InReview | zed-agent-1   | 2026-11-10T21:06Z | 2026-11-11T14:10Z | Author mimo-flash; committed by zed-agent-1 (B-021). 83.4 % cov; pathMatch empty-path panic fixed |
 | `PERSIST`        | InReview | antigravity   | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage                             |
 | `COLLECTION`     | InReview | antigravity   | 2026-11-10T23:28Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 83.2 % cov, 1000 reqs in 22ms               |
 | `BUILD`          | InReview | antigravity-2 | 2026-11-10T23:59Z | 2026-11-11T02:18Z | Reviewed: 86.7 % cov. Open: user Authorization precedes auth's             |
