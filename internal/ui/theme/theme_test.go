@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/egoist/mygo/ui"
-	lobe "github.com/lobehub/lobe-mygo/pkg/theme"
 )
 
 // Bruno's request.methods, per mode, as the browser renders them. The hexes
@@ -263,8 +262,8 @@ func TestApplyFollowsSystem(t *testing.T) {
 		if s.get != ui.Hex(wantLightMethods["get"]) {
 			t.Errorf("light frame get = %v, want %s", s.get, wantLightMethods["get"])
 		}
-		if s.bg != lobe.Light().BgBase {
-			t.Errorf("light frame BgBase = %v, want Lobe's %v", s.bg, lobe.Light().BgBase)
+		if s.bg != tokens(false).BgBase {
+			t.Errorf("light frame BgBase = %v, want the world's %v", s.bg, tokens(false).BgBase)
 		}
 	}
 
@@ -281,11 +280,11 @@ func TestApplyFollowsSystem(t *testing.T) {
 		if s.get != ui.Hex(wantDarkMethods["get"]) {
 			t.Errorf("dark frame get = %v, want %s", s.get, wantDarkMethods["get"])
 		}
-		if s.bg != lobe.Dark().BgBase {
-			t.Errorf("dark frame BgBase = %v, want Lobe's %v", s.bg, lobe.Dark().BgBase)
+		if s.bg != tokens(true).BgBase {
+			t.Errorf("dark frame BgBase = %v, want the world's %v", s.bg, tokens(true).BgBase)
 		}
 	}
-	if samples[0].bg == lobe.Light().BgBase {
+	if samples[0].bg == tokens(false).BgBase {
 		t.Error("dark frame kept the light background: Apply must follow the system")
 	}
 }
@@ -306,8 +305,12 @@ func TestApplyRebuildsAfterThemeChange(t *testing.T) {
 	tt.SetDark(true)
 
 	tt.Frame()
-	if bg != lobe.Dark().BgBase {
-		t.Fatalf("dark frame BgBase = %v, want Lobe's %v", bg, lobe.Dark().BgBase)
+	// TokensOf must answer with the world's tokens: before the import, the
+	// frame paints the Graphite ground, not Lobe's near-black default. Only a
+	// repaint through TokensOf — the D-017 white-input path — proves the theme
+	// carries the world.
+	if bg != tokens(true).BgBase {
+		t.Fatalf("dark frame BgBase = %v, want the world's %v", bg, tokens(true).BgBase)
 	}
 
 	if err := LoadBrunoTheme("../../../testdata/test_theme.json"); err != nil {
@@ -320,8 +323,8 @@ func TestApplyRebuildsAfterThemeChange(t *testing.T) {
 
 	SetBrunoTheme(nil)
 	tt.Frame()
-	if bg != lobe.Dark().BgBase {
-		t.Errorf("after clearing, dark BgBase = %v, want Lobe's %v", bg, lobe.Dark().BgBase)
+	if bg != tokens(true).BgBase {
+		t.Errorf("after clearing, dark BgBase = %v, want the world's %v", bg, tokens(true).BgBase)
 	}
 }
 
@@ -385,8 +388,8 @@ func TestBrunoThemeModeIsCaseInsensitive(t *testing.T) {
 		if got := a.cfg.Tokens(true).BgBase; got != ui.Hex("#1e1e2e") {
 			t.Errorf("mode %q: dark BgBase = %v, want the imported #1e1e2e", mode, got)
 		}
-		if got := a.cfg.Tokens(false).BgBase; got != lobe.Light().BgBase {
-			t.Errorf("mode %q: light BgBase = %v, want Lobe's untouched %v", mode, got, lobe.Light().BgBase)
+		if got := a.cfg.Tokens(false).BgBase; got != tokens(false).BgBase {
+			t.Errorf("mode %q: light BgBase = %v, want the world's untouched %v", mode, got, tokens(false).BgBase)
 		}
 	}
 
@@ -407,8 +410,8 @@ func TestBrunoThemeModeIsCaseInsensitive(t *testing.T) {
 		if got := a.cfg.Tokens(false).BgBase; got != ui.Hex("#1e1e2e") {
 			t.Errorf("mode %q: light BgBase = %v, want the imported #1e1e2e", mode, got)
 		}
-		if got := a.cfg.Tokens(true).BgBase; got != lobe.Dark().BgBase {
-			t.Errorf("mode %q: dark BgBase = %v, want Lobe's untouched %v", mode, got, lobe.Dark().BgBase)
+		if got := a.cfg.Tokens(true).BgBase; got != tokens(true).BgBase {
+			t.Errorf("mode %q: dark BgBase = %v, want the world's untouched %v", mode, got, tokens(true).BgBase)
 		}
 	}
 }

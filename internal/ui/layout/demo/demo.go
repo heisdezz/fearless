@@ -16,6 +16,7 @@ import (
 
 	"fearless/internal/ui/layout"
 	uitheme "fearless/internal/ui/theme"
+	"fearless/internal/ui/widgets"
 )
 
 // state is the demo's presentation state. A real app receives one from the
@@ -87,14 +88,14 @@ var root = &layout.RootView{
 		tk := uitheme.TokensOf(c)
 		ui.Row(c).Fill().AlignItems(ui.Center).Gap(8).Padding(0, 12).Background(tk.BgContainer).Children(func() {
 			ui.Text(c, "demo collection").TextColor(tk.Text)
-			action.Button(c, "env: dev", action.ButtonProps{Variant: action.Text, Size: lobetheme.Small}).
+			widgets.Button(c, "env: dev", widgets.ButtonProps{Variant: action.Text, Size: lobetheme.Small}).
 				OnClick(func() {}).Tooltip("Environment (demo)")
 			ui.Box(c).Grow(1)
-			action.Button(c, "Flip", action.ButtonProps{Variant: action.Text, Size: lobetheme.Small}).
+			widgets.Button(c, "Flip", widgets.ButtonProps{Variant: action.Text, Size: lobetheme.Small}).
 				OnClick(flipOrientation).Tooltip("Stacked ⇄ side-by-side (⌘J in the real app)")
-			action.Button(c, "Console", action.ButtonProps{Variant: action.Text, Size: lobetheme.Small}).
+			widgets.Button(c, "Console", widgets.ButtonProps{Variant: action.Text, Size: lobetheme.Small}).
 				OnClick(func() { state.ConsoleOpen = !state.ConsoleOpen }).Tooltip("Toggle the console dock")
-			action.Button(c, "Rail", action.ButtonProps{Variant: action.Text, Size: lobetheme.Small}).
+			widgets.Button(c, "Rail", widgets.ButtonProps{Variant: action.Text, Size: lobetheme.Small}).
 				OnClick(func() { state.RailExpanded = !state.RailExpanded }).Tooltip("Toggle the right rail")
 		})
 	},

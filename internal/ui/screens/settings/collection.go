@@ -118,14 +118,14 @@ func CollectionSettingsScreen(
 				saveLabel = "Save *"
 			}
 
-			action.Button(c, saveLabel, action.ButtonProps{
+			widgets.Button(c, saveLabel, widgets.ButtonProps{
 				Variant: action.Primary,
 				Size:    lobetheme.Small,
 			}).OnClick(func() {
 				p.Save(context.Background())
 			})
 
-			action.Button(c, "Revert", action.ButtonProps{
+			widgets.Button(c, "Revert", widgets.ButtonProps{
 				Variant: action.Default,
 				Size:    lobetheme.Small,
 			}).OnClick(func() {
@@ -161,7 +161,7 @@ func renderCollectionAuth(c *ui.Context, p *presenters.SettingsPresenter) {
 		ui.Row(c).AlignItems(ui.Center).Gap(10).Children(func() {
 			ui.Text(c, "Default Authentication:").FontSize(11).Bold().TextColor(tk.TextSecondary)
 
-			field.Select(c, &modeStr, field.SelectProps{
+			widgets.FieldSelect(c, &modeStr, widgets.FieldSelectProps{
 				Options: collectionAuthOptions,
 				Size:    lobetheme.Small,
 			})
@@ -189,7 +189,7 @@ func renderCollectionAuth(c *ui.Context, p *presenters.SettingsPresenter) {
 					ui.Box(c).Width(80).Children(func() {
 						ui.Text(c, "Username").FontSize(12).TextColor(tk.Text)
 					})
-					field.Input(c, &userStr, field.InputProps{
+					widgets.FieldInput(c, &userStr, widgets.FieldInputProps{
 						Placeholder: "Username",
 						Size:        lobetheme.Small,
 					})
@@ -200,7 +200,7 @@ func renderCollectionAuth(c *ui.Context, p *presenters.SettingsPresenter) {
 					ui.Box(c).Width(80).Children(func() {
 						ui.Text(c, "Password").FontSize(12).TextColor(tk.Text)
 					})
-					field.Input(c, &passStr, field.InputProps{
+					widgets.FieldInput(c, &passStr, widgets.FieldInputProps{
 						Placeholder: "Password",
 						Size:        lobetheme.Small,
 					})
@@ -217,7 +217,7 @@ func renderCollectionAuth(c *ui.Context, p *presenters.SettingsPresenter) {
 				ui.Box(c).Width(80).Children(func() {
 					ui.Text(c, "Token").FontSize(12).TextColor(tk.Text)
 				})
-				field.Input(c, &tokenStr, field.InputProps{
+				widgets.FieldInput(c, &tokenStr, widgets.FieldInputProps{
 					Placeholder: "Bearer token",
 					Size:        lobetheme.Small,
 				})
@@ -239,7 +239,7 @@ func renderCollectionAuth(c *ui.Context, p *presenters.SettingsPresenter) {
 					ui.Box(c).Width(80).Children(func() {
 						ui.Text(c, "Key").FontSize(12).TextColor(tk.Text)
 					})
-					field.Input(c, &keyStr, field.InputProps{
+					widgets.FieldInput(c, &keyStr, widgets.FieldInputProps{
 						Placeholder: "Header / Param name",
 						Size:        lobetheme.Small,
 					})
@@ -250,7 +250,7 @@ func renderCollectionAuth(c *ui.Context, p *presenters.SettingsPresenter) {
 					ui.Box(c).Width(80).Children(func() {
 						ui.Text(c, "Value").FontSize(12).TextColor(tk.Text)
 					})
-					field.Input(c, &valStr, field.InputProps{
+					widgets.FieldInput(c, &valStr, widgets.FieldInputProps{
 						Placeholder: "Value",
 						Size:        lobetheme.Small,
 					})

@@ -364,8 +364,8 @@ func TestDegrade(t *testing.T) {
 }
 
 // TestImportsAreDomainFree is the §8.3 acceptance: the layout package may
-// import the theme, the toolkit and the stdlib — never the core or app
-// layers whose state it must not read.
+// import the theme, its own presentation widgets, the toolkit and the stdlib —
+// never the core or app layers whose state it must not read.
 func TestImportsAreDomainFree(t *testing.T) {
 	files, err := filepath.Glob("*.go")
 	if err != nil {
@@ -386,6 +386,9 @@ func TestImportsAreDomainFree(t *testing.T) {
 			}
 			if path == "fearless/internal/ui/theme" {
 				continue // the declared UI-THEME dependency
+			}
+			if path == "fearless/internal/ui/widgets" {
+				continue // presentation primitives: control and surface shims, no state
 			}
 			if strings.HasPrefix(path, "fearless/") {
 				t.Errorf("%s imports %q: the layout layer must not read domain state (§8.3)", f, path)

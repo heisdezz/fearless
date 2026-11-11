@@ -50,7 +50,7 @@ func Screen(c *ui.Context, props Props) ui.Element {
 		// A nil presenter is a wiring mistake, not a user-visible state. Rendering
 		// an empty pane keeps the surrounding shell intact instead of panicking
 		// mid-frame.
-		return ui.Box(c).FillWidth().Height(DefaultMinHeight).Background(tk.BgContainer)
+		return ui.Box(c).Fill().MinHeight(DefaultMinHeight).Background(tk.BgContainer)
 	}
 
 	minHeight := props.MinHeight
@@ -58,14 +58,18 @@ func Screen(c *ui.Context, props Props) ui.Element {
 		minHeight = DefaultMinHeight
 	}
 
+	// Fill the splitter pane and keep MinHeight only as the floor: the
+	// pane's share of the window is larger than DefaultMinHeight at the
+	// §8.1 budget, so a fixed Height would strand the rest of the pane as
+	// bare background.
 	return ui.Column(c).
-		FillWidth().
-		Height(minHeight).
+		Fill().
+		MinHeight(minHeight).
 		Background(tk.BgContainer).
 		Children(func() {
 			StatusRow(c, p)
 			SubTabs(c, p, props.OnSelectTab)
-			ui.Column(c).FillWidth().Padding(8).Children(func() {
+			ui.Column(c).FillWidth().Grow(1).Padding(8).Children(func() {
 				Pane(c, p)
 			})
 		})

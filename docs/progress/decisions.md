@@ -253,3 +253,35 @@ Lobe MyGo's default tokens are an unopinionated neutral palette. Rendered, the a
 **Consequence:** `DESIGN.md` is written from the built world at the end of the redesign; `docs/ui/design-system.md` §7.2.2 remains the record of the Lobe layer and gains a pointer to `DESIGN.md`.
 
 **Raised by:** zed-design (UI-THEME), 2026-11-11T04:24Z.
+
+### D-018 — dark is the shipped appearance; light is a finished companion, not a peer
+
+Graphite Console is a dark-first world. The product owner chose: dark is what the app ships, light is good but secondary. Existing behaviour stays (the theme follows the system appearance; an appearance switch may still be offered), but:
+
+- dark is the appearance every golden, screenshot and review pass is **judged** on;
+- light must stay legible and complete — a light frame with an illegible control is a defect — and gets token assertions, not pixel review;
+- a component whose dark and light treatments disagree in meaning (not merely in tone) is a defect in whichever one the system does not ship.
+
+**Raised by:** zed-design (UI-THEME), 2026-11-11T04:24Z.
+
+### D-019 — controls are shimmed over Lobe's field/action on an app-owned surface
+
+D-017 recorded the white-input defect but not its cause. It is not a token bug: Lobe's `field.Input`, `field.Select` and `action.Button` apply their theme background to a container node that they do not return, so the element that actually paints is left with MyGo's default near-white surface. It reproduces with Lobe's own `theme.Apply` and no Graphite code at all, and it is independent of which tokens are installed.
+
+A second, real token-plumbing bug sat on top of it: `theme.Adapter.Apply` built an ad-hoc `ui.Theme` that Lobe's `TokensOf` could not resolve back to tokens, so any widget that asked for tokens got Lobe's light defaults. `Apply` now installs the theme from a `theme.NewConfig` pair, which `TokensOf` resolves by pointer.
+
+**Decision:** the app never builds a raw `field.*` or `action.Button` control on screen. `internal/ui/widgets/controls.go` provides `FieldInput`, `FieldSelect` and `Button`, each painted on an app-owned element from world tokens and building the Lobe control borderless inside it. Every screen routes through these.
+
+**Consequence:** this is a workaround for an upstream bug. When Lobe/MyGo fixes the detached-surface paint, the wrappers stay (they are the app's control surface) but their internals can be reconsidered. A screen that calls `field.Input`/`field.Select`/`action.Button` directly is a defect.
+
+**Raised by:** zed-design (UI-THEME), 2026-11-11T05:40Z.
+
+### D-020 — `ui-map/` is the Bruno UI reconstruction spec
+
+The Go port was being built against prose (`docs/ui/*.md`) that predates a rebuild pass and against screenshots from an older Bruno build. Reconstructing closely enough to look like Bruno needs exact values and cited evidence.
+
+**Decision:** `ui-map/` holds a framework-agnostic UI specification generated from the pinned Bruno source (`bruno/` at `60d7517`): `overview.md` (package structure + a checklist indexing all 104 `src/components` folders), `design-system.md` (light/dark tokens resolved to hex by `ui-map/_tools/dump-theme.mjs`), `screens/*`, `components/*`, `widgets.md` and `go-ui-notes.md`. Every claim carries a `file:line` citation; ambiguities are collected in `go-ui-notes.md` §5 rather than guessed.
+
+**Consequence:** where `refs/` screenshots disagree with source, source wins (the captures are from a different build); this is recorded in `go-ui-notes.md`. Token values are machine-verifiable — re-run `dump-theme.mjs` and diff `tokens.json`.
+
+**Raised by:** zed-design, 2026-11-11T16:30Z.

@@ -83,7 +83,7 @@ func RequestScreen(c *ui.Context, p *presenters.RequestPresenter, state ...*Requ
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Gap(8).Children(func() {
 			// HTTP Method Badge / Select
 			ui.Box(c).Width(100).Children(func() {
-				field.Select(c, &req.Method, field.SelectProps{
+				widgets.FieldSelect(c, &req.Method, widgets.FieldSelectProps{
 					Options: methodSelectOptions,
 					Size:    lobetheme.Small,
 				})
@@ -102,14 +102,14 @@ func RequestScreen(c *ui.Context, p *presenters.RequestPresenter, state ...*Requ
 
 			// Send / Cancel Action Button
 			if p.InFlight() {
-				action.Button(c, "Cancel", action.ButtonProps{
+				widgets.Button(c, "Cancel", widgets.ButtonProps{
 					Variant: action.Default,
 					Size:    lobetheme.Small,
 				}).OnClick(func() {
 					p.Cancel(context.Background())
 				})
 			} else {
-				action.Button(c, "Send", action.ButtonProps{
+				widgets.Button(c, "Send", widgets.ButtonProps{
 					Variant: action.Primary,
 					Size:    lobetheme.Small,
 				}).OnClick(func() {
@@ -122,7 +122,7 @@ func RequestScreen(c *ui.Context, p *presenters.RequestPresenter, state ...*Requ
 			if p.IsDirty() {
 				saveLabel = "Save *"
 			}
-			action.Button(c, saveLabel, action.ButtonProps{
+			widgets.Button(c, saveLabel, widgets.ButtonProps{
 				Variant: action.Default,
 				Size:    lobetheme.Small,
 			}).OnClick(func() {

@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/egoist/mygo/ui"
-	"github.com/lobehub/lobe-mygo/pkg/field"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 )
 
@@ -35,7 +34,7 @@ func VariableInput(c *ui.Context, value *string, props VariableInputProps) ui.El
 
 	return ui.Column(c).FillWidth().Gap(2).Children(func() {
 		// Input field
-		field.Input(c, value, field.InputProps{
+		FieldInput(c, value, FieldInputProps{
 			Placeholder: props.Placeholder,
 			Size:        size,
 		})

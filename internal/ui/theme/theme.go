@@ -281,30 +281,28 @@ func NewAdapter() *Adapter {
 	}
 }
 
-// Apply makes the frame use this adapter's tokens in the frame's own
-// appearance — the light or dark set, following the system — and is what the
-// rest of the UI must call instead of Lobe's theme.Apply, so a Bruno theme
-// import reaches every component through one call point.
+// Apply makes the frame use the world's theme in the frame's own appearance —
+// the light or dark set, following the system — and is what the rest of the UI
+// must call instead of Lobe's theme.Apply, so every component paints from one
+// snapshot through one call point.
+//
+// The theme comes from the adapter's Config rather than an ad-hoc ui.Theme: a
+// Config registers the themes it builds, so Lobe's TokensOf resolves the
+// world's tokens for the frame instead of falling back to Lobe's defaults. That
+// fallback was the white-input defect D-017 records — a Themed subtree or a
+// repainting component asked for tokens and got Lobe's white surfaces.
 func (a *Adapter) Apply(c *ui.Context) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
-	if a.cfg == nil || a.cfgGen != a.brunoGen {
-		a.buildConfig()
-		a.cfgGen = a.brunoGen
-	}
-
-	a.cfg.Apply(c)
+	c.SetTheme(a.config().Theme(c.Theme().Dark))
 }
 
-// buildConfig rebuilds the light/dark token pair. A loaded Bruno theme
-// describes one appearance, so its snapshot is mapped into that mode's tokens
-// only; the other mode keeps Lobe's defaults. Mapping the snapshot into both
-// would paint a light theme's background into dark mode and break "light/dark
-// follows system".
+// buildConfig rebuilds the light/dark token pair from the Graphite Console
+// world (D-017). A loaded Bruno theme describes one appearance, so its snapshot
+// is mapped into that mode's tokens only; the other mode keeps the world.
+// Mapping the snapshot into both would paint a light theme's background into
+// dark mode and break "light/dark follows system".
 func (a *Adapter) buildConfig() {
-	lightTokens := *theme.Light()
-	darkTokens := *theme.Dark()
+	lightTokens := tokens(false)
+	darkTokens := tokens(true)
 
 	if a.bruno != nil {
 		if a.bruno.isDark() {
@@ -315,6 +313,12 @@ func (a *Adapter) buildConfig() {
 	}
 
 	a.cfg = theme.NewConfig(lightTokens, darkTokens)
+	// tk.Theme() derives the surface and text tokens from the world, but Lobe's
+	// derivation leaves the accent and pressed state to its own palette. Finish
+	// each registered theme in place — the pointers stay the Config's key — so the
+	// world's accent survives a repaint in either appearance.
+	*a.cfg.Theme(false) = *worldTheme(false)
+	*a.cfg.Theme(true) = *worldTheme(true)
 }
 
 func (a *Adapter) mapBrunoToTokens(tk *theme.Tokens) {
@@ -462,6 +466,21 @@ func (a *Adapter) MethodColor(method string, dark bool) ui.Color {
 
 func (a *Adapter) Tokens(c *ui.Context) *theme.Tokens {
 	return theme.TokensOf(c)
+}
+
+// config returns the token config this adapter applied. It exists so the
+// package can answer for a frame theme the way Lobe's own TokensOf does:
+// a theme built here is resolvable by pointer, so a component that repaints
+// in a new appearance still finds the world's tokens instead of Lobe's
+// defaults. Lobe's Config.Theme values are the theme keys its TokensOf reads.
+func (a *Adapter) config() *theme.Config {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.cfg == nil || a.cfgGen != a.brunoGen {
+		a.buildConfig()
+		a.cfgGen = a.brunoGen
+	}
+	return a.cfg
 }
 
 var globalAdapter *Adapter

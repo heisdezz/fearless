@@ -23,6 +23,7 @@ import (
 	"fearless/internal/ui/screens/settings"
 	"fearless/internal/ui/screens/shell"
 	"fearless/internal/ui/theme"
+	"fearless/internal/ui/widgets"
 )
 
 // ViewKind represents the active top-level screen view.
@@ -549,12 +550,41 @@ func (a *App) renderMainView(c *ui.Context) {
 			envName = a.EnvironmentPresenter.ActiveEnvironmentName()
 		}
 
+		// The status bar shows facts, never decoration (PRODUCT.md): the
+		// request count of the mounted collections, the engine state and
+		// the dirty flag. An empty bar reads as dead space, and Bruno's
+		// bar is always populated.
+		requestCount, unsaved := 0, false
+		if a.CollectionPresenter != nil {
+			for _, col := range a.CollectionPresenter.Collections() {
+				if col == nil {
+					continue
+				}
+				requestCount += countRequestItems(col.Items)
+				unsaved = unsaved || col.Dirty
+			}
+		}
+		status := make([]shell.StatusEntry, 0, 2)
+		if a.RequestPresenter != nil && a.RequestPresenter.InFlight() {
+			status = append(status, shell.StatusEntry{Label: "Sending…"})
+		} else {
+			status = append(status, shell.StatusEntry{Label: "Ready", Tooltip: "No in-flight requests"})
+		}
+		if unsaved {
+			status = append(status, shell.StatusEntry{
+				Label:   "Unsaved changes",
+				Tooltip: "A mounted collection has uncommitted changes",
+			})
+		}
+
 		a.ShellScreen.Snapshot = shell.Snapshot{
 			AppName:          "fearless",
 			CollectionName:   colName,
 			WorkspaceName:    "Default Workspace",
 			ShowMenu:         true,
+			RequestCount:     requestCount,
 			EnvironmentName:  envName,
+			Status:           status,
 			ActiveConsoleTab: a.activeConsoleTab,
 		}
 
@@ -562,11 +592,28 @@ func (a *App) renderMainView(c *ui.Context) {
 	}
 }
 
+// countRequestItems counts request items in a collection tree, recursing
+// through folders; inert entries (no saved request) don't count.
+func countRequestItems(items []*model.Item) int {
+	n := 0
+	for _, it := range items {
+		if it == nil {
+			continue
+		}
+		if it.IsFolder() {
+			n += countRequestItems(it.Children)
+		} else if it.Request != nil {
+			n++
+		}
+	}
+	return n
+}
+
 func (a *App) renderPreferencesView(c *ui.Context, tokens *lobetheme.Tokens) {
 	ui.Column(c).Fill().Children(func() {
 		// Navigation Bar
 		ui.Row(c).Height(40).FillWidth().Padding(8, 16).AlignItems(ui.Center).Background(tokens.BgContainer).Children(func() {
-			action.Button(c, "← Back to Workspace", action.ButtonProps{
+			widgets.Button(c, "← Back to Workspace", widgets.ButtonProps{
 				Variant: action.Default,
 				Size:    lobetheme.Small,
 			}).OnClick(func() {
@@ -590,7 +637,7 @@ func (a *App) renderCollectionSettingsView(c *ui.Context, tokens *lobetheme.Toke
 	ui.Column(c).Fill().Children(func() {
 		// Navigation Bar
 		ui.Row(c).Height(40).FillWidth().Padding(8, 16).AlignItems(ui.Center).Background(tokens.BgContainer).Children(func() {
-			action.Button(c, "← Back to Workspace", action.ButtonProps{
+			widgets.Button(c, "← Back to Workspace", widgets.ButtonProps{
 				Variant: action.Default,
 				Size:    lobetheme.Small,
 			}).OnClick(func() {

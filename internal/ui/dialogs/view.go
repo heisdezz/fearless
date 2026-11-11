@@ -4,7 +4,6 @@ import (
 	"github.com/egoist/mygo/ui"
 	"github.com/lobehub/lobe-mygo/pkg/action"
 	"github.com/lobehub/lobe-mygo/pkg/feedback"
-	"github.com/lobehub/lobe-mygo/pkg/field"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/ui/widgets"
@@ -76,21 +75,13 @@ func body(c *ui.Context, q *Queue) {
 					ui.Text(c, f.Label).FontSize(tk.FontSize).FontWeight(500).TextColor(tk.TextSecondary)
 				}
 				value := q.Value(f.Key)
-				var input ui.Element
-				if f.Multiline {
-					input = field.TextArea(c, &value, field.TextAreaProps{
-						Variant:     field.InputOutlined,
-						Placeholder: f.Placeholder,
-						MinRows:     6,
-						MaxRows:     14,
-					})
-				} else {
-					input = field.Input(c, &value, field.InputProps{
-						Variant:     field.InputOutlined,
-						Placeholder: f.Placeholder,
-						Invalid:     q.Phase() == PhaseFailed && f.Required && value == "",
-					})
-				}
+				input := widgets.FieldInput(c, &value, widgets.FieldInputProps{
+					Placeholder: f.Placeholder,
+					Multiline:   f.Multiline,
+					MinRows:     6,
+					MaxRows:     14,
+					Invalid:     q.Phase() == PhaseFailed && f.Required && value == "",
+				})
 				input.AlignSelf(ui.Stretch)
 				if value != q.Value(f.Key) {
 					q.SetValue(f.Key, value)
@@ -155,10 +146,10 @@ func joinWarnings(ws []string) string {
 // chrome instead of using feedback.Modal.
 func Actions(c *ui.Context, q *Queue) ui.Element {
 	return ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
-		if action.Button(c, "Cancel", action.ButtonProps{}).Clicked() {
+		if widgets.Button(c, "Cancel", widgets.ButtonProps{}).Clicked() {
 			q.Cancel()
 		}
-		b := action.Button(c, q.OKText(), action.ButtonProps{Variant: action.Primary})
+		b := widgets.Button(c, q.OKText(), widgets.ButtonProps{Variant: action.Primary})
 		if q.Busy() {
 			b.Disabled(true)
 		}

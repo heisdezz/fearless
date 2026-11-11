@@ -66,7 +66,7 @@ func RequestTabBar(c *ui.Context, tabs []*presenters.TabItem, activeUID string, 
 					}
 
 					// Close button
-					action.Button(c, "✕", action.ButtonProps{
+					Button(c, "✕", ButtonProps{
 						Size:    lobetheme.Small,
 						Variant: action.Text,
 					}).OnClick(func() {
@@ -80,7 +80,7 @@ func RequestTabBar(c *ui.Context, tabs []*presenters.TabItem, activeUID string, 
 		// New Tab button "+"
 		if props.OnNewTab != nil {
 			ui.Box(c).Padding(0, 4).Children(func() {
-				action.Button(c, "+", action.ButtonProps{
+				Button(c, "+", ButtonProps{
 					Size:    lobetheme.Small,
 					Variant: action.Text,
 				}).OnClick(func() {

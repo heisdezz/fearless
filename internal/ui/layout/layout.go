@@ -26,6 +26,7 @@ import (
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	uitheme "fearless/internal/ui/theme"
+	"fearless/internal/ui/widgets"
 )
 
 // RegionBudget is the §8.1 region budget in DIPs: the fixed chrome heights
@@ -394,7 +395,7 @@ func (t *TitleBarView) View(c *ui.Context) {
 	ui.Row(c).Fill().AlignItems(ui.Center).Gap(8).Children(func() {
 		// App menu (Windows/Linux)
 		if t.ShowMenu && t.OnMenu != nil {
-			action.Button(c, "☰", action.ButtonProps{
+			widgets.Button(c, "☰", widgets.ButtonProps{
 				Variant: action.Text,
 				Size:    lobetheme.Small,
 			}).OnClick(t.OnMenu).Tooltip("Menu")
@@ -411,7 +412,7 @@ func (t *TitleBarView) View(c *ui.Context) {
 
 		// Workspace selector
 		if t.WorkspaceName != "" && t.OnWorkspace != nil {
-			action.Button(c, t.WorkspaceName, action.ButtonProps{
+			widgets.Button(c, t.WorkspaceName, widgets.ButtonProps{
 				Variant: action.Text,
 				Size:    lobetheme.Small,
 			}).OnClick(t.OnWorkspace).Tooltip("Switch workspace")
@@ -419,7 +420,7 @@ func (t *TitleBarView) View(c *ui.Context) {
 
 		// Settings
 		if t.OnSettings != nil {
-			action.Button(c, "⚙", action.ButtonProps{
+			widgets.Button(c, "⚙", widgets.ButtonProps{
 				Variant: action.Text,
 				Size:    lobetheme.Small,
 			}).OnClick(t.OnSettings).Tooltip("Settings")
@@ -449,38 +450,43 @@ type StatusBarView struct {
 func (s *StatusBarView) View(c *ui.Context) {
 	tk := uitheme.TokensOf(c)
 
-	ui.Row(c).Fill().AlignItems(ui.Center).Gap(12).Padding(0, 12).Children(func() {
-		// Left: request counts
-		if s.RequestCount > 0 {
-			ui.Text(c, formatCount(s.RequestCount, "request", "requests")).TextColor(tk.TextSecondary).FontSize(tk.FontSizeSM)
-			if s.SelectedCount > 0 {
-				ui.Text(c, " · ").TextColor(tk.TextSecondary)
-				ui.Text(c, formatCount(s.SelectedCount, "selected", "selected")).TextColor(tk.TextSecondary)
+	// Top divider: without it the bar reads as dead background rather
+	// than chrome, especially in dark mode where BgBase and the content
+	// surface are near-neighbours.
+	ui.Row(c).Fill().AlignItems(ui.Center).Gap(12).Padding(0, 12).
+		BorderWidth(1, 0, 0, 0).BorderColor(tk.BorderSecondary).
+		Children(func() {
+			// Left: request counts
+			if s.RequestCount > 0 {
+				ui.Text(c, formatCount(s.RequestCount, "request", "requests")).TextColor(tk.TextSecondary).FontSize(tk.FontSizeSM)
+				if s.SelectedCount > 0 {
+					ui.Text(c, " · ").TextColor(tk.TextSecondary)
+					ui.Text(c, formatCount(s.SelectedCount, "selected", "selected")).TextColor(tk.TextSecondary)
+				}
 			}
-		}
 
-		// Environment selector
-		if s.EnvironmentName != "" && s.OnEnvironment != nil {
-			action.Button(c, s.EnvironmentName, action.ButtonProps{
-				Variant: action.Text,
-				Size:    lobetheme.Small,
-			}).OnClick(s.OnEnvironment).Tooltip("Change environment")
-		}
-
-		ui.Box(c).Grow(1) // spacer
-
-		// Right status items
-		for _, item := range s.RightStatus {
-			if item.OnClick != nil {
-				action.Button(c, item.Label, action.ButtonProps{
+			// Environment selector
+			if s.EnvironmentName != "" && s.OnEnvironment != nil {
+				widgets.Button(c, s.EnvironmentName, widgets.ButtonProps{
 					Variant: action.Text,
 					Size:    lobetheme.Small,
-				}).OnClick(item.OnClick).Tooltip(item.Tooltip)
-			} else {
-				ui.Text(c, item.Label).TextColor(item.Color).FontSize(tk.FontSizeSM)
+				}).OnClick(s.OnEnvironment).Tooltip("Change environment")
 			}
-		}
-	})
+
+			ui.Box(c).Grow(1) // spacer
+
+			// Right status items
+			for _, item := range s.RightStatus {
+				if item.OnClick != nil {
+					widgets.Button(c, item.Label, widgets.ButtonProps{
+						Variant: action.Text,
+						Size:    lobetheme.Small,
+					}).OnClick(item.OnClick).Tooltip(item.Tooltip)
+				} else {
+					ui.Text(c, item.Label).TextColor(item.Color).FontSize(tk.FontSizeSM)
+				}
+			}
+		})
 }
 
 // formatCount renders a counted label with an explicit plural, so
@@ -520,7 +526,7 @@ func (d *ConsoleDockView) View(c *ui.Context) {
 		ui.Row(c).Gap(4).Padding(8, 8).Children(func() {
 			for i, tab := range d.Tabs {
 				active := i == d.ActiveTab
-				btn := action.Button(c, tab.Label, action.ButtonProps{
+				btn := widgets.Button(c, tab.Label, widgets.ButtonProps{
 					Variant: action.Text,
 					Size:    lobetheme.Small,
 				}).OnClick(func() {
@@ -534,7 +540,7 @@ func (d *ConsoleDockView) View(c *ui.Context) {
 			}
 			ui.Box(c).Grow(1)
 			if d.OnClose != nil {
-				action.Button(c, "✕", action.ButtonProps{
+				widgets.Button(c, "✕", widgets.ButtonProps{
 					Variant: action.Text,
 					Size:    lobetheme.Small,
 				}).OnClick(d.OnClose).Tooltip("Close console")

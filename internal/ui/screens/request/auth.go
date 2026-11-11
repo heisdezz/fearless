@@ -7,6 +7,7 @@ import (
 
 	"fearless/internal/core/model"
 	"fearless/internal/ui/presenters"
+	"fearless/internal/ui/widgets"
 )
 
 var authModeOptions = []field.SelectOption{
@@ -37,7 +38,7 @@ func renderAuthTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Req
 		ui.Row(c).AlignItems(ui.Center).Gap(8).Children(func() {
 			ui.Text(c, "Auth Type:").FontSize(11).Bold().TextColor(tk.TextSecondary)
 
-			field.Select(c, &selectedMode, field.SelectProps{
+			widgets.FieldSelect(c, &selectedMode, widgets.FieldSelectProps{
 				Options: authModeOptions,
 				Size:    lobetheme.Small,
 			})
@@ -75,7 +76,7 @@ func renderAuthTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Req
 					ui.Box(c).Width(80).Children(func() {
 						ui.Text(c, "Username").FontSize(12).TextColor(tk.Text)
 					})
-					field.Input(c, &userStr, field.InputProps{
+					widgets.FieldInput(c, &userStr, widgets.FieldInputProps{
 						Placeholder: "Username",
 						Size:        lobetheme.Small,
 					})
@@ -86,7 +87,7 @@ func renderAuthTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Req
 					ui.Box(c).Width(80).Children(func() {
 						ui.Text(c, "Password").FontSize(12).TextColor(tk.Text)
 					})
-					field.Input(c, &passStr, field.InputProps{
+					widgets.FieldInput(c, &passStr, widgets.FieldInputProps{
 						Placeholder: "Password",
 						Size:        lobetheme.Small,
 					})
@@ -104,7 +105,7 @@ func renderAuthTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Req
 				ui.Box(c).Width(80).Children(func() {
 					ui.Text(c, "Token").FontSize(12).TextColor(tk.Text)
 				})
-				field.Input(c, &tokenStr, field.InputProps{
+				widgets.FieldInput(c, &tokenStr, widgets.FieldInputProps{
 					Placeholder: "Bearer token",
 					Size:        lobetheme.Small,
 				})
@@ -130,7 +131,7 @@ func renderAuthTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Req
 					ui.Box(c).Width(80).Children(func() {
 						ui.Text(c, "Key").FontSize(12).TextColor(tk.Text)
 					})
-					field.Input(c, &keyStr, field.InputProps{
+					widgets.FieldInput(c, &keyStr, widgets.FieldInputProps{
 						Placeholder: "X-API-Key",
 						Size:        lobetheme.Small,
 					})
@@ -141,7 +142,7 @@ func renderAuthTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Req
 					ui.Box(c).Width(80).Children(func() {
 						ui.Text(c, "Value").FontSize(12).TextColor(tk.Text)
 					})
-					field.Input(c, &valStr, field.InputProps{
+					widgets.FieldInput(c, &valStr, widgets.FieldInputProps{
 						Placeholder: "Value",
 						Size:        lobetheme.Small,
 					})
@@ -152,7 +153,7 @@ func renderAuthTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Req
 					ui.Box(c).Width(80).Children(func() {
 						ui.Text(c, "Add To").FontSize(12).TextColor(tk.Text)
 					})
-					field.Select(c, &placementStr, field.SelectProps{
+					widgets.FieldSelect(c, &placementStr, widgets.FieldSelectProps{
 						Options: []field.SelectOption{
 							{Value: string(model.APIKeyHeader), Label: "Header"},
 							{Value: string(model.APIKeyQueryParams), Label: "Query Params"},

@@ -304,7 +304,7 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 
 		// Action buttons row: + Request, + Folder, Open
 		ui.Row(c).FillWidth().Gap(4).AlignItems(ui.Center).Children(func() {
-			action.Button(c, "+ Request", action.ButtonProps{
+			widgets.Button(c, "+ Request", widgets.ButtonProps{
 				Size:    lobetheme.Small,
 				Variant: action.Default,
 			}).OnClick(func() {
@@ -313,7 +313,7 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 				}
 			})
 
-			action.Button(c, "+ Folder", action.ButtonProps{
+			widgets.Button(c, "+ Folder", widgets.ButtonProps{
 				Size:    lobetheme.Small,
 				Variant: action.Default,
 			}).OnClick(func() {
@@ -324,7 +324,7 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 
 			ui.Box(c).Grow(1)
 
-			action.Button(c, "Open", action.ButtonProps{
+			widgets.Button(c, "Open", widgets.ButtonProps{
 				Size:    lobetheme.Small,
 				Variant: action.Default,
 			}).OnClick(func() {
@@ -422,7 +422,7 @@ func (s *Screen) renderRunnerSection(c *ui.Context, snap Snapshot, actions Actio
 				FontSize(12).
 				TextColor(tk.TextSecondary)
 
-			action.Button(c, "Run Collection", action.ButtonProps{
+			widgets.Button(c, "Run Collection", widgets.ButtonProps{
 				Size:    lobetheme.Small,
 				Variant: action.Primary,
 			}).OnClick(func() {
@@ -479,7 +479,7 @@ func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 
 				activeEnv := snap.ActiveEnvironment
 				ui.Box(c).Width(140).Children(func() {
-					field.Select(c, &activeEnv, field.SelectProps{
+					widgets.FieldSelect(c, &activeEnv, widgets.FieldSelectProps{
 						Options: envOptions,
 						Size:    lobetheme.Small,
 					})
@@ -489,7 +489,7 @@ func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 				}
 
 				// Environment settings / manage button
-				action.Button(c, "⚙ Env", action.ButtonProps{
+				widgets.Button(c, "⚙ Env", widgets.ButtonProps{
 					Size:    lobetheme.Small,
 					Variant: action.Default,
 				}).OnClick(func() {
@@ -499,7 +499,7 @@ func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 				})
 
 				// Run button
-				action.Button(c, "Run", action.ButtonProps{
+				widgets.Button(c, "Run", widgets.ButtonProps{
 					Size:    lobetheme.Small,
 					Variant: action.Primary,
 				}).OnClick(func() {

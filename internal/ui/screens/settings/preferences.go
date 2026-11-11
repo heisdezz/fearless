@@ -9,11 +9,11 @@ import (
 	"github.com/lobehub/lobe-mygo/pkg/action"
 	"github.com/lobehub/lobe-mygo/pkg/choice"
 	"github.com/lobehub/lobe-mygo/pkg/field"
-	"github.com/lobehub/lobe-mygo/pkg/nav"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/core/model"
 	"fearless/internal/ui/presenters"
+	"fearless/internal/ui/widgets"
 )
 
 var prefTabsList = []struct {
@@ -52,35 +52,46 @@ func PreferencesScreen(c *ui.Context, p *presenters.PreferencesPresenter) ui.Ele
 
 		// Main body: Categories navigation on left, settings controls on right
 		ui.Row(c).Fill().Gap(20).Children(func() {
-			// Left Category Nav
-			selectedIdx := 0
-			var navItems []nav.TabItem
-			for i, t := range prefTabsList {
-				navItems = append(navItems, nav.TabItem{Label: t.label})
-				if t.tab == activeTab {
-					selectedIdx = i
-				}
-			}
+			// Left Category Nav — a plain left-aligned list, like Bruno's
+			// settings rail. nav.Tabs centers every label inside its pill,
+			// which misaligns the rail, and wrapping a sized container here
+			// floats the list mid-window because Box and sized columns
+			// center their children.
+			ui.Column(c).Width(140).Shrink(0).Gap(2).Children(func() {
+				for _, t := range prefTabsList {
+					t := t
+					isActive := t.tab == activeTab
 
-			ui.Box(c).Width(140).Children(func() {
-				nav.Tabs(c, &selectedIdx, nav.TabsProps{
-					Items:    navItems,
-					Variant:  nav.TabsSquare,
-					Vertical: true,
-					Size:     lobetheme.Small,
-				}, nil)
+					row := ui.Row(c).
+						FillWidth().
+						AlignItems(ui.Center).
+						Height(26).
+						Padding(0, 10).
+						Radius(tk.BorderRadius)
+					switch {
+					case isActive:
+						row.Background(tk.BgElevated).TextColor(tk.Text)
+					case row.Hovered():
+						row.Background(tk.BgTextHover)
+					}
+					row.Cursor(ui.CursorPointer).OnClick(func() {
+						p.SelectTab(t.tab)
+					})
+
+					row.Children(func() {
+						color := tk.TextSecondary
+						if isActive || row.Hovered() {
+							color = tk.Text
+						}
+						ui.Text(c, t.label).SingleLine().FontSize(12).TextColor(color)
+					})
+				}
 			})
 
-			if selectedIdx >= 0 && selectedIdx < len(prefTabsList) {
-				newTab := prefTabsList[selectedIdx].tab
-				if newTab != activeTab {
-					p.SelectTab(newTab)
-					activeTab = newTab
-				}
-			}
-
-			// Right Content Pane
-			ui.Box(c).Grow(1).Children(func() {
+			// Right Content Pane. The trailing Grow spacer anchors the
+			// content to the top: columns distribute leftover height by
+			// centering, so a pane without one floats mid-window.
+			ui.Column(c).Grow(1).Children(func() {
 				switch activeTab {
 				case presenters.PrefTabGeneral:
 					renderGeneralPreferences(c, p, cfg.General)
@@ -101,6 +112,8 @@ func PreferencesScreen(c *ui.Context, p *presenters.PreferencesPresenter) ui.Ele
 				default:
 					renderGeneralPreferences(c, p, cfg.General)
 				}
+
+				ui.Box(c).Grow(1)
 			})
 		})
 
@@ -113,14 +126,14 @@ func PreferencesScreen(c *ui.Context, p *presenters.PreferencesPresenter) ui.Ele
 				saveLabel = "Save *"
 			}
 
-			action.Button(c, saveLabel, action.ButtonProps{
+			widgets.Button(c, saveLabel, widgets.ButtonProps{
 				Variant: action.Primary,
 				Size:    lobetheme.Small,
 			}).OnClick(func() {
 				p.Save(context.Background())
 			})
 
-			action.Button(c, "Revert", action.ButtonProps{
+			widgets.Button(c, "Revert", widgets.ButtonProps{
 				Variant: action.Default,
 				Size:    lobetheme.Small,
 			}).OnClick(func() {
@@ -157,7 +170,7 @@ func renderGeneralPreferences(c *ui.Context, p *presenters.PreferencesPresenter,
 			ui.Box(c).Width(120).Children(func() {
 				ui.Text(c, "Interface Language").FontSize(12).TextColor(tk.Text)
 			})
-			field.Input(c, &langStr, field.InputProps{
+			widgets.FieldInput(c, &langStr, widgets.FieldInputProps{
 				Placeholder: "en",
 				Size:        lobetheme.Small,
 			})
@@ -183,7 +196,7 @@ func renderAppearancePreferences(c *ui.Context, p *presenters.PreferencesPresent
 			ui.Box(c).Width(100).Children(func() {
 				ui.Text(c, "Theme Mode").FontSize(12).TextColor(tk.Text)
 			})
-			field.Select(c, &themeStr, field.SelectProps{
+			widgets.FieldSelect(c, &themeStr, widgets.FieldSelectProps{
 				Options: []field.SelectOption{
 					{Value: "system", Label: "System Default"},
 					{Value: "light", Label: "Light"},
@@ -218,7 +231,7 @@ func renderRequestPreferences(c *ui.Context, p *presenters.PreferencesPresenter,
 			ui.Box(c).Width(140).Children(func() {
 				ui.Text(c, "Request Timeout (ms)").FontSize(12).TextColor(tk.Text)
 			})
-			field.Input(c, &timeoutStr, field.InputProps{
+			widgets.FieldInput(c, &timeoutStr, widgets.FieldInputProps{
 				Placeholder: "0 (no timeout)",
 				Size:        lobetheme.Small,
 			})
@@ -238,7 +251,7 @@ func renderRequestPreferences(c *ui.Context, p *presenters.PreferencesPresenter,
 			ui.Box(c).Width(140).Children(func() {
 				ui.Text(c, "Max Redirects").FontSize(12).TextColor(tk.Text)
 			})
-			field.Input(c, &maxRedirStr, field.InputProps{
+			widgets.FieldInput(c, &maxRedirStr, widgets.FieldInputProps{
 				Placeholder: "5",
 				Size:        lobetheme.Small,
 			})
@@ -273,7 +286,7 @@ func renderProxyPreferences(c *ui.Context, p *presenters.PreferencesPresenter, p
 			ui.Box(c).Width(100).Children(func() {
 				ui.Text(c, "Proxy Mode").FontSize(12).TextColor(tk.Text)
 			})
-			field.Select(c, &modeStr, field.SelectProps{
+			widgets.FieldSelect(c, &modeStr, widgets.FieldSelectProps{
 				Options: []field.SelectOption{
 					{Value: string(model.ProxyOff), Label: "Disabled"},
 					{Value: string(model.ProxySystem), Label: "Use System Proxy"},
@@ -290,7 +303,7 @@ func renderProxyPreferences(c *ui.Context, p *presenters.PreferencesPresenter, p
 				ui.Box(c).Width(100).Children(func() {
 					ui.Text(c, "Hostname").FontSize(12).TextColor(tk.Text)
 				})
-				field.Input(c, &proxy.Hostname, field.InputProps{
+				widgets.FieldInput(c, &proxy.Hostname, widgets.FieldInputProps{
 					Placeholder: "127.0.0.1",
 					Size:        lobetheme.Small,
 				})
@@ -300,7 +313,7 @@ func renderProxyPreferences(c *ui.Context, p *presenters.PreferencesPresenter, p
 				ui.Box(c).Width(100).Children(func() {
 					ui.Text(c, "Port").FontSize(12).TextColor(tk.Text)
 				})
-				field.Input(c, &proxy.Port, field.InputProps{
+				widgets.FieldInput(c, &proxy.Port, widgets.FieldInputProps{
 					Placeholder: "8080",
 					Size:        lobetheme.Small,
 				})
@@ -310,7 +323,7 @@ func renderProxyPreferences(c *ui.Context, p *presenters.PreferencesPresenter, p
 				ui.Box(c).Width(100).Children(func() {
 					ui.Text(c, "PAC URL").FontSize(12).TextColor(tk.Text)
 				})
-				field.Input(c, &proxy.PACURL, field.InputProps{
+				widgets.FieldInput(c, &proxy.PACURL, widgets.FieldInputProps{
 					Placeholder: "http://example.com/proxy.pac",
 					Size:        lobetheme.Small,
 				})
@@ -338,7 +351,7 @@ func renderTLSPreferences(c *ui.Context, p *presenters.PreferencesPresenter, tls
 			ui.Box(c).Width(120).Children(func() {
 				ui.Text(c, "CA Certificate File").FontSize(12).TextColor(tk.Text)
 			})
-			field.Input(c, &tls.CACertFile, field.InputProps{
+			widgets.FieldInput(c, &tls.CACertFile, widgets.FieldInputProps{
 				Placeholder: "/path/to/custom-ca.pem",
 				Size:        lobetheme.Small,
 			})
@@ -361,7 +374,7 @@ func renderEditorPreferences(c *ui.Context, p *presenters.PreferencesPresenter, 
 			ui.Box(c).Width(100).Children(func() {
 				ui.Text(c, "Font Size").FontSize(12).TextColor(tk.Text)
 			})
-			field.Input(c, &fontSizeStr, field.InputProps{
+			widgets.FieldInput(c, &fontSizeStr, widgets.FieldInputProps{
 				Placeholder: "13",
 				Size:        lobetheme.Small,
 			})
@@ -374,7 +387,7 @@ func renderEditorPreferences(c *ui.Context, p *presenters.PreferencesPresenter, 
 			ui.Box(c).Width(100).Children(func() {
 				ui.Text(c, "Tab Size").FontSize(12).TextColor(tk.Text)
 			})
-			field.Input(c, &tabSizeStr, field.InputProps{
+			widgets.FieldInput(c, &tabSizeStr, widgets.FieldInputProps{
 				Placeholder: "2",
 				Size:        lobetheme.Small,
 			})
@@ -427,7 +440,7 @@ func renderOAuthPreferences(c *ui.Context, p *presenters.PreferencesPresenter) {
 			FontSize(12).
 			TextColor(tk.TextSecondary)
 
-		action.Button(c, "Clear OAuth2 Token Cache", action.ButtonProps{
+		widgets.Button(c, "Clear OAuth2 Token Cache", widgets.ButtonProps{
 			Variant: action.Default,
 			Size:    lobetheme.Small,
 		}).OnClick(func() {

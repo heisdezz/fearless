@@ -4,7 +4,6 @@ import (
 	"github.com/egoist/mygo/ui"
 	"github.com/lobehub/lobe-mygo/pkg/action"
 	"github.com/lobehub/lobe-mygo/pkg/choice"
-	"github.com/lobehub/lobe-mygo/pkg/field"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/core/model"
@@ -65,7 +64,7 @@ func KeyValueGrid(c *ui.Context, rows *[]model.KeyValue, props KeyValueGridProps
 						empty := ""
 						row.Name = &empty
 					}
-					field.Input(c, row.Name, field.InputProps{
+					FieldInput(c, row.Name, FieldInputProps{
 						Placeholder: keyPlaceholder,
 						Size:        lobetheme.Small,
 					})
@@ -75,7 +74,7 @@ func KeyValueGrid(c *ui.Context, rows *[]model.KeyValue, props KeyValueGridProps
 						empty := ""
 						row.Value = &empty
 					}
-					field.Input(c, row.Value, field.InputProps{
+					FieldInput(c, row.Value, FieldInputProps{
 						Placeholder: valPlaceholder,
 						Size:        lobetheme.Small,
 					})
@@ -86,7 +85,7 @@ func KeyValueGrid(c *ui.Context, rows *[]model.KeyValue, props KeyValueGridProps
 							empty := ""
 							row.Description = &empty
 						}
-						field.Input(c, row.Description, field.InputProps{
+						FieldInput(c, row.Description, FieldInputProps{
 							Placeholder: "Description",
 							Size:        lobetheme.Small,
 						})
@@ -94,7 +93,7 @@ func KeyValueGrid(c *ui.Context, rows *[]model.KeyValue, props KeyValueGridProps
 
 					// 5. Delete action
 					if !props.ReadOnly {
-						action.Button(c, "✕", action.ButtonProps{
+						Button(c, "✕", ButtonProps{
 							Size:    lobetheme.Small,
 							Variant: action.Text,
 						}).OnClick(func() {
@@ -113,7 +112,7 @@ func KeyValueGrid(c *ui.Context, rows *[]model.KeyValue, props KeyValueGridProps
 		// Add Row button
 		if !props.ReadOnly {
 			ui.Row(c).Padding(4, 0).Children(func() {
-				action.Button(c, "+ Add Row", action.ButtonProps{
+				Button(c, "+ Add Row", ButtonProps{
 					Size:    lobetheme.Small,
 					Variant: action.Dashed,
 				}).OnClick(func() {
