@@ -204,7 +204,7 @@ func TestInterpolateObjectsArrays(t *testing.T) {
 func TestInterpolateBracketNotation(t *testing.T) {
 	vars := map[string]any{
 		"user": map[string]any{
-			"fav-food": []any{"egg", "meat"},
+			"fav-food":       []any{"egg", "meat"},
 			"want.attention": true,
 		},
 	}
@@ -232,9 +232,9 @@ func TestInterpolateBracketNotation(t *testing.T) {
 func TestInterpolateRuntimeVars(t *testing.T) {
 	vars := map[string]any{
 		"rUser": map[string]any{
-			"full_name": "Bruno",
-			"age":       7,
-			"fav-food":  []any{"egg", "meat"},
+			"full_name":      "Bruno",
+			"age":            7,
+			"fav-food":       []any{"egg", "meat"},
 			"want.attention": true,
 		},
 	}

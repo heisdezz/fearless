@@ -4,15 +4,15 @@ package vars
 // ones when merged, matching flows/environment-resolution.md precedence:
 // global -> collection -> environment -> folder -> request -> oauth2 -> runtime -> prompt -> process.
 type Scopes struct {
-	Global     map[string]any
-	Collection map[string]any
+	Global      map[string]any
+	Collection  map[string]any
 	Environment map[string]any
-	Folder     map[string]any
-	Request    map[string]any
-	OAuth2     map[string]any
-	Runtime    map[string]any
-	Prompt     map[string]any
-	ProcessEnv map[string]string
+	Folder      map[string]any
+	Request     map[string]any
+	OAuth2      map[string]any
+	Runtime     map[string]any
+	Prompt      map[string]any
+	ProcessEnv  map[string]string
 }
 
 // Merge produces a single lookup map with precedence applied.
@@ -49,7 +49,7 @@ func InterpolateWithScopes(s string, scopes Scopes, opts InterpolateOptions) str
 
 // UnresolvedCollector collects unresolved variable names in order of first report.
 type UnresolvedCollector struct {
-	seen map[string]bool
+	seen  map[string]bool
 	Names []string
 }
 

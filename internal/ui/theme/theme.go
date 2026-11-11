@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
+	"math"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/egoist/mygo/ui"
@@ -12,25 +14,25 @@ import (
 )
 
 type BrunoTheme struct {
-	Name    string         `json:"name"`
-	Mode    string         `json:"mode"`
-	Brand   NRGBA          `json:"brand"`
-	Primary PrimaryColors  `json:"primary"`
-	Background BackgroundColors `json:"background"`
-	Status  map[string]StatusColors `json:"status"`
-	Font    FontSizes      `json:"font"`
-	Radius  BorderRadius   `json:"radius"`
-	Border  BorderColors   `json:"border"`
-	Methods map[string]NRGBA `json:"methods"`
-	Colors  ColorExtras    `json:"colors"`
-	Input   InputColors    `json:"input"`
-	Request RequestColors  `json:"request"`
-	WS      WSColors       `json:"ws"`
-	CodeMirror CodeMirrorColors `json:"codemirror"`
+	Name       string                  `json:"name"`
+	Mode       string                  `json:"mode"`
+	Brand      NRGBA                   `json:"brand"`
+	Primary    PrimaryColors           `json:"primary"`
+	Background BackgroundColors        `json:"background"`
+	Status     map[string]StatusColors `json:"status"`
+	Font       FontSizes               `json:"font"`
+	Radius     BorderRadius            `json:"radius"`
+	Border     BorderColors            `json:"border"`
+	Methods    map[string]NRGBA        `json:"methods"`
+	Colors     ColorExtras             `json:"colors"`
+	Input      InputColors             `json:"input"`
+	Request    RequestColors           `json:"request"`
+	WS         WSColors                `json:"ws"`
+	CodeMirror CodeMirrorColors        `json:"codemirror"`
 }
 
 type NRGBA struct {
-	R, G, B, A uint8 `json:"-"`
+	R, G, B, A uint8  `json:"-"`
 	Hex        string `json:"hex"`
 }
 
@@ -75,20 +77,20 @@ type StatusColors struct {
 }
 
 type FontSizes struct {
-	XS  int `json:"xs"`
-	SM  int `json:"sm"`
+	XS   int `json:"xs"`
+	SM   int `json:"sm"`
 	Base int `json:"base"`
-	MD  int `json:"md"`
-	LG  int `json:"lg"`
-	XL  int `json:"xl"`
+	MD   int `json:"md"`
+	LG   int `json:"lg"`
+	XL   int `json:"xl"`
 }
 
 type BorderRadius struct {
-	SM  int `json:"sm"`
+	SM   int `json:"sm"`
 	Base int `json:"base"`
-	MD  int `json:"md"`
-	LG  int `json:"lg"`
-	XL  int `json:"xl"`
+	MD   int `json:"md"`
+	LG   int `json:"lg"`
+	XL   int `json:"xl"`
 }
 
 type BorderColors struct {
@@ -142,63 +144,180 @@ type CodeMirrorColors struct {
 	Border NRGBA `json:"border"`
 }
 
+// isDark reports which appearance the snapshot describes. The match is
+// case- and space-insensitive: a theme file is hand-edited JSON, and
+// "Dark"/"DARK"/" dark " must not silently fall through to the light table
+// (review finding on UI-THEME, 2026-11-11T02:18Z). Anything that is not
+// dark — including an empty mode — is a light-theme import.
+func (b *BrunoTheme) isDark() bool {
+	return b != nil && strings.EqualFold(strings.TrimSpace(b.Mode), "dark")
+}
+
+// hslColor is one colour of Bruno's palette: hue in degrees, saturation and
+// lightness in percent.
+type hslColor struct{ h, s, l float64 }
+
+// Bruno's request.methods tables, transcribed from the shipped themes:
+//
+//	light: bruno/packages/bruno-app/src/themes/light/light.js:262
+//	dark:  bruno/packages/bruno-app/src/themes/dark/dark.js:270
+//
+// each hue taken from that file's palette (light.js:2, dark.js:3). The dark
+// table's delete is `lighten(0.08, hues.RED)`, which adds 0.08 to HSL
+// lightness, so hsl(8, 70%, 52%) → hsl(8, 70%, 60%). Note what the source
+// actually says: post is PURPLE in light and INDIGO in dark, patch is PURPLE
+// in light and ORANGE in dark — the tables are not the same mapping twice.
+var (
+	brunoLightMethods = map[string]hslColor{
+		"get":     {145, 50, 36}, // hues.GREEN
+		"post":    {280, 45, 48}, // hues.PURPLE
+		"put":     {35, 85, 42},  // hues.ORANGE
+		"delete":  {8, 60, 52},   // hues.RED
+		"patch":   {280, 45, 48}, // hues.PURPLE (shares post's colour)
+		"options": {178, 50, 36}, // hues.TEAL
+		"head":    {195, 55, 42}, // hues.CYAN
+	}
+	brunoDarkMethods = map[string]hslColor{
+		"get":     {140, 72, 68}, // hues.GREEN
+		"post":    {202, 88, 72}, // hues.INDIGO
+		"put":     {24, 88, 72},  // hues.ORANGE
+		"delete":  {8, 70, 60},   // lighten(0.08, hues.RED)
+		"patch":   {24, 88, 72},  // hues.ORANGE (shares put's colour)
+		"options": {170, 70, 60}, // hues.TEAL
+		"head":    {190, 82, 72}, // hues.CYAN
+	}
+	// colors.text.muted of each theme, the colour MethodBadge paints a method
+	// with no entry (MethodBadge/StyledWrapper.js:4): light SUBTEXT1 #838383,
+	// dark SUBTEXT1 #aaa.
+	brunoMuted = [2]ui.Color{ui.Hex("#838383"), ui.Hex("#aaaaaa")}
+)
+
+// modeIndex maps an appearance to a table slot: 0 light, 1 dark.
+func modeIndex(dark bool) int {
+	if dark {
+		return 1
+	}
+	return 0
+}
+
+// defaultMethodColors returns Bruno's method table for one mode.
+func defaultMethodColors(dark bool) map[string]ui.Color {
+	src := brunoLightMethods
+	if dark {
+		src = brunoDarkMethods
+	}
+	out := make(map[string]ui.Color, len(src))
+	for m, c := range src {
+		out[m] = hsl(c.h, c.s, c.l)
+	}
+	return out
+}
+
+// hsl converts hue in degrees and saturation/lightness in percent to a
+// colour, rounding each channel half-up the way JavaScript's Math.round
+// does. Bruno's palette is HSL and the browser rounds the same way, so the
+// resulting hexes are the ones Bruno actually renders.
+func hsl(h, s, l float64) ui.Color {
+	s /= 100
+	l /= 100
+	c := (1 - math.Abs(2*l-1)) * s
+	h = math.Mod(h, 360)
+	if h < 0 {
+		h += 360
+	}
+	x := c * (1 - math.Abs(math.Mod(h/60, 2)-1))
+	m := l - c/2
+	var r, g, b float64
+	switch {
+	case h < 60:
+		r, g, b = c, x, 0
+	case h < 120:
+		r, g, b = x, c, 0
+	case h < 180:
+		r, g, b = 0, c, x
+	case h < 240:
+		r, g, b = 0, x, c
+	case h < 300:
+		r, g, b = x, 0, c
+	default:
+		r, g, b = c, 0, x
+	}
+	return ui.RGBA(roundChannel(r+m), roundChannel(g+m), roundChannel(b+m), 1)
+}
+
+func roundChannel(v float64) uint8 {
+	if v <= 0 {
+		return 0
+	}
+	if v >= 1 {
+		return 255
+	}
+	return uint8(math.Floor(v*255 + 0.5))
+}
+
 type Adapter struct {
-	mu      sync.RWMutex
-	bruno   *BrunoTheme
-	cfg     *theme.Config
-	methods map[string]ui.Color
+	mu    sync.RWMutex
+	bruno *BrunoTheme
+	// brunoGen counts SetBrunoTheme calls; cfgGen is the generation cfg was
+	// built for, so a theme change rebuilds the token config on the next Apply.
+	brunoGen int
+	cfgGen   int
+	cfg      *theme.Config
+	// methods holds one method→colour table per appearance, and muted the
+	// fallback for a method with no entry (Bruno's colors.text.muted). Both
+	// start as Bruno's built-in tables and a loaded theme overrides the mode
+	// it declares.
+	methods [2]map[string]ui.Color
+	muted   [2]ui.Color
 }
 
 func NewAdapter() *Adapter {
 	return &Adapter{
-		methods: defaultMethodColors(),
+		methods: [2]map[string]ui.Color{
+			defaultMethodColors(false),
+			defaultMethodColors(true),
+		},
+		muted: brunoMuted,
 	}
 }
 
-func defaultMethodColors() map[string]ui.Color {
-	return map[string]ui.Color{
-		"get":    ui.Hex("#34a853"),
-		"post":   ui.Hex("#fbbc04"),
-		"put":    ui.Hex("#ea4335"),
-		"delete": ui.Hex("#ea4335"),
-		"patch":  ui.Hex("#ea4335"),
-		"options": ui.Hex("#4285f4"),
-		"head":   ui.Hex("#9aa0a6"),
-	}
-}
-
+// Apply makes the frame use this adapter's tokens in the frame's own
+// appearance — the light or dark set, following the system — and is what the
+// rest of the UI must call instead of Lobe's theme.Apply, so a Bruno theme
+// import reaches every component through one call point.
 func (a *Adapter) Apply(c *ui.Context) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	if a.cfg == nil {
-		lightTokens := *theme.Light()
-		darkTokens := *theme.Dark()
-		a.cfg = theme.NewConfig(lightTokens, darkTokens)
-	}
-
-	if a.bruno != nil {
-		a.applyBrunoTheme()
+	if a.cfg == nil || a.cfgGen != a.brunoGen {
+		a.buildConfig()
+		a.cfgGen = a.brunoGen
 	}
 
 	a.cfg.Apply(c)
 }
 
-func (a *Adapter) applyBrunoTheme() {
-	if a.bruno == nil {
-		return
-	}
-
+// buildConfig rebuilds the light/dark token pair. A loaded Bruno theme
+// describes one appearance, so its snapshot is mapped into that mode's tokens
+// only; the other mode keeps Lobe's defaults. Mapping the snapshot into both
+// would paint a light theme's background into dark mode and break "light/dark
+// follows system".
+func (a *Adapter) buildConfig() {
 	lightTokens := *theme.Light()
 	darkTokens := *theme.Dark()
 
-	a.mapBrunoToTokens(&lightTokens, false)
-	a.mapBrunoToTokens(&darkTokens, true)
+	if a.bruno != nil {
+		if a.bruno.isDark() {
+			a.mapBrunoToTokens(&darkTokens)
+		} else {
+			a.mapBrunoToTokens(&lightTokens)
+		}
+	}
 
 	a.cfg = theme.NewConfig(lightTokens, darkTokens)
 }
 
-func (a *Adapter) mapBrunoToTokens(tk *theme.Tokens, dark bool) {
+func (a *Adapter) mapBrunoToTokens(tk *theme.Tokens) {
 	if a.bruno == nil {
 		return
 	}
@@ -275,14 +394,41 @@ func toUIColor(c color.NRGBA) ui.Color {
 	return ui.RGBA(c.R, c.G, c.B, float32(c.A)/255)
 }
 
+// SetBrunoTheme installs a Bruno theme snapshot, or clears it with nil.
+// The snapshot's method colours and muted fallback override the appearance
+// its Mode names (matched case-insensitively: "dark"/"Dark"/"DARK" → dark,
+// anything else, including empty, → light); the other appearance keeps
+// Bruno's built-in table, so a light theme import can never repaint dark
+// mode. Method entries merge over the defaults, so a theme that ships only
+// some verbs keeps the rest. `request.methods` — where Bruno's own themes
+// put the table — wins over a top-level `methods`.
 func (a *Adapter) SetBrunoTheme(b *BrunoTheme) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
 	a.bruno = b
-	if b != nil && b.Methods != nil {
-		for k, v := range b.Methods {
-			a.methods[k] = toUIColor(v.Color())
+	a.brunoGen++
+	// Rebuild from the built-in tables so clearing a theme restores them.
+	a.methods = [2]map[string]ui.Color{
+		defaultMethodColors(false),
+		defaultMethodColors(true),
+	}
+	a.muted = brunoMuted
+
+	if b == nil {
+		return
+	}
+	slot := modeIndex(b.isDark())
+	for k, v := range b.Methods {
+		a.methods[slot][strings.ToLower(k)] = toUIColor(v.Color())
+	}
+	if len(b.Request.Methods) > 0 {
+		for k, v := range b.Request.Methods {
+			a.methods[slot][strings.ToLower(k)] = toUIColor(v.Color())
 		}
+	}
+	if b.Colors.Text.Muted.Hex != "" {
+		a.muted[slot] = toUIColor(b.Colors.Text.Muted.Color())
 	}
 }
 
@@ -299,13 +445,19 @@ func (a *Adapter) LoadBrunoTheme(path string) error {
 	return nil
 }
 
-func (a *Adapter) MethodColor(method string) ui.Color {
+// MethodColor returns the colour for an HTTP method in the given appearance,
+// the exact value of Bruno's request.methods table for that mode. The lookup
+// is case-insensitive the way MethodBadge normalizes it, and a method with no
+// entry (TRACE, CONNECT, a custom verb) takes the theme's colors.text.muted,
+// exactly as Bruno's MethodBadge falls back.
+func (a *Adapter) MethodColor(method string, dark bool) ui.Color {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
-	if c, ok := a.methods[method]; ok {
+	slot := modeIndex(dark)
+	if c, ok := a.methods[slot][strings.ToLower(method)]; ok {
 		return c
 	}
-	return ui.Hex("#6b7280")
+	return a.muted[slot]
 }
 
 func (a *Adapter) Tokens(c *ui.Context) *theme.Tokens {
@@ -330,8 +482,15 @@ func TokensOf(c *ui.Context) *theme.Tokens {
 	return Global().Tokens(c)
 }
 
-func MethodColor(method string) ui.Color {
-	return Global().MethodColor(method)
+func MethodColor(method string, dark bool) ui.Color {
+	return Global().MethodColor(method, dark)
+}
+
+// MethodColorFor is MethodColor for the frame being built: the appearance is
+// the context's own, so it follows the system like Apply does. Widgets read
+// the table through this.
+func MethodColorFor(c *ui.Context, method string) ui.Color {
+	return Global().MethodColor(method, c.Theme().Dark)
 }
 
 func LoadBrunoTheme(path string) error {

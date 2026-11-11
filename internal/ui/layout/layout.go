@@ -1,26 +1,54 @@
+// Package layout composes the application's regions — title bar, sidebar,
+// request/response split, status bar and console dock — as described in
+// docs/ui/application-layout.md §8.
+//
+// It owns presentation state only (§8.3): split ratios, sidebar width, pane
+// orientation and console visibility are plain data, serialised by
+// EncodeState and repaired on load by DecodeState. Nothing in the package
+// reads domain state — TestImportsAreDomainFree enforces that over the
+// package's own syntax. Region sizes come from RegionBudget (§8.1); the
+// contents of every region arrive as callbacks from the screens, so no
+// screen is composed or restyled here.
+//
+// All sizes are DIPs. MyGo converts DIPs to device pixels at the window's
+// scale, so the budget is identical at 100 % and 200 % DPI — asserted by
+// TestRegionBudgetAtDPIScales.
 package layout
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/egoist/mygo/ui"
 	"github.com/lobehub/lobe-mygo/pkg/action"
 	"github.com/lobehub/lobe-mygo/pkg/feedback"
-	"github.com/lobehub/lobe-mygo/pkg/layout"
-	"github.com/lobehub/lobe-mygo/pkg/theme"
+	lobe "github.com/lobehub/lobe-mygo/pkg/layout"
+	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
+
+	uitheme "fearless/internal/ui/theme"
 )
 
-// RegionBudget holds the pixel budgets for each UI region
+// RegionBudget is the §8.1 region budget in DIPs: the fixed chrome heights
+// and the bounds every resizable region must respect. Zero fields fall back
+// to DefaultRegionBudget through withDefaults, so a partially specified
+// budget still produces the full structure.
 type RegionBudget struct {
-	TitleBar       float32 // ~28-32 px
-	SidebarMin     float32 // 220 px
-	SidebarMax     float32 // 600 px
-	SidebarCollapsed float32 // 64 px (icon rail)
-	CollectionHeader float32 // ~40 px
-	StatusBar      float32 // ~24 px
-	ConsoleDock    float32 // ~300 px when open
-	MinWindowWidth  float32 // 900 px
-	MinWindowHeight float32 // 600 px
+	TitleBar         float32 // top chrome; max(window controls, this) when the frame is hidden
+	SidebarMin       float32 // least width a drag leaves while expanded
+	SidebarMax       float32 // most width a drag gives
+	SidebarCollapsed float32 // rail width while collapsed (DraggableSideNav MinWidth)
+	CollectionHeader float32 // environment selector strip
+	StatusBar        float32 // bottom chrome
+	ConsoleDock      float32 // fixed height while open; opening it shrinks the content
+	RailMin          float32 // right rail (DraggablePanel) smallest size
+	RailMax          float32 // right rail largest size
+	MinWindowWidth   float32 // window floor the app enforces (UI-APP/PLATFORM)
+	MinWindowHeight  float32
 }
 
+// DefaultRegionBudget returns the §8.1 budget at 100 % DPI. MyGo scales
+// DIPs itself, so these numbers hold at every DPI; they are never
+// multiplied by a scale factor here.
 func DefaultRegionBudget() RegionBudget {
 	return RegionBudget{
 		TitleBar:         32,
@@ -30,132 +58,325 @@ func DefaultRegionBudget() RegionBudget {
 		CollectionHeader: 40,
 		StatusBar:        24,
 		ConsoleDock:      300,
+		RailMin:          240,
+		RailMax:          560,
 		MinWindowWidth:   900,
 		MinWindowHeight:  600,
 	}
 }
 
-// Orientation represents the request/response pane orientation
+// withDefaults fills zero or negative fields from DefaultRegionBudget.
+func (b RegionBudget) withDefaults() RegionBudget {
+	d := DefaultRegionBudget()
+	if b.TitleBar <= 0 {
+		b.TitleBar = d.TitleBar
+	}
+	if b.SidebarMin <= 0 {
+		b.SidebarMin = d.SidebarMin
+	}
+	if b.SidebarMax <= 0 {
+		b.SidebarMax = d.SidebarMax
+	}
+	if b.SidebarCollapsed <= 0 {
+		b.SidebarCollapsed = d.SidebarCollapsed
+	}
+	if b.CollectionHeader <= 0 {
+		b.CollectionHeader = d.CollectionHeader
+	}
+	if b.StatusBar <= 0 {
+		b.StatusBar = d.StatusBar
+	}
+	if b.ConsoleDock <= 0 {
+		b.ConsoleDock = d.ConsoleDock
+	}
+	if b.RailMin <= 0 {
+		b.RailMin = d.RailMin
+	}
+	if b.RailMax <= 0 {
+		b.RailMax = d.RailMax
+	}
+	if b.MinWindowWidth <= 0 {
+		b.MinWindowWidth = d.MinWindowWidth
+	}
+	if b.MinWindowHeight <= 0 {
+		b.MinWindowHeight = d.MinWindowHeight
+	}
+	return b
+}
+
+// Orientation is how the request and response panes share the middle
+// region — Bruno's requestPaneOrientation, flipped by the changeLayout
+// hotkey (⌘/Ctrl+J).
 type Orientation int
 
 const (
+	// OrientationStacked puts the request pane above the response pane.
 	OrientationStacked Orientation = iota
+	// OrientationSideBySide puts the response pane to the right.
 	OrientationSideBySide
 )
 
-// LayoutState holds presentation state for the main window
+// Split-percent bounds: state persisted by an older build or edited by hand
+// must not be able to erase a pane.
+const (
+	minSplitPercent = 5
+	maxSplitPercent = 95
+)
+
+// LayoutState is the persisted presentation state of the main window
+// (§8.3). It is deliberately plain data: screens mutate it through the
+// presenter, which saves it to the settings file, and the core never reads
+// it. Zero fields are repaired and out-of-range values clamped by
+// Normalize, so loading is always DecodeState → usable state.
+//
+// Window bounds are not here: they belong to PLATFORM's windowstate.
 type LayoutState struct {
-	SidebarWidth         float32
-	SidebarExpanded      bool
-	RequestResponseOrientation Orientation
-	ConsoleOpen          bool
-	SplitRatio           float32 // 0.0-1.0 for request/response split
-	WindowWidth          float32
-	WindowHeight         float32
+	SidebarWidth    float32 `json:"sidebar_width"` // DIPs, the expanded width
+	SidebarExpanded bool    `json:"sidebar_expanded"`
+	// RequestResponseOrientation selects OrientationStacked or
+	// OrientationSideBySide.
+	RequestResponseOrientation Orientation `json:"orientation"`
+	// SplitPercent is the request pane's share of the request/response
+	// region, 0–100. A percent rather than DIPs so the persisted ratio
+	// survives window resizes (SplitPercent/SplitVerticalPercent grow and
+	// shrink both panes in proportion).
+	SplitPercent float32 `json:"split_percent"`
+	ConsoleOpen  bool    `json:"console_open"`
+	// RailWidth and RailExpanded drive the optional right rail
+	// (DraggablePanel), Bruno's pop-out AI sidebar.
+	RailWidth    float32 `json:"rail_width"`
+	RailExpanded bool    `json:"rail_expanded"`
 }
 
+// DefaultLayoutState returns the default §8 structure: expanded 280 DIP
+// sidebar, stacked panes at a 55 % request share, console closed, rail
+// hidden.
 func DefaultLayoutState() LayoutState {
 	return LayoutState{
-		SidebarWidth:              280,
-		SidebarExpanded:           true,
+		SidebarWidth:               280,
+		SidebarExpanded:            true,
 		RequestResponseOrientation: OrientationStacked,
-		ConsoleOpen:               false,
-		SplitRatio:                0.55,
-		WindowWidth:               1200,
-		WindowHeight:              800,
+		SplitPercent:               55,
+		ConsoleOpen:                false,
+		RailWidth:                  320,
+		RailExpanded:               false,
 	}
 }
 
-// RootView is the main application layout root
-type RootView struct {
-	State        *LayoutState
-	Budget       RegionBudget
-	TitleBar     func(*ui.Context)
-	Sidebar      func(*ui.Context, layout.SideNavState)
-	RequestPane  func(*ui.Context)
-	ResponsePane func(*ui.Context)
-	StatusBar    func(*ui.Context)
-	ConsoleDock  func(*ui.Context)
+// Normalize repairs zero or invalid numeric fields with the defaults and
+// clamps the rest into b, so a truncated or hand-edited settings file
+// cannot produce an impossible layout. Bools are taken as written — false
+// is a legitimate value for a collapsed sidebar — so callers that need
+// default bools should start from DefaultLayoutState or use DecodeState,
+// which overlays the file on the defaults.
+func (s *LayoutState) Normalize(b RegionBudget) {
+	b = b.withDefaults()
+	d := DefaultLayoutState()
+
+	if s.SidebarWidth <= 0 {
+		s.SidebarWidth = d.SidebarWidth
+	}
+	s.SidebarWidth = clamp(s.SidebarWidth, b.SidebarMin, b.SidebarMax)
+
+	if s.SplitPercent <= 0 {
+		s.SplitPercent = d.SplitPercent
+	}
+	s.SplitPercent = clamp(s.SplitPercent, minSplitPercent, maxSplitPercent)
+
+	if s.RailWidth <= 0 {
+		s.RailWidth = d.RailWidth
+	}
+	s.RailWidth = clamp(s.RailWidth, b.RailMin, b.RailMax)
+
+	if s.RequestResponseOrientation != OrientationStacked &&
+		s.RequestResponseOrientation != OrientationSideBySide {
+		s.RequestResponseOrientation = OrientationStacked
+	}
 }
 
+// Degrade applies the §8.4 degraded modes for a window of the given width:
+// below MinWindowWidth the sidebar collapses to its rail and the panes
+// stack, so the editor keeps a usable width. It only ever collapses — a
+// window growing back does not re-open what the user (or this method) shut.
+// It is idempotent; call it whenever the window resizes.
+func (s *LayoutState) Degrade(width float32, b RegionBudget) {
+	b = b.withDefaults()
+	if width > 0 && width < b.MinWindowWidth {
+		s.SidebarExpanded = false
+		s.RequestResponseOrientation = OrientationStacked
+	}
+}
+
+// EncodeState returns the JSON the settings file holds for s. The caller
+// persists the bytes — PERSIST owns storage; this package never touches
+// disk.
+func EncodeState(s LayoutState) ([]byte, error) {
+	return json.Marshal(s)
+}
+
+// DecodeState parses what EncodeState wrote, overlays it on the defaults —
+// so keys an older build never wrote keep their default value — and
+// normalises against b, so values from a hand edit cannot break the layout.
+// Corrupt input returns an error; it never panics.
+func DecodeState(data []byte, b RegionBudget) (LayoutState, error) {
+	s := DefaultLayoutState()
+	if err := json.Unmarshal(data, &s); err != nil {
+		return LayoutState{}, fmt.Errorf("layout: decode state: %w", err)
+	}
+	s.Normalize(b)
+	return s, nil
+}
+
+func clamp(v, lo, hi float32) float32 {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+// RootView is the §8.2 window tree: chrome, body, bottom regions and the
+// toast host, with every content region supplied by the caller. View is a
+// pure function of State apart from the split, sidebar and rail handles
+// MyGo writes through their pointers; it holds no domain data.
+//
+// State must not be nil: the app layer owns one LayoutState and hands it
+// here so the drag handles, the presenter and the settings file all agree.
+type RootView struct {
+	State  *LayoutState
+	Budget RegionBudget
+
+	TitleBar func(*ui.Context)
+	// Sidebar builds the side-nav content; the SideNavState tells it how
+	// the nav currently shows (expanded, collapse progress, rail width).
+	Sidebar          func(*ui.Context, lobe.SideNavState)
+	CollectionHeader func(*ui.Context) // environment selector + runner strip
+	RequestPane      func(*ui.Context)
+	ResponsePane     func(*ui.Context)
+	// RightRail is the optional pop-out rail (DraggablePanel); nil keeps
+	// it out of the tree entirely.
+	RightRail   func(*ui.Context)
+	StatusBar   func(*ui.Context)
+	ConsoleDock func(*ui.Context)
+}
+
+// View renders the window tree for one frame.
 func (r *RootView) View(c *ui.Context) {
-	theme.Apply(c)
-	tk := theme.TokensOf(c)
+	// theme.Apply once at the top of the root view, before any Lobe
+	// component renders (§8.2 layer note).
+	uitheme.Apply(c)
+	tk := uitheme.TokensOf(c)
 
-	ui.Column(c).Children(func() {
-		// Title bar
-		if r.TitleBar != nil {
-			r.TitleBar(c)
-		}
+	b := r.Budget.withDefaults()
 
-		// Main body area
-		ui.Row(c).Children(func() {
-			// Sidebar with draggable resize
+	// Repair the state on the way in. DecodeState normalises what it reads
+	// from disk, but a state built in memory — an older build's file, a
+	// hand edit, a test — can still carry values outside the §8.1 budget,
+	// and rendering must never be driven out of it. Normalize is idempotent,
+	// clamps numbers into the budget and takes bools as written (review
+	// finding on UI-LAYOUT, 2026-11-11T02:18Z).
+	r.State.Normalize(b)
+
+	ui.Column(c).Fill().Children(func() {
+		// Title bar: the §8.1 chrome row, padded clear of the window
+		// controls of a hidden frame and draggable as a whole; children
+		// take the pointer before the drag does.
+		bar := c.TitleBar()
+		ui.Box(c).
+			Height(max(bar.Height, b.TitleBar)).
+			FillWidth().
+			Padding(0, bar.Right, 0, bar.Left).
+			DragWindow().
+			Children(func() {
+				if r.TitleBar != nil {
+					r.TitleBar(c)
+				}
+			})
+
+		// Body: DraggableSideNav | main column, with the optional right
+		// rail as the last flow child so expanding it pushes the panes
+		// rather than covering them.
+		ui.Row(c).FillHeight().Grow(1).Children(func() {
 			if r.Sidebar != nil {
-				props := layout.DraggableSideNavProps{
-					MinWidth:   r.Budget.SidebarMin,
-					MaxWidth:   r.Budget.SidebarMax,
+				props := lobe.DraggableSideNavProps{
+					MinWidth:   b.SidebarCollapsed, // the §8.1 icon rail
+					MaxWidth:   b.SidebarMax,
 					Background: tk.BgContainer,
 				}
-				layout.DraggableSideNav(c, &r.State.SidebarWidth, &r.State.SidebarExpanded, props, func(state layout.SideNavState) {
-					r.Sidebar(c, state)
+				lobe.DraggableSideNav(c, &r.State.SidebarWidth, &r.State.SidebarExpanded, props, func(nav lobe.SideNavState) {
+					r.Sidebar(c, nav)
 				}).FillHeight()
 			}
 
-			// Main content area
-			ui.Column(c).Children(func() {
-				// Collection header
-				ui.Box(c).Height(r.Budget.CollectionHeader).FillWidth().Children(func() {
-					// Environment selector, runner buttons go here
-					// Implemented by presenter
+			ui.Column(c).Fill().Grow(1).Children(func() {
+				// Collection header strip: fixed budget, content optional.
+				ui.Box(c).Height(b.CollectionHeader).FillWidth().Children(func() {
+					if r.CollectionHeader != nil {
+						r.CollectionHeader(c)
+					}
 				})
 
-				// Request/Response split
-				if r.State.RequestResponseOrientation == OrientationStacked {
-					ui.SplitVertical(c, &r.State.SplitRatio, func() {
-						if r.RequestPane != nil {
-							r.RequestPane(c)
-						}
-					}, func() {
-						if r.ResponsePane != nil {
-							r.ResponsePane(c)
-						}
-					}).Fill()
-				} else {
-					ui.Split(c, &r.State.SplitRatio, func() {
-						if r.RequestPane != nil {
-							r.RequestPane(c)
-						}
-					}, func() {
-						if r.ResponsePane != nil {
-							r.ResponsePane(c)
-						}
-					}).Fill()
+				// Request/response split. Percent-based so the persisted
+				// ratio survives resizes; the orientation flag is the
+				// only thing changeLayout flips, as in Bruno.
+				req := func() {
+					if r.RequestPane != nil {
+						r.RequestPane(c)
+					}
 				}
-			}).Fill().Grow(1)
-		}).FillHeight().Grow(1)
+				resp := func() {
+					if r.ResponsePane != nil {
+						r.ResponsePane(c)
+					}
+				}
+				if r.State.RequestResponseOrientation == OrientationSideBySide {
+					ui.SplitPercent(c, &r.State.SplitPercent, req, resp).Fill()
+				} else {
+					ui.SplitVerticalPercent(c, &r.State.SplitPercent, req, resp).Fill()
+				}
+			})
 
-		// Bottom chrome (status bar + console dock)
-		ui.Column(c).Children(func() {
-			if r.StatusBar != nil {
-				ui.Box(c).Height(r.Budget.StatusBar).FillWidth().Children(func() {
-					r.StatusBar(c)
-				})
+			// Optional right rail: DraggablePanel resizes from its inner
+			// seam, collapses to zero width and remembers RailWidth.
+			if r.RightRail != nil {
+				lobe.DraggablePanel(c, &r.State.RailWidth, &r.State.RailExpanded,
+					lobe.DraggablePanelProps{
+						Placement: lobe.Right,
+						MinSize:   b.RailMin,
+						MaxSize:   b.RailMax,
+					}, func() {
+						r.RightRail(c)
+					})
 			}
+		})
 
+		// Bottom chrome: status bar over the console dock. The dock is a
+		// fixed-height box, so opening it shrinks the content — the
+		// calc(100vh - 60px - 300px) reservation of §1, expressed
+		// structurally rather than by overlaying the editor.
+		ui.Column(c).Children(func() {
+			ui.Box(c).Height(b.StatusBar).FillWidth().Children(func() {
+				if r.StatusBar != nil {
+					r.StatusBar(c)
+				}
+			})
 			if r.State.ConsoleOpen && r.ConsoleDock != nil {
-				ui.Box(c).Height(r.Budget.ConsoleDock).FillWidth().Children(func() {
+				ui.Box(c).Height(b.ConsoleDock).FillWidth().Children(func() {
 					r.ConsoleDock(c)
 				})
 			}
 		})
 
-		// Toast host (mounted once)
+		// Toast host, mounted exactly once (§8.2).
 		feedback.ToastHost(c, feedback.ToastHostProps{})
 	})
 }
 
-// TitleBarView creates the custom title bar row
+// TitleBarView is the content of the title-bar region: app menu, active
+// collection, workspace trigger, settings. RootView supplies the height,
+// the window-control insets and the drag region.
 type TitleBarView struct {
 	AppName        string
 	CollectionName string
@@ -166,16 +387,16 @@ type TitleBarView struct {
 	OnSettings     func()
 }
 
+// View renders the title-bar row; it fills whatever height RootView gives.
 func (t *TitleBarView) View(c *ui.Context) {
-	tk := theme.TokensOf(c)
+	tk := uitheme.TokensOf(c)
 
-	// Title bar content goes in the window's title bar area
-	ui.Row(c).Gap(8).Padding(8, 12).Background(tk.BgContainer).Children(func() {
+	ui.Row(c).Fill().AlignItems(ui.Center).Gap(8).Children(func() {
 		// App menu (Windows/Linux)
 		if t.ShowMenu && t.OnMenu != nil {
 			action.Button(c, "☰", action.ButtonProps{
 				Variant: action.Text,
-				Size:    theme.Small,
+				Size:    lobetheme.Small,
 			}).OnClick(t.OnMenu).Tooltip("Menu")
 		}
 
@@ -192,7 +413,7 @@ func (t *TitleBarView) View(c *ui.Context) {
 		if t.WorkspaceName != "" && t.OnWorkspace != nil {
 			action.Button(c, t.WorkspaceName, action.ButtonProps{
 				Variant: action.Text,
-				Size:    theme.Small,
+				Size:    lobetheme.Small,
 			}).OnClick(t.OnWorkspace).Tooltip("Switch workspace")
 		}
 
@@ -200,22 +421,13 @@ func (t *TitleBarView) View(c *ui.Context) {
 		if t.OnSettings != nil {
 			action.Button(c, "⚙", action.ButtonProps{
 				Variant: action.Text,
-				Size:    theme.Small,
+				Size:    lobetheme.Small,
 			}).OnClick(t.OnSettings).Tooltip("Settings")
 		}
 	})
 }
 
-// StatusBarView creates the bottom status bar
-type StatusBarView struct {
-	Budget          RegionBudget
-	RequestCount    int
-	SelectedCount   int
-	EnvironmentName string
-	OnEnvironment   func()
-	RightStatus     []StatusItem
-}
-
+// StatusItem is one right-aligned entry of the status bar.
 type StatusItem struct {
 	Label   string
 	Color   ui.Color
@@ -223,16 +435,27 @@ type StatusItem struct {
 	OnClick func()
 }
 
-func (s *StatusBarView) View(c *ui.Context) {
-	tk := theme.TokensOf(c)
+// StatusBarView is the content of the status-bar region. RootView supplies
+// the height; this fills it.
+type StatusBarView struct {
+	RequestCount    int
+	SelectedCount   int
+	EnvironmentName string
+	OnEnvironment   func()
+	RightStatus     []StatusItem
+}
 
-	ui.Row(c).Gap(12).Padding(0, 12).Height(s.Budget.StatusBar).Background(tk.BgContainer).Children(func() {
+// View renders the status row.
+func (s *StatusBarView) View(c *ui.Context) {
+	tk := uitheme.TokensOf(c)
+
+	ui.Row(c).Fill().AlignItems(ui.Center).Gap(12).Padding(0, 12).Children(func() {
 		// Left: request counts
 		if s.RequestCount > 0 {
-			ui.Text(c, formatCount(s.RequestCount, "request")).TextColor(tk.TextSecondary).FontSize(tk.FontSizeSM)
+			ui.Text(c, formatCount(s.RequestCount, "request", "requests")).TextColor(tk.TextSecondary).FontSize(tk.FontSizeSM)
 			if s.SelectedCount > 0 {
 				ui.Text(c, " · ").TextColor(tk.TextSecondary)
-				ui.Text(c, formatCount(s.SelectedCount, "selected")).TextColor(tk.TextSecondary)
+				ui.Text(c, formatCount(s.SelectedCount, "selected", "selected")).TextColor(tk.TextSecondary)
 			}
 		}
 
@@ -240,7 +463,7 @@ func (s *StatusBarView) View(c *ui.Context) {
 		if s.EnvironmentName != "" && s.OnEnvironment != nil {
 			action.Button(c, s.EnvironmentName, action.ButtonProps{
 				Variant: action.Text,
-				Size:    theme.Small,
+				Size:    lobetheme.Small,
 			}).OnClick(s.OnEnvironment).Tooltip("Change environment")
 		}
 
@@ -251,7 +474,7 @@ func (s *StatusBarView) View(c *ui.Context) {
 			if item.OnClick != nil {
 				action.Button(c, item.Label, action.ButtonProps{
 					Variant: action.Text,
-					Size:    theme.Small,
+					Size:    lobetheme.Small,
 				}).OnClick(item.OnClick).Tooltip(item.Tooltip)
 			} else {
 				ui.Text(c, item.Label).TextColor(item.Color).FontSize(tk.FontSizeSM)
@@ -260,21 +483,16 @@ func (s *StatusBarView) View(c *ui.Context) {
 	})
 }
 
-func formatCount(n int, singular string) string {
+// formatCount renders a counted label with an explicit plural, so
+// adjectives ("3 selected") and nouns ("5 requests") both read right.
+func formatCount(n int, singular, plural string) string {
 	if n == 1 {
 		return "1 " + singular
 	}
-	return "0 " + singular + "s"
+	return fmt.Sprintf("%d %s", n, plural)
 }
 
-// ConsoleDockView creates the bottom console dock
-type ConsoleDockView struct {
-	Tabs        []ConsoleTab
-	ActiveTab   int
-	OnTabChange func(int)
-	OnClose     func()
-}
-
+// ConsoleTab is one tab of the console dock.
 type ConsoleTab struct {
 	Label   string
 	Content func(*ui.Context)
@@ -282,38 +500,52 @@ type ConsoleTab struct {
 	Badge   string
 }
 
-func (c *ConsoleDockView) View(ctx *ui.Context) {
-	tk := theme.TokensOf(ctx)
+// ConsoleDockView is the content of the console-dock region: a tab strip
+// over the active tab's body. RootView supplies the dock height (§8.1's
+// ConsoleDock budget) and only mounts it while ConsoleOpen; this fills
+// whatever it is given.
+type ConsoleDockView struct {
+	Tabs        []ConsoleTab
+	ActiveTab   int
+	OnTabChange func(int)
+	OnClose     func()
+}
 
-	ui.Box(ctx).Height(300).FillWidth().Background(tk.BgBase).Children(func() {
+// View renders the dock: tab strip above, active tab content below.
+func (d *ConsoleDockView) View(c *ui.Context) {
+	tk := uitheme.TokensOf(c)
+
+	ui.Column(c).Fill().Background(tk.BgBase).Children(func() {
 		// Tab bar
-		ui.Row(ctx).Gap(4).Padding(8, 8).Children(func() {
-			for i, tab := range c.Tabs {
-				active := i == c.ActiveTab
-				btn := action.Button(ctx, tab.Label, action.ButtonProps{
+		ui.Row(c).Gap(4).Padding(8, 8).Children(func() {
+			for i, tab := range d.Tabs {
+				active := i == d.ActiveTab
+				btn := action.Button(c, tab.Label, action.ButtonProps{
 					Variant: action.Text,
-					Size:    theme.Small,
+					Size:    lobetheme.Small,
 				}).OnClick(func() {
-					if c.OnTabChange != nil {
-						c.OnTabChange(i)
+					if d.OnTabChange != nil {
+						d.OnTabChange(i)
 					}
 				})
 				if active {
 					btn.Background(tk.Primary).TextColor(tk.PrimaryForeground)
 				}
 			}
-			ui.Box(ctx).Grow(1)
-			if c.OnClose != nil {
-				action.Button(ctx, "✕", action.ButtonProps{
+			ui.Box(c).Grow(1)
+			if d.OnClose != nil {
+				action.Button(c, "✕", action.ButtonProps{
 					Variant: action.Text,
-					Size:    theme.Small,
-				}).OnClick(c.OnClose).Tooltip("Close console")
+					Size:    lobetheme.Small,
+				}).OnClick(d.OnClose).Tooltip("Close console")
 			}
 		})
 
-		// Active tab content
-		if c.ActiveTab >= 0 && c.ActiveTab < len(c.Tabs) {
-			c.Tabs[c.ActiveTab].Content(ctx)
-		}
+		// Active tab content fills the rest of the dock.
+		ui.Box(c).Grow(1).FillWidth().Children(func() {
+			if d.ActiveTab >= 0 && d.ActiveTab < len(d.Tabs) && d.Tabs[d.ActiveTab].Content != nil {
+				d.Tabs[d.ActiveTab].Content(c)
+			}
+		})
 	})
 }
