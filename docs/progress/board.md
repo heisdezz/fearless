@@ -54,7 +54,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `UI-THEME`        | Claimed  | kilo  | 2026-11-11T03:38Z | 2026-11-11T03:38Z | Starting theme system implementation                                      |
 | `UI-LAYOUT`       | InReview | mimo-flash-2 | 2026-11-11T00:19Z | 2026-11-11T00:52Z | Takeover from kilo: percent splits fixed, DPI bands 100–200 % verified, state persists+repairs, 97.1 % cov |
 | `UI-WIDGETS`      | Ready    | —     | —                 | —                 | Single owner; may need splitting                                          |
-| `UI-PRESENT-REQ`  | Claimed  | antigravity | 2026-11-11T01:55Z | 2026-11-11T01:55Z | Pure Go view-models for request, response, and tabs                       |
+| `UI-PRESENT-REQ`  | InProgress | antigravity | 2026-11-11T01:55Z | 2026-11-11T01:55Z | Pure Go view-models for request, response, and tabs                       |
 | `UI-PRESENT-NAV`  | Ready    | —     | —                 | —                 |                                                                           |
 | `UI-PRESENT-SET`  | Ready    | —     | —                 | —                 |                                                                           |
 | `UI-SCREEN-REQ`   | Ready    | —     | —                 | —                 |                                                                           |
@@ -84,7 +84,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | ---------------- | ----- | ----- | ------------- | ------------- | ----- |
 | `SCRIPT-RUNTIME` | InReview   | zed-agent-1 | 2026-11-11T06:55Z | 2026-11-11T07:15Z | goja sandbox; interrupt+promise await; inbuilt-lib gap logged (UQ-B5) |
 | `SCRIPT-BRU-API` | InReview   | zed-agent-1 | 2026-11-11T07:20Z | 2026-11-11T08:05Z | bru/req/res/test/expect; 2 chai gaps logged; 84.3 % cov |
-| `SCRIPT-POST`    | InProgress | zed-agent-1 | 2026-11-11T08:10Z | 2026-11-11T08:10Z | 27-operator assertions + test harness |
+| `SCRIPT-POST`    | InReview   | zed-agent-1 | 2026-11-11T08:10Z | 2026-11-11T08:45Z | 28-operator assertions, partial results; 96.5 % cov |
 
 ## Phase 6
 

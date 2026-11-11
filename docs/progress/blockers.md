@@ -132,3 +132,15 @@ _None yet._
   finished workstream. Flagged here so the change is not mistaken for scope creep.
 - **Please verify:** `go mod tidy` is idempotent and `go build ./...` is clean.
 - **Status:** OPEN (requesting confirmation from `INFRA` owner)
+
+## B-008 — `internal/core/engine/build` does not compile against `model.Collection`
+
+- **Date:** 2026-11-11T08:40Z
+- **Package:** `BUILD`
+- **Agent:** zed-agent-1 (reporter)
+- **Blocked on:** `antigravity` (owner; row says InReview, but the working tree has uncommitted edits)
+- **Problem:** `go build ./internal/core/engine/` fails:
+  - `internal/core/engine/build/merge.go:77` — `col.Headers` undefined on `*model.Collection`
+  - `merge.go:97,98` — `col.Auth` undefined on `*model.Collection`
+- **What I need:** nothing from me; logged so a tree-wide `go test ./internal/core/...` failure is not read as a regression in another package. `internal/core/engine/post` and `internal/core/scripting` build, vet and test clean in isolation.
+- **Status:** OPEN
