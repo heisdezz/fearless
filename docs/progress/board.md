@@ -127,7 +127,7 @@ These groups contain **no shared file paths and no unmet dependencies**, so ever
 
 **Wave 6** (GUI, can start as soon as `MODEL` is `Done`): `UI-THEME` → `UI-LAYOUT` → `UI-WIDGETS`, in that order; the three `UI-PRESENT-*` packages can start right after `EVENTS`+`BUS` and run **in parallel with all of Phase 1's remaining work**, because they touch no core files.
 
-| `UI-APP`          | InReview   | antigravity   | 2026-11-11T04:30Z | 2026-11-11T04:45Z | Window, menus, hotkey router, root view composing all screens; 83.8% cov, race-clean             |
+**Wave 7** (after GUI screens exist): `UI-SCREEN-*` in parallel, then `UI-APP`.
 
 **Wave 8**: `AUTH-*` providers (five packages, fully parallel), `ENV-FILES`, `SCRIPT-*` (sequential among themselves).
 
