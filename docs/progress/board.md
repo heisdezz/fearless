@@ -101,7 +101,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | Package          | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                    |
 | ---------------- | ---------- | ----------- | ----------------- | ----------------- | ---------------------------------------- |
 | `ADV-STREAM`     | Ready      | —           | —                 | —                 |                                          |
-| `ADV-RUNNER`     | Ready      | —           | —                 | —                 |                                          |
+| `ADV-RUNNER`     | InReview   | antigravity | 2026-11-11T02:35Z | 2026-11-11T02:45Z | Runner, data files, iterations, JUnit/HTML/JSON/CLI reporters; >82% cov   |
 | `ADV-GRPC`       | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                        |
 | `ADV-WS`         | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                        |
 | `ADV-HISTORY`    | InReview   | zed-agent-1 | 2026-11-11T08:50Z | 2026-11-11T09:05Z | JSONL store per D-011; UI half blocked on UI-SCREEN-RESP; 87.5 % cov |
