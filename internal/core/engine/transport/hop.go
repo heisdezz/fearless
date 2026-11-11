@@ -2,6 +2,7 @@ package transport
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -16,8 +17,45 @@ import (
 
 // doHop sends one request and collects its body.
 func doHop(ctx context.Context, client *http.Client, req *http.Request, opts Options, tl *timeline) (*hopResult, error) {
+	st, err := sendHop(ctx, client, req, opts, tl)
+	if err == nil {
+		return finishHop(st, req, opts, tl)
+	}
+	if !retryableAcrossAttempts(err) || len(opts.ProxyAttempts) == 0 {
+		return nil, classifyError(err)
+	}
+
+	// The active proxy attempt failed before the target answered, so the next PAC
+	// attempt is still viable (B-020). Each attempt gets its own client and its own
+	// timeline: phases that explain a failure would otherwise be interleaved with
+	// the phases of the attempt that succeeded.
+	for i := 1; i < len(opts.ProxyAttempts); i++ {
+		attemptOpts := opts
+		// nil means DIRECT, which is exactly how an unset proxy is expressed.
+		attemptOpts.Proxy = opts.ProxyAttempts[i]
+		attemptOpts.ProxyAttempts = nil
+
+		attemptTL := newTimeline(opts.Sink)
+		next, nerr := newClient(attemptOpts, attemptTL)
+		if nerr != nil {
+			continue
+		}
+		st, err = sendHop(ctx, next, req, attemptOpts, attemptTL)
+		if err == nil {
+			return finishHop(st, req, attemptOpts, attemptTL)
+		}
+	}
+	return nil, classifyError(err)
+}
+
+// sendHop performs the request and returns the live response plus a timeline
+// sink for the caller. tl may be nil, in which case no phases are recorded.
+func sendHop(ctx context.Context, client *http.Client, req *http.Request, opts Options, tl *timeline) (*http.Response, error) {
 	// The trace must be attached to this hop's context, not the caller's, so a
 	// redirect's phases do not merge with the first hop's.
+	if tl == nil {
+		tl = newTimeline(NopSink{})
+	}
 	traceCtx := httptrace.WithClientTrace(ctx, newTrace(tl))
 	req = req.WithContext(traceCtx)
 
@@ -38,9 +76,33 @@ func doHop(ctx context.Context, client *http.Client, req *http.Request, opts Opt
 	tl.drain()
 	if err != nil {
 		tl.end(model.PhaseRequestSent, err.Error(), time.Now())
-		return nil, classifyError(err)
+		return nil, err
 	}
-	defer resp.Body.Close()
+	return resp, nil
+}
+
+// retryableAcrossAttempts reports whether err is a connection-level failure that
+// another proxy could still satisfy. A response already received is never retried,
+// and neither is a cancellation or a deadline the caller set.
+func retryableAcrossAttempts(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	// A TLS verification failure is a fact about the target, not the route, and
+	// retrying it would only hide the error behind a slower failure.
+	var certErr *tls.CertificateVerificationError
+	if errors.As(err, &certErr) {
+		return false
+	}
+	return true
+}
+
+// finishHop applies the response-independent phases to a completed hop.
+func finishHop(resp *http.Response, req *http.Request, opts Options, tl *timeline) (*hopResult, error) {
+	tl.drain()
 
 	// Store any cookies the server set before the body is read, so a redirect hop
 	// sees them.

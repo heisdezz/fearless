@@ -16,30 +16,24 @@ type PACSource interface {
 	Evaluate(ctx context.Context, target *url.URL) (PACResult, error)
 }
 
-// ErrPACUnsupported means the PAC document answered with something this layer
-// cannot express as a single proxy URL.
+// ErrPACUnsupported means the PAC document answered with a directive this client
+// cannot express as a proxy URL.
 //
 // PAC's return value is a *ranked list of attempts* — "PROXY a:1; PROXY b:2;
-// DIRECT" means "try a, then b, then go direct". A url.URL is one choice, and
-// http.Transport's Proxy func is free to return http.ErrUseLastResponse-style
-// sentinels but cannot say "and if this one fails, try the next". So the first
-// proxy attempt is returned and the rest are dropped; when the first attempt is
-// DIRECT, the caller gets a direct connection.
-//
-// That is a real behavioural gap against a full PAC client, and it is recorded
-// in docs/progress/blockers.md (B-020) rather than papered over. Closing it
-// needs a proxy selector that can retry across attempts, which is an
-// ENGINE/TRANSPORT concern, not a resolver one.
-var ErrPACUnsupported = errors.New("proxy: PAC returned a fallback list; only the first attempt is used")
+// DIRECT" means "try a, then b, then go direct". Resolve returns only the first
+// attempt, because a url.URL is one choice; ResolveAttempts returns the whole
+// chain, and the transport falls through to the next entry when dialing one
+// fails (B-020).
+var ErrPACUnsupported = errors.New("proxy: PAC returned a directive this client cannot use")
 
-// resolveFromPAC evaluates the configured PAC document and converts the first
-// attempt into a proxy URL.
+// resolveFromPAC evaluates the configured PAC document and returns every attempt
+// it named, in PAC's own rank order.
 //
 // Bypass entries in the settings are applied before the script: a host the user
 // listed must skip the proxy whether or not the PAC file agrees, because the
 // bypass list is an explicit per-app instruction and the PAC file is a
 // network-level policy.
-func resolveFromPAC(input ResolutionInput) (*url.URL, error) {
+func resolveFromPAC(input ResolutionInput) ([]*url.URL, error) {
 	settings := input.AppSettings
 	if settings == nil {
 		return nil, nil
@@ -63,24 +57,33 @@ func resolveFromPAC(input ResolutionInput) (*url.URL, error) {
 	if err != nil {
 		return nil, fmt.Errorf("pac: %w", err)
 	}
+	return AttemptsOf(result)
+}
+
+// AttemptsOf converts a PACResult into dial attempts, preserving order.
+//
+// A DIRECT directive becomes a nil *url.URL so callers can tell "connect
+// directly" apart from "there is no attempt at all" (an empty slice). An
+// unsupported scheme is an error rather than a silently skipped attempt: a PAC
+// file asking for something this client cannot do should be visible.
+func AttemptsOf(result PACResult) ([]*url.URL, error) {
 	if len(result.Attempts) == 0 {
 		return nil, ErrPACEmptyResult
 	}
-
-	first := result.Attempts[0]
-	if first.Kind == PACDirect {
-		return nil, nil
+	attempts := make([]*url.URL, 0, len(result.Attempts))
+	for _, d := range result.Attempts {
+		switch d.Kind {
+		case PACDirect:
+			attempts = append(attempts, nil)
+		case PACHTTP, PACHTTPS, PACSOCKS5:
+			attempts = append(attempts, d.URL())
+		default:
+			// PACDirective.URL defaults an unknown kind to http, which would turn a
+			// typo in the parser into a bogus HTTP proxy. Reject it here instead.
+			return nil, fmt.Errorf("%w: %s", ErrPACUnsupported, d)
+		}
 	}
-	u := first.URL()
-	if u == nil {
-		return nil, nil
-	}
-	switch u.Scheme {
-	case "http", "https", "socks5":
-		return u, nil
-	default:
-		return nil, fmt.Errorf("%w: %s", ErrPACUnsupported, first)
-	}
+	return attempts, nil
 }
 
 // ErrPACNoSource means PAC mode was selected but no resolver was supplied.

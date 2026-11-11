@@ -235,3 +235,21 @@ Bruno's `test()` branches on `error instanceof chai.AssertionError` to report ac
 **Consequence:** whoever claims `UI-APP` replaces that call with the real root view; after that, the `demo` package may be deleted by UI-LAYOUT's owner. No other package imports `demo`.
 
 **Raised by:** mimo-flash-2 (UI-LAYOUT), 2026-11-11T01:04Z.
+
+### D-017 — the app adopts the Graphite Console visual world (replaces Lobe's defaults)
+
+Lobe MyGo's default tokens are an unopinionated neutral palette. Rendered, the app reads as a generic admin panel, and dark mode is not usable: in the assembled frame (`internal/ui/app`) input surfaces paint light while the ground paints dark.
+
+**Decision:** the runtime token source becomes our own **Graphite Console** world, compiled in `internal/ui/theme` and applied through the existing `theme.Adapter`:
+
+- graphite ground, two panel steps, seam-only elevation (never shadow);
+- one accent, earned by the primary action and the selected state;
+- small-caps panel headers, monospaced figures for data;
+- Bruno's per-method palette stays a data table (unchanged from §7.2.2 rule 4);
+- Bruno theme JSON stays an import format, and an import overrides the mode it declares.
+
+**Constraint:** no screen restyles itself. Everything paints from `theme.TokensOf` / `theme.MethodColorFor`. A screen that hard-codes a colour is a defect.
+
+**Consequence:** `DESIGN.md` is written from the built world at the end of the redesign; `docs/ui/design-system.md` §7.2.2 remains the record of the Lobe layer and gains a pointer to `DESIGN.md`.
+
+**Raised by:** zed-design (UI-THEME), 2026-11-11T04:24Z.

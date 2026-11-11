@@ -48,8 +48,9 @@ flowchart TB
 **Dependency rule (enforced):** `core/**` and `app/**` must not import `ui/**` or any GUI framework module. Add a CI check:
 
 ```sh
-# MyGo is the only UI toolkit allowed to appear in the dependency graph of ui/.
-go list -deps ./core/... ./app/... | grep -E 'github.com/egoist/mygo|gioui.org|fyne.io' && exit 1 || true
+# MyGo is the only UI toolkit, and Lobe MyGo the only component library, allowed in the
+# dependency graph of ui/. Neither may appear in core/ or app/.
+go list -deps ./core/... ./app/... | grep -E 'github.com/egoist/mygo|github.com/lobehub/lobe-mygo|gioui.org|fyne.io' && exit 1 || true
 ```
 
 This is the Go analogue of Bruno's renderer/main boundary, without the IPC cost.
@@ -85,7 +86,7 @@ internal/
     bus/            # event bus implementation
   ui/
     presenters/     # pure Go view-models; no MyGo imports
-    widgets/        # MyGo-bound widgets (github.com/egoist/mygo/ui)
+    widgets/        # MyGo-bound widgets + Lobe components (github.com/lobehub/lobe-mygo/pkg/*)
     theme/          # token loading into ui.Theme (see ui/design-system.md §7)
     layout/         # Split/SplitPercent composition, region budget
   platform/         # MyGo app services: mygo.Dialog, mygo.Secrets, mygo.WatchFiles, mygo/netproxy
@@ -270,6 +271,22 @@ Core never touches the GUI config dir path directly; a `Paths` struct is injecte
 | `app/commands`   | Fake engine + fake bus; assert emitted event sequences                                 |
 | `ui/presenters`  | Headless unit tests (no toolkit)                                                       |
 | `ui/widgets`     | `ui.Tester` from MyGo for headless widget tests; golden screenshots where supported    |
+
+### Scratch files
+
+A file named `zz_*` is a scratch probe — a dump, a capture, a timing harness —
+and is expected to be deleted before the work is committed. It is fine to leave
+one untracked while investigating; it must never be committed. `go vet` and
+`go build` see scratch test files, so a half-finished probe breaks the gates for
+every package, not just its own.
+
+`scripts/check-debug-leftovers.sh` (CI: "Debug leftovers", local: `make
+debug-check`) fails on any tracked `zz_*` path. The convention exists because
+three such files reached the tree during development: `zz_probe_test.go` in
+`transport`, `zz_dump_test.go` in `format/bru` (wrong package, no assertions —
+B-019), and `zz_capture_test.go` in `ui/app` (broke `go vet` tree-wide).
+
+If a fixture genuinely belongs in the repo, name it for the behaviour it tests.
 
 ---
 

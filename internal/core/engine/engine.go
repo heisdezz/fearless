@@ -22,17 +22,21 @@ type Engine interface {
 
 // Input gathers everything needed to execute a request.
 type Input struct {
-	Item               *model.Item
-	Collection         *model.Collection
-	Ancestors          []*model.Item // enclosing folders outermost to innermost
-	Scopes             vars.Scopes   // resolved variable scopes
-	Settings           model.ItemSettings
-	GlobalPreferences  model.Settings // application preferences for defaults
-	Hooks              HookSet
-	Sink               EventSink
-	Jar                *cookies.Jar           // optional shared cookie jar
-	Spooler            *persistence.Spooler   // optional body spooler
-	ProxyURL           *url.URL               // optional resolved proxy
+	Item              *model.Item
+	Collection        *model.Collection
+	Ancestors         []*model.Item // enclosing folders outermost to innermost
+	Scopes            vars.Scopes   // resolved variable scopes
+	Settings          model.ItemSettings
+	GlobalPreferences model.Settings // application preferences for defaults
+	Hooks             HookSet
+	Sink              EventSink
+	Jar               *cookies.Jar         // optional shared cookie jar
+	Spooler           *persistence.Spooler // optional body spooler
+	ProxyURL          *url.URL             // optional resolved proxy
+	// ProxyAttempts is the resolved proxy chain (B-020). When non-empty it takes
+	// precedence over ProxyURL, and the transport falls through to the next
+	// attempt when dialing one fails.
+	ProxyAttempts      []*url.URL
 	TLS                enginetls.BuildOptions // optional TLS configuration
 	CollectionPath     string                 // root collection directory path
 	UserAgent          string                 // optional custom User-Agent

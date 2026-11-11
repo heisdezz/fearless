@@ -88,9 +88,15 @@ func newTransport(opts Options, _ *timeline) (*http.Transport, error) {
 		TLSClientConfig:       buildTLSConfig(opts),
 	}
 
-	// The caller has already resolved which proxy to use.
-	if opts.Proxy != nil {
-		if err := proxy.ConfigureTransport(tr, opts.Proxy); err != nil {
+	// The caller has already resolved which proxy to use. ProxyAttempts carries the
+	// full PAC chain in rank order, so a caller that supplies only the chain still
+	// gets its first attempt configured here.
+	proxyURL := opts.Proxy
+	if proxyURL == nil && len(opts.ProxyAttempts) > 0 {
+		proxyURL = opts.ProxyAttempts[0]
+	}
+	if proxyURL != nil {
+		if err := proxy.ConfigureTransport(tr, proxyURL); err != nil {
 			return nil, err
 		}
 	}

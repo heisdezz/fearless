@@ -51,6 +51,21 @@ type ResolutionInput struct {
 // Returns (nil, nil) if a direct connection should be used (e.g. proxy disabled,
 // bypassed, or none configured).
 func Resolve(input ResolutionInput) (*url.URL, error) {
+	attempts, err := ResolveAttempts(input)
+	if err != nil || len(attempts) == 0 {
+		return nil, err
+	}
+	return attempts[0], nil
+}
+
+// ResolveAttempts resolves the proxy chain for one request, in PAC's rank order.
+//
+// Each element is an attempt: a proxy URL, or nil for DIRECT. An empty slice
+// means no proxy applies at all. Most callers only express one proxy and get a
+// single element; PAC's "PROXY a; PROXY b; DIRECT" yieldsthree, so a caller that
+// can retry (the transport) should walk the slice and fall through on dial
+// failure. See B-020.
+func ResolveAttempts(input ResolutionInput) ([]*url.URL, error) {
 	if input.TargetURL == nil {
 		return nil, errors.New("target URL must not be nil")
 	}
@@ -73,7 +88,7 @@ func Resolve(input ResolutionInput) (*url.URL, error) {
 			return nil, fmt.Errorf("request proxy: %w", err)
 		}
 		if u != nil {
-			return u, nil
+			return []*url.URL{u}, nil
 		}
 		// If RequestProxy was present but empty without host/disabled, fall through
 	}
@@ -96,7 +111,7 @@ func Resolve(input ResolutionInput) (*url.URL, error) {
 				return nil, fmt.Errorf("collection proxy: %w", err)
 			}
 			if u != nil {
-				return u, nil
+				return []*url.URL{u}, nil
 			}
 		}
 		// If Inherit is true (or empty config), fall through to App scope
@@ -118,7 +133,7 @@ func Resolve(input ResolutionInput) (*url.URL, error) {
 					return nil, fmt.Errorf("app manual proxy: %w", err)
 				}
 				if u != nil {
-					return u, nil
+					return []*url.URL{u}, nil
 				}
 			}
 			return nil, nil
@@ -130,7 +145,11 @@ func Resolve(input ResolutionInput) (*url.URL, error) {
 	}
 
 	// 4. Environment scope (HTTP_PROXY / HTTPS_PROXY / ALL_PROXY / NO_PROXY)
-	return resolveFromEnvironment(input.TargetURL, lookup)
+	u, err := resolveFromEnvironment(input.TargetURL, lookup)
+	if err != nil || u == nil {
+		return nil, err
+	}
+	return []*url.URL{u}, nil
 }
 
 func resolveFromEnvironment(targetURL *url.URL, lookup func(string) (string, bool)) (*url.URL, error) {

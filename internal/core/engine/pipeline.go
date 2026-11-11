@@ -220,6 +220,7 @@ func runPipeline(ctx context.Context, in Input) (*model.Result, error) {
 		TimeoutMs:          timeoutMs,
 		ForwardAuthHeader:  forwardAuth,
 		Proxy:              in.ProxyURL,
+		ProxyAttempts:      in.ProxyAttempts,
 		TLS:                tlsOpts,
 		TLSConfig:          tlsRes.TLSConfig,
 		WrapTransport:      wrapTransport,

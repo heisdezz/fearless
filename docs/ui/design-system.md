@@ -168,7 +168,7 @@ Rules:
 6. **Spacing and radius** map to `ui.Theme.Spacing` (base unit) and `ui.Theme.Radius`; our struct's `Space(n)`/`Rem(n)` helpers mirror `Theme.Space`/`Theme.Rem`.
 7. **Accessibility preferences** (`ReduceMotion`, `HighContrast`, `TextScale`, accent color) are read from `Context.Preferences()` and must feed the theme adapter, not be ignored.
 
-### 7.2 Widgets replace components
+### 7.2 Baseline MyGo `ui` widgets (fallback layer)
 
 The component inventory in `ui/components.md` maps to **MyGo `ui` widgets**; nothing is drawn from scratch except badges and the token adapter.
 
@@ -187,6 +187,113 @@ The component inventory in `ui/components.md` maps to **MyGo `ui` widgets**; not
 | Toasts / tooltips                                       | `ui.Toast` / `Context.Toast`, `Element.Tooltip`                                                          |
 | Docs tab (tiptap)                                       | `ui/richtext` editor or `ui/markdown` viewer                                                             |
 | Response body (HTML/PDF)                                | optional **response-only** `ui.WebView` — never for app chrome                                           |
+
+### 7.2.1 Layering: MyGo floor, Lobe components on top (PROPOSED)
+
+The table in §7.2 is the **floor**: what the plain MyGo `ui` package offers. The application does not build its look from that floor directly. It uses **Lobe MyGo** (`github.com/lobehub/lobe-mygo`), a component library drawn on MyGo's native UI, and falls back to the `ui` primitives only where Lobe has no component.
+
+| Layer                | Package                                                                        | Role in this app                                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Toolkit              | `github.com/egoist/mygo/ui`                                                    | Layout (`Column`/`Row`/`Box`/`Split`/`SplitVertical`/`SplitPercent`), drawing, input, IME, `ui/editor`, `ui/richtext`, `ui.Tester` |
+| Design tokens        | `lobe-mygo/pkg/theme`                                                          | All colour, radius, font-size and control-height tokens                                                                            |
+| Components           | `lobe-mygo/pkg/{action,field,choice,display,feedback,overlay,nav,layout,code}` | Buttons, inputs, menus, modals, tabs, side nav, lists, alerts, toasts                                                              |
+| Icons                | `lobe-mygo/pkg/lucide`                                                         | All icons (2,300+ Lucide glyphs as Go functions)                                                                                   |
+| App-specific widgets | ours                                                                           | Method badge, key/value editors, code editor with variable completion, tree with drag-reorder                                      |
+
+Source: `github.com/lobehub/lobe-mygo` README (“Lobe UI components for MyGo native UI, drawn on the GPU in pure Go”)
+Relevant symbols: package list in the module README
+
+Lobe is MIT-licensed, pure Go, needs Go ≥ 1.27 (the `go.mod` here declares 1.27.3), and states it “brings the Lobe UI design language to desktop apps written with MyGo's native UI: no HTML, no JavaScript and no webview”. It is therefore compatible with the Go-only constraint: it is not a webview wrapper, it is a component set that paints through MyGo.
+
+### 7.2.2 Theme tokens come from `lobe/theme`, not from a hand-written adapter
+
+This replaces rule (1)–(5) of §7.1 as the _primary_ mechanism. The Bruno-shaped struct in §7.1 is retained **only as an import format** for users who bring Bruno's own theme JSON across; the runtime token source is `theme.TokensOf(c)`.
+
+```go
+import (
+    "github.com/egoist/mygo/ui"
+    "github.com/lobehub/lobe-mygo/pkg/theme"
+)
+
+func view(c *ui.Context) {
+    theme.Apply(c)                    // light/dark follows the system appearance
+    tk := theme.TokensOf(c)           // copy of the active Tokens
+    ui.Column(c).Background(tk.BgContainer).Children(func() {
+        ui.Text(c, "Body").TextColor(tk.Text)
+    })
+}
+```
+
+API (VERIFIED from the package docs):
+
+| Symbol                                      | Signature                                                            | Use here                                                                                                                             |
+| ------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `theme.Apply`                               | `func Apply(c *ui.Context)`                                          | Called once at the top of each view; selects light or dark from system appearance                                                    |
+| `theme.TokensOf`                            | `func TokensOf(c *ui.Context) *Tokens`                               | Read the active token set in any view                                                                                                |
+| `theme.Light` / `theme.Dark`                | `func() *Tokens`                                                     | Preset token sets                                                                                                                    |
+| `theme.Default`                             | `func() *Config`                                                     | Lobe UI's own tokens (what `Apply` uses)                                                                                             |
+| `theme.NewConfig`                           | `func NewConfig(light, dark Tokens) *Config`                         | Brand override; docs say “keep the Config for the life of the app rather than making one for each frame: every Config is remembered” |
+| `(*Config).Apply`                           | `func (cfg *Config) Apply(c *ui.Context)`                            | Apply a branded config                                                                                                               |
+| `(*Config).Theme`                           | `func (cfg *Config) Theme(dark bool) *ui.Theme`                      | Theme for a `ui.Themed` subtree                                                                                                      |
+| `(*Tokens).Color`                           | `func (t *Tokens) Color(name string) (ui.Color, bool)`               | Look up a token **by string name**                                                                                                   |
+| `theme.ColorTokenNames`                     | `func ColorTokenNames() []string`                                    | Enumerate valid names — useful for a theme-inspector settings page                                                                   |
+| `(*Tokens).Elevate`                         | `func (t *Tokens) Elevate(e ui.Element, level Elevation) ui.Element` | Lobe's shadow + 1 px ring; `theme.BoxShadow`, `BoxShadowSecondary`, `BoxShadowTertiary`                                              |
+| `(*Tokens).FillBorder` / `FillBorderStrong` | `func() ui.Color`                                                    | Derived border colours                                                                                                               |
+| `theme.Mix`                                 | `func Mix(c, o ui.Color, t float32) ui.Color`                        | Blend for hover states                                                                                                               |
+| `theme.Size`                                | `Middle`, `Small`, `Large`                                           | Control sizing enum used by nearly every component prop                                                                              |
+
+`Tokens` is a flat struct of ~200 `ui.Color` fields plus scale fields. The groups that matter for this application:
+
+| Group    | Fields (examples)                                                                                                                                                        | Maps to Bruno token                        |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| Surfaces | `BgBase`, `BgLayout`, `BgContainer`, `BgElevated`, `BgContainerSecondary`, `BgContainerDisabled`                                                                         | `background.base/mantle/crust/surface0..2` |
+| Text     | `Text`, `TextSecondary`, `TextTertiary`, `TextQuaternary`, `TextDescription`, `TextPlaceholder`, `TextDisabled`, `TextHeading`, `TextLabel`                              | `text`, `colors.text.subtext0..2`          |
+| Borders  | `Border`, `BorderSecondary`, `BorderBg`, `BorderDisabled`, `Fill`, `FillSecondary`, `FillTertiary`, `FillQuaternary`, `Split`                                            | `border.border0..3`, `border.subtle`       |
+| Brand    | `Primary`, `PrimaryHover`, `PrimaryActive`, `PrimaryBorder`, `PrimaryFill*`, `PrimaryText*`, `PrimaryForeground`                                                         | `primary.solid/text/strong/subtle`         |
+| Status   | `Success*`, `Warning*`, `Error*`, `Info*` (each with `…Active`, `…Hover`, `…Bg`, `…Border`, `…Fill`, `…FillSecondary/Tertiary/Quaternary`, `…Text`)                      | `status.{success,warning,danger,info}`     |
+| Accents  | `Blue`, `Cyan`, `Geekblue`, `Gold`, `Green`, `Lime`, `Magenta`, `Orange`, `Purple`, `Red`, `Volcano`, `Yellow`, `Gray` (+ `…Active`, `…FillTertiary`, `…FillQuaternary`) | accent usage, tag palettes                 |
+| Scale    | `BorderRadius`, `BorderRadiusLG/SM/XS`, `ControlHeight`, `ControlHeightLG/SM/XS`, `FontSize`, `FontSizeSM/LG/XL`, `FontSizeHeading1..5`, `FontWeightStrong`, `LineWidth` | `font.size.*`, `border.radius.*`           |
+
+Consequences for the earlier rules in §7.1:
+
+1. **Do not hand-roll alpha backgrounds.** Bruno's `rgba(intent, 0.15)` status backgrounds already exist as `SuccessBg`, `ErrorBg`, `WarningBg`, `InfoBg` and their `…Hover` counterparts. Use them; only fall back to `theme.Mix` for a colour Lobe does not define.
+2. **Control density is a token pair.** `ControlHeight`/`FontSize` give the default 32 px / 13 px pair that matches Bruno's density; `theme.Small` and `theme.Large` select 24 px and 40 px variants through the components' `Size` prop. This satisfies §6 rule 4 (preserve Bruno's density) without hard-coding numbers.
+3. **Named lookup beats struct fields** where a colour comes from persisted user settings or a `.bru` `color:` rule: `tk.Color(name)` with names from `theme.ColorTokenNames()` avoids a `switch` over 200 fields.
+4. **Per-method HTTP colours still have no token.** Lobe's palette has `Green`, `Blue`, `Orange`, `Red`, `Purple`, `Cyan`, `Gold` — enough to _derive_ Bruno's light/dark method colours, but there is no `request.methods.*` equivalent. Keep our own `Methods map[string]ui.Color` in the theme adapter and read from it in the method badge (§7.2.3).
+
+VERIFIED: the full `Tokens` field list and the signatures above are transcribed from the `pkg/theme` package documentation of `lobe-mygo` (commit `5e5fea5`, docs dated 2026-11-10).
+Source: `github.com/lobehub/lobe-mygo` → `pkg/theme` (`apply.go`, `shadow.go`, `size.go`, `theme.go`, `tokens.go`, `tokens_gen.go`)
+Relevant symbols: `Apply`, `TokensOf`, `Config`, `Tokens`, `Elevation`, `Size`, `ColorTokenNames`, `Mix`
+
+### 7.2.3 Typography, spacing and iconography in the Lobe layer
+
+§7.4's rules still hold; these are the additions that come with Lobe.
+
+| Concern      | Rule                                                                                                                                                                                                                                                                                                    |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Text styles  | Prefer `display.Text(c, s, display.TextProps{…})` over raw `ui.Text`: it carries Lobe's type ramp (`Heading` 1–5, `Strong`, `Italic`, `Code`, `Mark`, `Disabled`, `Rows` truncation, `Shiny` pending state) and status `Type` (`TextSecondary`, `TextSuccess`, `TextWarning`, `TextDanger`, `TextInfo`) |
+| Code text    | `display.TextProps{Code: true}` for inline code; `code.Highlighter` for blocks (§7.2.4)                                                                                                                                                                                                                 |
+| Size enum    | Every component with a `Size` field takes `theme.Middle`/`Small`/`Large`; do not invent pixel sizes                                                                                                                                                                                                     |
+| Icons        | `display.Icon(c, svg, display.IconProps{Size: display.IconSmall\|IconMiddle\|IconLarge, Spin: bool})`; `IconInherit` follows the surrounding font size                                                                                                                                                  |
+| Icons source | `lobe-mygo/pkg/lucide` — Lucide glyphs as Go functions. pkg.go.dev withholds the symbol list for licence reasons, so take individual names from the catalog code under `catalog/*/` or the Lucide set                                                                                                   |
+| Keycaps      | `display.Hotkey(c, "mod+shift+k", display.HotkeyProps{Platform: display.HotkeyAuto})` renders platform-correct glyphs (⌘ on Apple, Ctrl elsewhere)                                                                                                                                                      |
+| Key parsing  | `display.HotkeyBinding("mod+k", display.HotkeyAuto) (ui.Modifiers, ui.Key, bool)` and `display.FormatHotkey(mods, key, platform) (string, bool)` bridge our keybinding table to `Context.Shortcut` and back                                                                                             |
+| Spacing      | Layout components take `Gap` fields (e.g. `layout.GridProps.Gap` defaults to 14 DIPs, `SortableListProps.Gap` to 8, `AccordionProps.Gap`); prefer these over manual padding                                                                                                                             |
+| Shadows      | Use `tk.Elevate(el, theme.BoxShadow)` for dialogs, `BoxShadowSecondary` for popovers and menus, `BoxShadowTertiary` for tooltips — this is Lobe UI's own convention from the docs                                                                                                                       |
+
+**Accessibility is improved by the Lobe layer, not reduced.** §7.3 asked every interactive element to declare a `Role` and `Label`; Lobe components already take a `Label`/`Title` prop for this (`action.ActionIconProps.Title` “names the button for assistive technology and shows as its tooltip”; `overlay.Tooltip` “describes anchor to assistive technology”). Where we build a custom widget, we still set `Role`/`Label` ourselves. The `Spin` variant `theme.Size` and `display.Skeleton` give us loading states that are announced rather than blank.
+
+### 7.2.4 Code rendering
+
+Two distinct needs, two mechanisms:
+
+| Need                                                                 | Mechanism                                                                                            | Notes                                                                                                                                                |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Read-only, highlighted** (response body, generated code, snippets) | `code.Highlighter(c, src, code.HighlighterProps{Language: "json", Wrap: false, FullFeatured: true})` | Handles copy button (`NoCopy`), language label, collapse toggle, optional `Actions`; `LanguageName` normalises `"ts"`→`"TypeScript"`                 |
+| **Editable** (request body, scripts, tests)                          | `ui/editor` from MyGo with `code.Theme(tk)`                                                          | `code.Theme` returns Lobe's syntax colours for the active tokens; `code.Spans(ct, lang, src)` yields `[]ui.Span` if we need to paint spans ourselves |
+| Single line                                                          | `code.Snippet`                                                                                       | Prefix support (`"$"`) is excluded from what Copy copies                                                                                             |
+
+The important consequence: **there is no Lobe code editor.** `pkg/code` highlights and displays; it does not accept edits. The editable editor remains a MyGo `ui/editor` instance that we configure with `code.Theme(tk)` so its colours match Lobe. See `ui/request-editor.md` and the "custom implementation" list in `ui/components.md` §6.
 
 ### 7.3 Accessibility (target state)
 

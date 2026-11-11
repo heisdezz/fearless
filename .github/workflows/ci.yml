@@ -21,8 +21,11 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Build
+      # Both toolkits are pure Go, so a CGO-free build is a real gate, not a formality.
+      - name: Build (no cgo)
         run: go build ./...
+        env:
+          CGO_ENABLED: "0"
 
       - name: Vet
         run: go vet ./...
@@ -30,9 +33,6 @@ jobs:
       - name: Test
         run: go test -race ./...
 
-  # The layering rule from docs/implementation/go-architecture.md §1:
-  # core/ and app/ must never reach the GUI. This is the Go analogue of Bruno's
-  # renderer/main boundary, enforced mechanically instead of by convention.
   layer-guard:
     name: Layer guard (core and app are GUI-free)
     runs-on: ubuntu-latest
@@ -44,28 +44,48 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: core/ and app/ must not import a GUI toolkit
-        shell: bash
-        run: |
-          set -euo pipefail
-          forbidden='github.com/egoist/mygo|github.com/lobehub/lobe-mygo|gioui.org|fyne.io'
-          if go list -deps ./internal/core/... ./internal/app/... 2>/dev/null | grep -Eq "$forbidden"; then
-            echo "::error::core/ or app/ depends on a GUI toolkit. See docs/implementation/go-architecture.md §1."
-            go list -deps ./internal/core/... ./internal/app/... | grep -E "$forbidden"
-            exit 1
-          fi
-          echo "Layer guard passed: core/ and app/ are GUI-free."
+      # Single source of truth for the rule; the same script runs locally via `make dep-check`.
+      # See docs/implementation/go-architecture.md §1 and decisions D-002, D-003.
+      - name: Dependency policy
+        run: ./scripts/check-deps.sh
 
-      - name: presenters must not import a GUI toolkit
+      # zz_* is the scratch-file convention. Three of them were committed during
+      # development (B-019 and two others) and one broke `go vet` tree-wide.
+      - name: Debug leftovers
+        run: ./scripts/check-debug-leftovers.sh
+
+  # A dependency that exists in the working tree but was never committed builds
+  # locally for everyone and fails for anyone who clones. That happened once:
+  # internal/core/cookies was imported by three committed packages but untracked
+  # (B-021), so `go build ./...` passed for every agent and a fresh checkout did
+  # not compile. Building an export of HEAD catches it in one line.
+  #
+  # `git archive` writes only tracked files, which is exactly the question:
+  # does the committed tree build on its own?
+  tracked-tree-build:
+    name: Tracked tree builds (no untracked deps)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build HEAD as tracked
         shell: bash
         run: |
           set -euo pipefail
-          forbidden='github.com/egoist/mygo|github.com/lobehub/lobe-mygo|gioui.org|fyne.io'
-          if go list -deps ./internal/ui/presenters/... 2>/dev/null | grep -Eq "$forbidden"; then
-            echo "::error::presenters must stay toolkit-free so they can be unit-tested headlessly."
+          dest=$(mktemp -d)
+          git archive HEAD | tar -x -C "$dest"
+          cd "$dest"
+          if ! go build ./... 2>"$dest/err.txt"; then
+            echo "::error::HEAD does not build from tracked files alone. A package is imported but never committed — see B-021."
+            cat "$dest/err.txt"
             exit 1
           fi
-          echo "Presenter guard passed."
+          echo "HEAD builds from its tracked files alone."
 
   format:
     name: Format
@@ -88,17 +108,3 @@ jobs:
             echo "$unformatted"
             exit 1
           fi
-
-  no-cgo:
-    name: Pure Go (no cgo)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Build with CGO disabled
-        run: CGO_ENABLED=0 go build ./...

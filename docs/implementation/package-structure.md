@@ -1,6 +1,6 @@
 # Package Structure
 
-Status: **PROPOSED**. Constraint: Go-only application (GUI included) with **MyGo** (`github.com/egoist/mygo`, native `ui` package) as the GUI toolkit; core GUI-independent (see `implementation/go-architecture.md`, `implementation/dependency-recommendations.md`).
+Status: **PROPOSED**. Constraint: Go-only application (GUI included) with **MyGo** (`github.com/egoist/mygo`, native `ui` package) as the GUI toolkit and **Lobe MyGo** (`github.com/lobehub/lobe-mygo`) as the component library; core GUI-independent (see `implementation/go-architecture.md`, `implementation/dependency-recommendations.md`).
 
 Layout follows the standard Go project pattern: `cmd/` for binaries, `internal/` for non-exported code, small interfaces at consumer sites.
 
@@ -61,7 +61,7 @@ fearless/
 │   ├── app/                      # GUI-FREE orchestration
 │   │   ├── commands/             # SendRequest, SaveItem, ImportCollection…
 │   │   └── bus/                  # event bus (buffered, per-topic)
-│   ├── ui/                       # GUI-BOUND — the only place MyGo is imported
+│   ├── ui/                       # GUI-BOUND — the only place MyGo + Lobe are imported
 │   │   ├── app/                  # window, menu bar, keybindings → mygo.App/NewWindow/ui.View
 │   │   ├── presenters/           # view-models; read events, call commands, no drawing
 │   │   ├── screens/              # compose MyGo widgets per region
@@ -95,15 +95,15 @@ fearless/
 
 ## 2. Placement rules
 
-| Rule                                                                                    | Rationale                                                          |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `core` and `app` never import `ui/*` or `github.com/egoist/mygo`                        | Keeps the engine GUI-independent (hard requirement)                |
-| `ui` imports `app` + `core/model` (types only)                                          | Presenters may read models; screens may not touch engine internals |
-| MyGo is imported **only** in `internal/ui/*`, `internal/platform/*`, and `cmd/fearless` | One place to absorb MyGo API changes, one place to swap toolkits   |
-| Parsers live in `core/format`, not in `collection`                                      | Codecs are pure and reusable by the CLI                            |
-| Auth providers are separate files in `engine/auth/<mode>.go` with `init()` registration | Adding a provider is one file (contrast: five places in Bruno)     |
-| No `init()` side effects outside registries                                             | Predictable graph                                                  |
-| `platform` isolates OS-specific code behind interfaces                                  | Testable in CI without a display/keyring                           |
+| Rule                                                                                                   | Rationale                                                             |
+| ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| `core` and `app` never import `ui/*`, `github.com/egoist/mygo`, or `github.com/lobehub/lobe-mygo`      | Keeps the engine GUI-independent (hard requirement)                   |
+| `ui` imports `app` + `core/model` (types only)                                                         | Presenters may read models; screens may not touch engine internals    |
+| MyGo and Lobe MyGo are imported **only** in `internal/ui/*`, `internal/platform/*`, and `cmd/fearless` | One place to absorb toolkit/library changes, one place to swap either |
+| Parsers live in `core/format`, not in `collection`                                                     | Codecs are pure and reusable by the CLI                               |
+| Auth providers are separate files in `engine/auth/<mode>.go` with `init()` registration                | Adding a provider is one file (contrast: five places in Bruno)        |
+| No `init()` side effects outside registries                                                            | Predictable graph                                                     |
+| `platform` isolates OS-specific code behind interfaces                                                 | Testable in CI without a display/keyring                              |
 
 ---
 
@@ -146,5 +146,6 @@ Keeping names aligned with the source docs makes cross-referencing (`data/*.md`)
 2. Presenters doing file I/O — they call commands.
 3. Passing `*model.Result` bodies to widgets — pass `BodyRef` and let a reader stream bytes.
 4. `mygo.webview` / `ui.WebView` for application chrome — response bodies only.
-5. One giant `model` file — keep the split above so changes stay reviewable.
-6. Using the JS engine for app logic (theming, config parsing, validation).
+5. Importing `lobe-mygo/pkg/*` from `presenters/` — presenters produce view-models; only `widgets/` and `screens/` render them with Lobe.
+6. One giant `model` file — keep the split above so changes stay reviewable.
+7. Using the JS engine for app logic (theming, config parsing, validation).

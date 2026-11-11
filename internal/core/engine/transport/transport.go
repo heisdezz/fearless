@@ -61,7 +61,18 @@ type Options struct {
 	ForwardAuthHeader bool
 
 	// Proxy is the resolved proxy URL, or nil for a direct connection.
+	//
+	// When ProxyAttempts is non-empty it takes precedence; Proxy is then only the
+	// first attempt, kept for callers that predate the attempt list.
 	Proxy *url.URL
+	// ProxyAttempts is the resolved proxy chain in rank order: a proxy URL per
+	// entry, or nil for DIRECT. It exists because PAC returns a ranked list
+	// ("PROXY a; PROXY b; DIRECT") that a single URL cannot express, so a hop
+	// whose first attempt fails at dial time falls through to the next (B-020).
+	//
+	// Empty means "no proxy chain applies"; a nil entry that is not first is only
+	// meaningful when the request is not already carrying a direct attempt.
+	ProxyAttempts []*url.URL
 	// TLS configures verification and client certificates.
 	TLS enginetls.BuildOptions
 	// TLSConfig, when non-nil, is the fully resolved TLS configuration supplied

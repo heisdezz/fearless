@@ -10,3 +10,7 @@ bruno
 
 # Coverage output
 *.out
+
+# Agent tooling and design-audit working artifacts (not application source)
+/skills/
+/.impeccable/
