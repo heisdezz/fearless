@@ -89,78 +89,89 @@ The UI must not be built in a way that forbids adding them later.
 
 ---
 
-## 5. Open questions (rolled up from every file)
+## 5. Resolved & remaining questions
 
-### Shell & sidebar
+Most of the first pass's open questions are now answered from source and folded
+into the screen/component files. Resolved items are kept as a record so a
+builder does not re-open them.
+
+### Resolved (with source)
+
+- **`Cmd/Ctrl J` layout toggle** — bound after all: `bindAction('changeLayout', ...)`
+  at `providers/Hotkeys/index.js:386`; key mapping `command+bind+j` /
+  `ctrl+bind+j`, name "Change Orientation" (`providers/Hotkeys/keyMappings.js:43`).
+  It flips `preferences.layout.responsePaneOrientation` horizontal<->vertical.
+- **`HttpMethodSelector` caret** — `showCaret` defaults `false` and no call site
+  passes `true` (`RequestPane/QueryUrl/index.js:407`,
+  `Sidebar/NewRequest/index.js:502`). The URL bar method control deliberately has
+  no caret; render it that way.
+- **`input.background` (Zoom select)** — a genuine source bug: the token does not
+  exist (only `input.bg`), so `Preferences/Display/Zoom/StyledWrapper.js:25`
+  renders a transparent background. Go port: use `input.bg`.
+- **Import option labels** — verbatim in `screens/import-export.md`
+  (Folder arrangement Tags/Paths, Naming requests
+  Summary/operationId/Description/Path, Set authentication at collection level,
+  Check for Spec Updates, plus their info-tip text).
+- **Empty/no-collection state** — it is `WorkspaceOverview`
+  (`RequestTabPanel/index.js:40`), not `EmptyAppState`. Copy in
+  `screens/welcome.md`. `EmptyAppState` is the deferred App/webview surface.
+- **Toast** — no general Toast component; transient messages use
+  `react-hot-toast`. Only `Toast/ImportIssuesToast` exists. See
+  `components/misc-primitives.md` (Toast).
+- **ColorPicker geometry** — preset grid (`#CE4F3B #2E8A54 #346AB2 #C77A0F
+  #B83D7F #8D44B2`, 20x20 swatches, `No color` with `IconBan`), a six-stop
+  discrete slider (`#D85D43 #F4BB74 #61DCB1 #7EBDF2 #D48ADE #B491E5`). See
+  `components/misc-primitives.md`.
+- **RichTextEditor toolbar** — Bold, Italic, Strikethrough, Inline code, Bullet
+  list, Numbered list, Task list, Quote, Code block, Link, Table, Undo, Redo +
+  "More formatting options". See `components/misc-primitives.md`.
+- **Select / SettingsInput sizing** — `INPUT_SIZES` (`sm` 0.15x0.4 rem, `md`
+  0.45 rem) in `components/select.md`; SettingsInput is a `w-24 h-8` row field
+  in `components/text-input.md`.
+- **Request Docs empty state** — none: the tab shows an action bar only
+  (`RequestPane/HttpRequestPane/index.js:149-153`). See `screens/request-docs.md`.
+- **Auth mode labels** — `AWS Sig v4`, `Basic Auth`, `Bearer Token`,
+  `Digest Auth`, `NTLM Auth`, `OAuth 1.0`, `OAuth 2.0`, `WSSE Auth`,
+  `API Key`, `Inherit`, `No Auth`
+  (`components/RequestPane/Auth/AuthMode/index.js:28-89`).
+- **OAuth2 token placement** — the menu is `Header` / `URL` (not "Headers").
+- **Assertion operators** — only `eq`/`neq` are relabelled `equals`/`notEquals`;
+  every other operator shows its raw id (`gt`, `startsWith`, ...)
+  (`components/RequestPane/Assertions/AssertionOperator/index.js:72-82`). This
+  is source-accurate; keep it or normalise all — decide once and document.
+- **Secret masking** — the editor uses a per-character mask via CodeMirror
+  `isSecret` with a reveal eye (`SecretEyeButton`); inherited rows use literal
+  `*` per character (`InheritedVariableRow/index.js:8-9`). Unify to one style in
+  the Go port.
+
+### Remaining (needs a decision or a fresh capture)
+
 - **Screenshot vs source drift.** `refs/side_bar_bruno.png`,
   `folder_bruno.png`, `workspace_switcher_bruno.png` are from a build with a
-  top-level tab bar and a `Mock Servers` section that the pinned commit renders
-  differently (per-collection tabs; mock servers behind a beta flag). The map
-  follows source at `60d7517`. Before locking visuals, capture fresh shots of the
-  pinned commit via `npm run dev:electron`.
-- **Sidebar indent geometry** at depth ≥ 1 is flex-derived; needs a pixel check
-  against a fresh capture. Only the 16 px indent cell and 1 px guide are certain.
-- **`MethodBadge` unused by sidebar** at this commit: sidebar uses a
-  `min-width: 34px` text slot. Choose the badge or the slot explicitly.
-- **Light hover == selection** (`#eaeaea` both): only the 3 px accent rail
-  distinguishes them. Intentional in source; decide whether to keep.
-- **Request tab hover/preview**: no hover token and no preview colour token;
-  preview is italics only. Do not invent colours.
-
-### Request / response
-- `⌘/Ctrl J` (`changeLayout`) is declared in `providers/Hotkeys/keyMappings.js`
-  but no binding was found — verify before shipping the shortcut.
-- `HttpMethodSelector` defaults `showCaret=false`; the URL bar shows no method
-  caret even though other selectors do. Intent unclear.
-- `ResponsiveTabs` reserves 60 px for an 18 px chevron — reproduce or
-  right-size; call it out.
-- `EditableTable` sets a `drag-over` class with no drop indicator and ignores
-  `dragAndDrop.*`; implement an indicator explicitly.
-- GraphQL is a separate request type, not an HTTP body mode.
-- Auth copy is inconsistent in source: `NTLM Auth` (menu) vs `NTLM` (selected);
-  `AWS Sig v4` vs `AWS Sig V4`; `Query Param` vs `Query Params`; `Header` vs
-  `Headers` (OAuth2 token placement); EdgeGrid "Advanced Settings" renders
-  unconditionally despite a basic/advanced split. Pick one per surface and
-  document it.
-- Assertion operators show raw ids (`gt`, `startsWith`) except `eq`/`neq`
-  (`equals`/`notEquals`).
-- Request Docs tab has no empty-state placeholder.
-
-### Settings & environments
-- Preferences has **ten** tabs (General, Themes, Display, Proxy, Client
-  Certificates, Keybindings, AI, Cache, Support, Beta) — no Request/Font/Privacy/
-  About tabs; request behaviour is inside General, font inside Display, privacy
-  inside AI › Security (`screens/preferences.md`).
-- `SecuritySettings` is the per-collection JS-sandbox selector, not a
-  Preferences tab.
-- Missing `input.background` token used by the Zoom select
-  (`Display/Zoom/StyledWrapper.js:25`).
-- Secret masking differs across three surfaces (CodeMirror bullets /
-  `********` / per-char `*`) — unify.
-- Client-cert path wording conflicts (absolute vs relative); folder `Test` vs
-  collection `Tests`; Expr tooltip drift (Template Literal vs expression).
-- `refs/workspace_switcher_bruno.png` is a workspace switcher, not an
-  environment surface; no environment screenshots exist, so
-  `screens/environments.md` is source-derived only.
-
-### Import / export & docs
-- Import option labels live in per-option components; read them at build time.
-- `EmptyAppState` / `WorkspaceHome` copy not exhaustively captured.
-- `ResponseExample` should be `QueryResponse` minus live actions.
-
-### Primitives
-- Select trigger height/padding follow `InputWrapper` — confirm once.
-- `SettingsInput` vs `TextInput` visual delta not read line-by-line.
-- Toast visuals and ColorPicker geometry still need a source read.
-- RichTextEditor toolbar contents not enumerated.
-
----
+  top-level tab bar and a `Mock Servers` section the pinned commit renders
+  differently. The map follows source at `60d7517`. Needs: fresh captures from
+  `npm run dev:electron` at the pinned commit before locking visuals.
+- **Sidebar indent geometry** at depth >= 1 is flex-derived; only the 16 px
+  indent cell and 1 px guide are certain. Needs: a pixel check against a fresh
+  capture.
+- **`MethodBadge` vs sidebar text slot.** The sidebar uses a `min-width: 34px`
+  text slot, not `MethodBadge`. Decide: adopt the badge or keep the slot.
+- **Light hover == selection** (`#eaeaea` both). Source-accurate; decide
+  whether to keep only the accent rail as the differentiator.
+- **Request tab hover/preview.** No hover token; preview is italics only.
+  Decide whether to add a hover tint (the design system has none).
+- **`ResponsiveTabs` 60 px overflow reserve** for an 18 px chevron. Decide
+  reproduce or right-size.
+- **Assertion operator normalisation** (see Resolved) — keep raw ids or relabel
+  all.
+- **Preferences/AI/OpenAPI/gRPC/WebSocket have no captures**; those specs are
+  source-derived only. Fine for deferred scope; needs capture if promoted.
 
 ## 6. Verification plan
 
 - Each screen file's dimension/state tables are checkable with a golden capture
   at 1440×900 (and at 100 %/200 % DPI). Use the repo's existing capture harness
-  (`internal/ui/app/zz_design_test.go`) and the `UPDATE_GOLDEN` convention.
+  (`internal/ui/app/design_capture_test.go`, opt-in via `CAPTURE_DESIGN=1`) and the `UPDATE_GOLDEN` convention.
 - Token claims are machine-verified: re-run
   `cd bruno && node ../ui-map/_tools/dump-theme.mjs` and diff `tokens.json`.
 - Copy claims cite source `file:line`; grep the string to confirm before

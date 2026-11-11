@@ -12,18 +12,31 @@ optional left section, optional clear (`IconX`), optional loading
 (`IconLoader2`). Popup is a tippy-based `Dropdown` whose width matches the
 trigger (`sameWidthModifier`, `index.js:33-45`).
 
-| Prop | Default | Notes |
-| --- | --- | --- |
-| `data` | — | `string[]` or `{value,label,disabled?}[]` (`index.js:20-31`) |
-| `value` / `onChange` | — | controlled, value is a string |
-| `placeholder` | **`Select...`** | shown when empty |
-| `searchable` | false | type-to-filter |
-| `nothingFoundMessage` | **`No options found`** | search empty state |
-| `clearable` | false | clear button when a value is set |
-| `allowDeselect` | true | click selected option to clear |
-| `maxDropdownHeight` | 250 px | |
-| `label`, `description`, `error` | — | rendered above/below trigger |
-| `loading`, `leftSection`, `rightSection` | — | adornments |
+| Prop                                     | Default                | Notes                                                        |
+| ---------------------------------------- | ---------------------- | ------------------------------------------------------------ |
+| `data`                                   | —                      | `string[]` or `{value,label,disabled?}[]` (`index.js:20-31`) |
+| `value` / `onChange`                     | —                      | controlled, value is a string                                |
+| `placeholder`                            | **`Select...`**        | shown when empty                                             |
+| `searchable`                             | false                  | type-to-filter                                               |
+| `nothingFoundMessage`                    | **`No options found`** | search empty state                                           |
+| `clearable`                              | false                  | clear button when a value is set                             |
+| `allowDeselect`                          | true                   | click selected option to clear                               |
+| `maxDropdownHeight`                      | 250 px                 |                                                              |
+| `label`, `description`, `error`          | —                      | rendered above/below trigger                                 |
+| `loading`, `leftSection`, `rightSection` | —                      | adornments                                                   |
+
+## Trigger shell (shared with text inputs)
+
+Select uses the same `InputWrapper` shell as text inputs, sized from
+`src/ui/InputWrapper/constants.js` `INPUT_SIZES`:
+
+| Size           | padding                        | font-size    | radius            |
+| -------------- | ------------------------------ | ------------ | ----------------- |
+| `sm`           | `0.15rem 0.4rem` (≈2.4×6.4 px) | `xs` (11 px) | `radius.sm` (4)   |
+| `md` (default) | `0.45rem` (≈7.2 px)            | `sm` (12 px) | `radius.base` (6) |
+
+The trigger is `width: 100%`, ellipsised, placeholder at opacity `0.5`; when
+open the border becomes `input.focusBorder` (`input.focusBorder`).
 
 Keyboard: `ArrowDown/ArrowUp/Home/End` move the active option, `Enter` selects,
 `Escape` closes (`index.js:8-18`). Active option keys wrap cyclically.
@@ -42,14 +55,13 @@ Variants: `src/ui/MenuDropdown` (menu with icons, separators, checkmarks),
 
 ## Interaction summary
 
-| Key | Select | Menu |
-| --- | --- | --- |
-| ↓/↑ | next/prev option | next/prev item |
-| Home/End | first/last | first/last |
-| Enter | choose | activate |
-| Esc | close | close |
+| Key      | Select           | Menu           |
+| -------- | ---------------- | -------------- |
+| ↓/↑      | next/prev option | next/prev item |
+| Home/End | first/last       | first/last     |
+| Enter    | choose           | activate       |
+| Esc      | close            | close          |
 
 ## Open Questions
 
-- Select's exact trigger padding/height follow `InputWrapper`; confirm against
-  `components/text-input.md` (same shell).
+None outstanding: the trigger shell and sizing are in § Trigger shell above.

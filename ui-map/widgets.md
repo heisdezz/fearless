@@ -16,6 +16,7 @@ Bruno uses CodeMirror. In Go, use a text widget with syntax highlighting,
 line numbers and variable-aware styling.
 
 **MUST-HAVE**
+
 - Monospace, tab-size configurable (Preferences → Display, default 2),
   word-wrap toggle.
 - Syntax highlighting using `codemirror.tokens` (design-system §7):
@@ -28,6 +29,7 @@ line numbers and variable-aware styling.
 - Format/beautify action for JSON/XML/HTML where the mode allows.
 
 **NICE-TO-HAVE**
+
 - Bracket matching and auto-close.
 - Search & replace overlay (`CodeMirrorSearch`): `⌘/Ctrl F`, match
   highlight `#B8860B`, active match `#DAA520`, current-line tint
@@ -56,16 +58,18 @@ variable highlighting.
 - `MarkDown` renders docs (request Docs, changelog, workspace docs). Headings,
   lists, links, code spans/blocks, tables.
 - `RichTextEditor` (`src/ui/RichTextEditor`, TipTap) is the **editable** rich
-  text used for docs: bold/italic/underline, headings, lists, links, code,
-  images. **MUST-HAVE** for Docs editing: bold, italic, headings, bullet/number
-  lists, links, code block, undo/redo, save. **NICE-TO-HAVE:** tables, image
-  embed, find.
+  text used for docs. **MUST-HAVE** (all are real toolbar buttons; see
+  `components/misc-primitives.md` § RichTextEditor toolbar): bold, italic,
+  strikethrough, inline code, bullet list, numbered list, task list, quote,
+  code block, link (text + url), table, undo/redo. **NICE-TO-HAVE:** the
+  overflow "More formatting options" menu, image embed, find.
 
 ## 5. Key/value table (`Table`, `EditableTable`)
 
 Backbone of Params, Headers, Vars, form-urlencoded, auth fields.
 
 **MUST-HAVE**
+
 - Columns: enable checkbox, key, value, (optional) description, delete.
 - Inline editable cells (single-line editor).
 - Row add button (`+ Add Row`), delete row, enable toggle (dim disabled rows).
@@ -74,6 +78,7 @@ Backbone of Params, Headers, Vars, form-urlencoded, auth fields.
 - Horizontal scroll on overflow; description column optional per tab.
 
 **NICE-TO-HAVE**
+
 - Drag-reorder rows (`ReorderTable`), with drop indicator (source sets a
   `drag-over` class but defines no indicator — implement one using
   `dragAndDrop.border` `2px solid` and `hoverBg`).
@@ -102,20 +107,20 @@ Covered in `components/select.md`, `components/misc-primitives.md`.
 
 Bruno/CodeMirror mode ids need explicit mapping in a Go editor:
 
-| Body/section | Mode id(s) seen | Highlight rule |
-| --- | --- | --- |
-| JSON | `json`, `application/json` | JSON token set |
-| XML/HTML | `xml`, `text/xml`, `html` | tag/attr/string |
-| JavaScript (scripts) | `javascript` | JS token set |
-| GraphQL | `graphql` | keyword/field/string |
-| Text | `text/plain` | none |
-| SPARQL | `sparql` | keyword/string |
-| Form/urlencoded | plain | none |
+| Body/section         | Mode id(s) seen            | Highlight rule       |
+| -------------------- | -------------------------- | -------------------- |
+| JSON                 | `json`, `application/json` | JSON token set       |
+| XML/HTML             | `xml`, `text/xml`, `html`  | tag/attr/string      |
+| JavaScript (scripts) | `javascript`               | JS token set         |
+| GraphQL              | `graphql`                  | keyword/field/string |
+| Text                 | `text/plain`               | none                 |
+| SPARQL               | `sparql`                   | keyword/string       |
+| Form/urlencoded      | plain                      | none                 |
 
 Confirm the exact ids in `components/CodeEditor` before wiring the Go editor.
 
 ## Open Questions
 
-- CodeMirror search UI exact layout not captured; build a standard find bar.
-- RichTextEditor toolbar content not enumerated; read `src/ui/RichTextEditor`
-  when building the Docs editor.
+None outstanding: the editor toolbar is enumerated in
+`components/misc-primitives.md`; the find bar is a standard one and the mode
+ids are confirmed in `components/CodeEditor` at build time.

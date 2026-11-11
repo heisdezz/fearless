@@ -31,3 +31,24 @@ Owner history: zed-design (claimed 2026-11-11T16:30Z)
   DELETE token to `#e06552` — matching the repo's own test. Where `refs/`
   captures disagree with source (different build), source wins and the drift is
   recorded in `go-ui-notes.md` §5.
+
+### 2026-11-11T17:35Z — zed-design
+
+- Did: closed the map's flagged gaps against source and folded answers into the
+  screen/component files.
+  - Resolved with citations: `changeLayout` is globally bound (`Cmd/Ctrl J`,
+    `providers/Hotkeys/index.js:386`); URL-bar method caret is off by design;
+    `input.background` is a real missing-token bug (use `input.bg`); import
+    option labels/descriptions verbatim; the no-collection surface is
+    `WorkspaceOverview`, not `EmptyAppState`; Toast is react-hot-toast plus
+    `ImportIssuesToast`; ColorPicker preset/slider geometry; RichTextEditor
+    toolbar buttons; `INPUT_SIZES`; SettingsInput `w-24 h-8`; request Docs has
+    no empty state; auth mode labels; OAuth2 placement Header/URL; assertion
+    operator labels; secret masking.
+  - `go-ui-notes.md` section 5 rewritten as "Resolved & remaining": resolved
+    items keep their sources; the remaining few are genuine product decisions
+    or need a fresh capture of the pinned commit.
+- Tests: docs only; `go build ./...` and `go test ./...` still green.
+- Notes: the remaining open items are decisions (badge vs text slot, hover
+  tokens, operator labelling, secret-mask style) or capture-dependent (sidebar
+  indent, screenshot drift), not further reading.

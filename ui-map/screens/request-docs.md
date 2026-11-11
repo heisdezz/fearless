@@ -9,17 +9,20 @@ Sources: `components/Documentation/` (`index.js`, `DocsEditor/`, `DocsAction/`,
 
 ## Request Docs tab
 
-Reached from the request sub-tab strip (see `screens/request-subtabs.md`).
-A rich-text/markdown editor for the request's documentation, stored with the
-request.
+Reached from the request sub-tab strip: **`Docs`**
+(`components/RequestPane/HttpRequestPane/index.js:34`). When the Docs tab is
+active the right side of the sub-tab bar shows a `DocsAction` (edit/save
+controls) plus the AI-assist control (`:149-153`).
 
-- Sections seen in `WorkspaceHome/WorkspaceDocs` (same docs component family):
+- Sections seen in `WorkspaceHome/WorkspaceDocs` (same docs editor family):
   **`Documentation`**, **`Project overview`**, **`Setup instructions`**,
-  **`Key workflows`** — these are the workspace-level docs templates; the
-  request Docs tab uses the same editor on the request's own doc.
+  **`Key workflows`** — these are the workspace-level docs placeholders; the
+  request Docs tab uses the same `DocsEditor` on the request's own doc.
 - Editing state via `useDocsEditingState`; save/cancel surfaced by `DocsAction`.
-- Empty state: no placeholder is defined (see Open Questions in
-  `request-subtabs.md`).
+- **Empty state:** the request Docs tab has **no placeholder** — an empty doc
+  renders an empty editor. (Collection settings _does_ seed a placeholder via
+  `documentationPlaceholder`, `components/CollectionSettings/Docs/index.js:79,91`;
+  the request tab does not.)
 
 ## Response example
 
@@ -31,5 +34,4 @@ status/time/size).
 
 ## Open Questions
 
-- `ResponseExample` internals not fully read; build it as `QueryResponse` minus
-  live actions and verify the recorded-metadata display.
+None outstanding: the Docs empty state and action bar are documented above.

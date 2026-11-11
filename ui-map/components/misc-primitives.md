@@ -25,11 +25,16 @@ there are unsaved changes uses the confirm-close dialogs (see
 Ctrl/Cmd+Enter confirms in prompt modals (see `dialogs` in repo:
 `internal/ui/dialogs/view.go`).
 
-## Toast (`components/Toast`, react-hot-toast)
+## Toast
 
-Transient message bottom-right. Types: success (green), error (danger),
-loading (spinner), blank (neutral). Auto-dismiss ~4 s; stackable; each has a
-close affordance. Copy is per-call. `feedback.ToastHost` is the Go port.
+Bruno has **no general toast component** at this commit. Transient messages use
+`react-hot-toast` directly (`toast.success` / `toast.error` / `toast.loading`),
+positioned bottom-right, auto-dismiss ~4 s. The only `components/Toast` entry is
+`Toast/ImportIssuesToast`, a bespoke persistent notice shown after an import
+when some items failed — it lists the issues and closes on user action.
+
+Go port: use `feedback.ToastHost` for the transient messages; render the import
+issues notice as a modal/card (follow `components/Toast/ImportIssuesToast`).
 
 ## Tooltip — `ToolHint` & `InfoTip`
 
@@ -69,10 +74,25 @@ request Settings and runner include/exclude (`screens/runner.md`).
 
 ## ColorBadge / ColorPicker / ColorRange
 
-- `ColorBadge`: a swatch + label chip (theme previews, env colour dots).
-- `ColorPicker`: popover with hue/saturation area + hex input (custom scenes).
-- `ColorRange`: a gradient/hue slider used inside ColorPicker.
-  Uses `colors.accent` and the theme palette.
+- `ColorBadge`: a small swatch + optional label chip (theme previews, env colour
+  dots). Reads the colour directly; falls back to a neutral swatch.
+- `ColorPicker` (`components/ColorPicker/index.js`): a `Dropdown` anchored bottom-start.
+  Default trigger is the current colour swatch, `title="Change color"`
+  (`:109-113`). Content (`:115-160`):
+  - Row 1 — a **`No color`** control (`IconBan` 20/1.5) plus six preset swatches,
+    each `w-5 h-5` (20×20) rounded, `hover:scale-110`, selected gets a 2 px
+    `border-current`. Presets in order: `#CE4F3B`, `#2E8A54`, `#346AB2`,
+    `#C77A0F`, `#B83D7F`, `#8D44B2` (`:9-16`).
+  - Row 2 — a round custom-colour chip (`w-5 h-5 rounded-full`) and a
+    `ColorRange` slider (`:143-153`).
+  - Picker body padding `p-2` (8 px), swatch gap `1.5` (6 px).
+- `ColorRange` (`components/ColorRange`): a **discrete** slider interpolating
+  across a fixed six-stop sequence `#D85D43`, `#F4BB74`, `#61DCB1`, `#7EBDF2`,
+  `#D48ADE`, `#B491E5` (`index.js:18`); position 0–100 maps linearly across the
+  stops (`interpolateColor`, `:40-60`). It is not an HSL hue slider.
+
+A Go port reproduces the preset grid, the `No color` option, and the six-stop
+slider; do **not** substitute a free-form hue/saturation picker.
 
 ## CodeSnippet (`components/CodeSnippet`)
 
@@ -114,7 +134,27 @@ scope switcher list. Used by VariablesEditor and variable autocomplete. See
 Indeterminate ring spinner, inherits `currentColor`. See
 `components/spinner.md`.
 
+## RichTextEditor toolbar (Docs editing)
+
+`src/ui/RichTextEditor` is TipTap-based. The toolbar
+(`components/EditorToolbar/index.js`) renders buttons from
+`utils/editorToolbarConfig.js`; each button's `aria-label`, tooltip and label
+is its tooltip string. Verbatim, in order:
+
+| Group    | Buttons (tooltip = label)                                                       |
+| -------- | ------------------------------------------------------------------------------- |
+| Inline   | **Bold**, **Italic**, **Strikethrough**, **Inline code**                        |
+| Block    | **Bullet list**, **Numbered list**, **Task list**, **Quote**, **Code block**    |
+| Insert   | **Link**, **Table** (with a `Table` options menu, `aria-label="Table options"`) |
+| History  | **Undo**, **Redo**                                                              |
+| Overflow | `IconDots` → `aria-label="More formatting options"` (`:128-131`)                |
+
+Toolbar icons use Tabler at 16/1.5 (carets 14/1.5 filled). Link edit popover
+fields: **`Text`** (placeholder `Text to display`) and **`URL`** (placeholder
+`https://example.com`) (`components/EditorLinkEditPopover/index.js:78-99`).
+A tooltip host `ToolHint` is mounted once with id `editor-toolbar-tooltip`
+(`:136`).
+
 ## Open Questions
 
-- Several small components (Toast visuals, ColorPicker geometry) were not
-  read line-by-line; refine from source when building each.
+None outstanding for the primitives in this file.

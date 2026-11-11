@@ -303,11 +303,12 @@ WebSocket request panes (`RequestTabPanel/index.js:564-578`,
 
 ## 10. Open Questions
 
-1. **`changeLayout` is declared but not bound in anything I could find.** The
-   binding exists in `keyMappings.js:43`, but `RequestTabPanel` only wires
-   `sendRequest` (`index.js:88-93`); I did not find a `useKeybinding('changeLayout', …)`
-   call. Verify in a running build before implementing.
-2. **`showCaret` default.** `HttpMethodSelector` defaults `showCaret = false`
+1. **RESOLVED — `changeLayout` is bound globally.** Not in `RequestTabPanel`;
+   it lives in the hotkeys provider: `bindAction('changeLayout', ...)` at
+   `providers/Hotkeys/index.js:386`, mapping `Cmd/Ctrl J`
+   (`keyMappings.js:43`), toggling `responsePaneOrientation`
+   horizontal<->vertical. Implement it as a global shortcut.
+2. **RESOLVED — `showCaret` default.** Confirmed: every call site omits it, so the URL bar shows no caret by design. `HttpMethodSelector` defaults `showCaret = false`
    (`index.js:33`) and `QueryUrl` does not pass it, so no caret should render
    in the request URL bar — the screenshot shows only the verb. Confirm this is
    intended (the caret is visible in other method selectors such as the new-request
