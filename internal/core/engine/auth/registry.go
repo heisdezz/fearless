@@ -33,6 +33,7 @@ func RegisterBase() {
 	Register(awsv4Provider{})
 	Register(oauth1Provider{})
 	Register(ntlmProvider{})
+	Register(edgegridProvider{})
 }
 
 // ChainFor builds the auth inheritance chain for one request.

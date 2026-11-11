@@ -75,7 +75,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `AUTH-OAUTH1`   | InReview   | zed-agent-1 | 2026-11-11T04:20Z | 2026-11-11T05:10Z | RFC 5849 signing; openssl-verified base string; header/query/body placement, body hash, RSA |
 | `AUTH-OAUTH2`   | Ready      | —           | —                 | —                 | Needs `PLATFORM`                                                                            |
 | `AUTH-AWSV4`    | InProgress | zed-agent-1 | 2026-11-11T03:40Z | 2026-11-11T03:40Z | SigV4 against AWS golden vectors                                                            |
-| `AUTH-EDGEGRID` | Ready      | —           | —                 | —                 |                                                                                             |
+| `AUTH-EDGEGRID` | InReview   | zed-agent-1 | 2026-11-11T06:25Z | 2026-11-11T06:50Z | EG1-HMAC-SHA256; all intermediates recomputed independently; no live-gateway vector                     |
 | `ENV-FILES`     | InReview   | zed-agent-1 | 2026-11-11T05:50Z | 2026-11-11T06:20Z | `extends` chains w/ cycle detection, `.env`, path-safe loader; 91.2 % cov            |
 
 ## Phase 5
