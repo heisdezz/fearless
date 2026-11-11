@@ -20,6 +20,22 @@ import (
 //
 // Source: bruno-js/src/sandbox/node-vm/constants.js safeGlobals
 func (r *Runtime) installGlobals() error {
+	// AssertionError is what chai throws, and what test() distinguishes from an
+	// ordinary error when reporting a failure. Without it, an expect() failure
+	// would arrive as a generic TypeError and lose its actual/expected fields.
+	if err := r.vm.Set("AssertionError", func(call goja.ConstructorCall) *goja.Object {
+		message := "assertion failed"
+		if len(call.Arguments) > 0 && !goja.IsUndefined(call.Arguments[0]) {
+			message = call.Arguments[0].String()
+		}
+		instance := call.This
+		_ = instance.Set("name", "AssertionError")
+		_ = instance.Set("message", message)
+		return instance
+	}); err != nil {
+		return fmt.Errorf("scripting: install AssertionError: %w", err)
+	}
+
 	native := map[string]any{
 		"btoa": btoa,
 		"atob": atob,

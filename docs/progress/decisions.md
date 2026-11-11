@@ -209,3 +209,21 @@ OAuth1's `body` placement rewrites the payload (the signed parameters _become_ t
 **Rationale:** the alternative — a second `TransportProvider`-style hook — would put payload mutation in the transport layer, after signing, which is the wrong order. Keeping it in `Prepared` means every provider composes the request in one place.
 
 **Constraint for future providers:** "no body" must be an empty non-nil slice, never `nil`, or the override will be ignored.
+
+### D-014 — `expect` boolean assertions are methods, not properties
+
+chai's `expect(x).to.be.true` is a getter. goja's `DefineAccessorProperty` has no error return, so host code cannot raise a **catchable** exception from one — only a Go `panic`, which escapes the runtime and aborts the process.
+
+**Decision:** the boolean assertions (`ok`, `true`, `false`, `null`, `undefined`, `exist`, `empty`) are methods: `expect(x).to.be.true()`. Everything else (`equal`, `eql`, `above`, `include`, `match`, `a`, …) needs no change.
+
+**Consequence:** Bruno scripts using the property form must gain `()`. This is a visible source-level incompatibility, chosen over the alternative (interrupting the runtime from a getter), which would make even a passing chain abort.
+
+**Revisit if:** goja gains an error-returning accessor, or the fixture corpus shows the property form is common enough to justify a preprocessor.
+
+### D-015 — assertion failures are `GoError`, not `AssertionError`
+
+Bruno's `test()` branches on `error instanceof chai.AssertionError` to report actual/expected. goja's `*Exception` value field is unexported, so a host function cannot construct an `AssertionError` instance.
+
+**Decision:** assertion failures are raised as Go errors (goja converts them to `GoError`) whose message names both operands. `test()` reports them as failures with that message.
+
+**Consequence:** a script that catches assertions and inspects `error.name` will see `GoError`. The user-facing pass/fail result is unaffected.

@@ -83,7 +83,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | Package          | State | Agent | Claimed (UTC) | Updated (UTC) | Notes |
 | ---------------- | ----- | ----- | ------------- | ------------- | ----- |
 | `SCRIPT-RUNTIME` | InReview   | zed-agent-1 | 2026-11-11T06:55Z | 2026-11-11T07:15Z | goja sandbox; interrupt+promise await; inbuilt-lib gap logged (UQ-B5) |
-| `SCRIPT-BRU-API` | InProgress | zed-agent-1 | 2026-11-11T07:20Z | 2026-11-11T07:20Z | bru/req/res/test/expect host bindings |
+| `SCRIPT-BRU-API` | InReview   | zed-agent-1 | 2026-11-11T07:20Z | 2026-11-11T08:05Z | bru/req/res/test/expect; 2 chai gaps logged; 84.3 % cov |
 | `SCRIPT-POST`    | Ready | —     | —             | —             |       |
 
 ## Phase 6
@@ -92,7 +92,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | --------------- | ----- | ----- | ------------- | ------------- | ----- |
 | `CONV-POSTMAN`  | InReview   | antigravity | 2026-11-11T01:38Z | 2026-11-11T01:43Z | Builds, vet-clean, race-clean, 82.2 % cov, v2/v2.1 import+export+env |
 | `CONV-INSOMNIA` | InReview   | antigravity | 2026-11-11T01:45Z | 2026-11-11T01:48Z | Builds, vet-clean, race-clean, 83.8 % cov, v4/v5 JSON/YAML import+export |
-| `CONV-OPENAPI`  | Claimed | antigravity | 2026-11-11T01:50Z | 2026-11-11T01:50Z | OpenAPI 3.x / Swagger 2 importer and exporter |
+| `CONV-OPENAPI`  | InProgress | antigravity | 2026-11-11T01:50Z | 2026-11-11T01:50Z | OpenAPI 3.x / Swagger 2 importer and exporter |
 | `CONV-CURL`     | InReview   | antigravity | 2026-11-11T01:18Z | 2026-11-11T01:25Z | Builds, vet-clean, race-clean, 87.6 % cov, import+export+round-trip |
 | `CODEGEN`       | InReview   | antigravity | 2026-11-11T01:30Z | 2026-11-11T01:35Z | Builds, vet-clean, race-clean, 87.5 % cov, cURL/Go/JS/Python generators |
 
