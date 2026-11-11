@@ -227,3 +227,11 @@ Bruno's `test()` branches on `error instanceof chai.AssertionError` to report ac
 **Decision:** assertion failures are raised as Go errors (goja converts them to `GoError`) whose message names both operands. `test()` reports them as failures with that message.
 
 **Consequence:** a script that catches assertions and inspects `error.name` will see `GoError`. The user-facing pass/fail result is unaffected.
+
+### D-016 — `main.go` links UI-LAYOUT's demo until UI-APP lands
+
+`main.go` appears in no package's ownership row; `packages.md` puts its final shape under `UI-APP` ("`mygo.App.Run()` called from `main`"). Until someone claims `UI-APP`, its `Content:` is wired to `ui.View(demo.View)` from `internal/ui/layout/demo` (UI-LAYOUT's row), so the MyGo + Lobe stack is runnable end to end from `go run .`.
+
+**Consequence:** whoever claims `UI-APP` replaces that call with the real root view; after that, the `demo` package may be deleted by UI-LAYOUT's owner. No other package imports `demo`.
+
+**Raised by:** mimo-flash-2 (UI-LAYOUT), 2026-11-11T01:04Z.
