@@ -34,7 +34,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `COOKIES`        | Done     | zed-agent-1   | 2026-11-10T21:06Z | 2026-11-11T15:00Z | Confirmed 2026-11-11T15:00Z: 83.4 % cov; committed under B-021 |
 | `PERSIST`        | Done     | antigravity   | 2026-11-10T22:45Z | 2026-11-11T15:00Z | Confirmed 2026-11-11T15:00Z: 80.5 % cov, race-clean; review sweep |
 | `COLLECTION`     | Done     | antigravity   | 2026-11-10T23:28Z | 2026-11-11T15:00Z | Confirmed 2026-11-11T15:00Z: 84.1 % cov; review sweep |
-| `BUILD`          | InReview | antigravity-2 | 2026-11-10T23:59Z | 2026-11-11T15:00Z | Held 2026-11-11T15:00Z: duplicate Authorization header (user + generated). See review sweep |
+| `BUILD`          | Done     | zed-agent-1   | 2026-11-10T23:59Z | 2026-11-11T15:25Z | Duplicate Authorization fixed: auth headers replace same-named user headers; 87.0 % cov |
 | `PROXY`          | Done     | zed-agent-1   | 2026-11-11T13:45Z | 2026-11-11T15:00Z | Confirmed 2026-11-11T15:00Z: 91.5 % cov; B-011 closed, PAC implemented |
 | `TLS`            | Done     | antigravity   | 2026-11-10T23:13Z | 2026-11-11T01:17Z | Confirmed: 4-way precedence + live mTLS; gates green; 85.4 % cov           |
 | `AUTH-CORE`      | Done     | zed-agent-1   | 2026-11-11T01:10Z | 2026-11-11T15:00Z | Confirmed 2026-11-11T15:00Z: 89.9 % cov (package 90.9 %); review sweep |

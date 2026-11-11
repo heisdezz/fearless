@@ -778,3 +778,27 @@ Gate baseline: `go build ./...`, `go vet ./...`, `gofmt`, `check-deps.sh`,
   least one internal implementation", which holds: `encoder.go:31-33`,
   `resolver.go:31-33`, `converter.go:39-40`. The engine not consuming the
   registries yet is `ENGINE` wiring, not this package's criterion. Promoted.
+
+
+
+## B-023 — intermittent data race in `TestNewAndSaveEnvironment`
+
+- **Date:** 2026-11-11T15:20Z
+- **Package:** `CMD-ENV`
+- **Agent:** zed-agent-1 (found while verifying an unrelated BUILD fix)
+- **Blocked on:** `antigravity-2` (`CMD-ENV` owner)
+- **Problem:** `internal/app/commands/environment_test.go:142` mutates
+  `env.Variables` on a model object that is still reachable from the store,
+  while the store's actor goroutine clones the same tree
+  (`bus.cloneEnvironment`, `bus/state.go:131/134`). `go test -race
+  ./internal/app/commands/` therefore fails intermittently — roughly 1 run in 3
+  here, and it passed 6/6 on another attempt, so CI will see it as flaky.
+- **Not a production bug:** the racy mutation is in the *test*, which hands the
+  store a pointer and then writes through it. `SaveEnvironment` itself is fine.
+- **Not caused by the BUILD fix:** that change touches only
+  `internal/core/engine/build/build.go`, which is not on this call path, and the
+  race reproduces with it reverted. Verified by reverting and re-running.
+- **Fix:** deep-copy `env` before mutating it in the test, or take a fresh
+  snapshot from the store and modify that copy.
+- **Status:** OPEN — needs a follow-up in `CMD-ENV`, which is now `Done`; this
+  is a test-quality defect, not an acceptance-criteria failure.

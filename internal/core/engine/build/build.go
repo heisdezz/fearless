@@ -80,6 +80,41 @@ func Build(ctx context.Context, in BuildInput) (*BuiltRequest, error) {
 		headerEntries = append(headerEntries, HeaderEntry{Name: name, Value: value})
 	}
 
+	// setAuthHeader installs a header the auth mode generated. It replaces any
+	// entry the user set under the same name instead of appending to it: a
+	// request that carries an explicit Authorization header and also selects
+	// Basic/Bearer auth must send one header, and it must be the generated one.
+	//
+	// net/http writes one line per value, so appending here would put two
+	// Authorization headers on the wire and leave the user's stale value first.
+	// Bruno assigns to its header object, which overwrites for the same reason.
+	setAuthHeader := func(name, value string) {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			return
+		}
+		if len(headers.Values(name)) == 0 {
+			addHeader(name, value)
+			return
+		}
+		headers.Set(name, value)
+		// Replace the first user entry in place so ordering and casing stay
+		// stable, and drop any later duplicates of the same name.
+		replaced := false
+		kept := headerEntries[:0]
+		for _, e := range headerEntries {
+			if strings.EqualFold(strings.TrimSpace(e.Name), name) {
+				if !replaced {
+					kept = append(kept, HeaderEntry{Name: name, Value: value})
+					replaced = true
+				}
+				continue
+			}
+			kept = append(kept, e)
+		}
+		headerEntries = kept
+	}
+
 	// Add merged headers
 	for _, kv := range merged.Headers {
 		if !kv.Live() {
@@ -90,9 +125,9 @@ func Build(ctx context.Context, in BuildInput) (*BuiltRequest, error) {
 		addHeader(name, val)
 	}
 
-	// Add auth headers
+	// Add auth headers. They replace same-named user headers: see setAuthHeader.
 	for _, ah := range authHeaders {
-		addHeader(ah.Name, ah.Value)
+		setAuthHeader(ah.Name, ah.Value)
 	}
 
 	// 5. Interpolate URL

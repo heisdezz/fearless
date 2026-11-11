@@ -973,3 +973,130 @@ func TestHostHeaderSetsHTTPRequestHost(t *testing.T) {
 		t.Errorf("HTTPRequest.Host = %q, want custom.virtualhost.org", res.HTTPRequest.Host)
 	}
 }
+
+// TestAuthHeaderReplacesUserHeader pins the rule that a header the auth mode
+// generates replaces a same-named header the user set, rather than joining it.
+//
+// http.Header.Add appends and net/http writes one line per value, so appending
+// put two Authorization headers on the wire with the user's stale value first.
+// Bruno assigns to its header object, so its generated value is the only one
+// sent; this matches that.
+func TestAuthHeaderReplacesUserHeader(t *testing.T) {
+	ctx := context.Background()
+
+	buildWith := func(t *testing.T, auth *model.Auth, headers ...model.KeyValue) *build.BuiltRequest {
+		t.Helper()
+		item := &model.Item{
+			Request: &model.Request{
+				Method:  "GET",
+				URL:     "https://api.example.com/x",
+				Headers: headers,
+				Auth:    auth,
+			},
+		}
+		res, err := build.Build(ctx, build.BuildInput{Item: item})
+		if err != nil {
+			t.Fatalf("Build: %v", err)
+		}
+		return res
+	}
+	userAuth := model.KeyValue{
+		Name: stringPtr("Authorization"), Value: stringPtr("Bearer USER-SET"), Enabled: true,
+	}
+
+	t.Run("Bearer", func(t *testing.T) {
+		res := buildWith(t,
+			&model.Auth{Mode: model.AuthBearer, Token: stringPtr("GENERATED")},
+			userAuth)
+		got := res.Headers.Values("Authorization")
+		if len(got) != 1 {
+			t.Fatalf("Authorization = %v, want exactly one value", got)
+		}
+		if got[0] != "Bearer GENERATED" {
+			t.Errorf("Authorization = %q, want the generated value", got[0])
+		}
+	})
+
+	t.Run("Basic", func(t *testing.T) {
+		res := buildWith(t,
+			&model.Auth{Mode: model.AuthBasic, Username: stringPtr("u"), Password: stringPtr("p")},
+			userAuth)
+		got := res.Headers.Values("Authorization")
+		if len(got) != 1 {
+			t.Fatalf("Authorization = %v, want exactly one value", got)
+		}
+		if !strings.HasPrefix(got[0], "Basic ") {
+			t.Errorf("Authorization = %q, want the generated Basic value", got[0])
+		}
+	})
+
+	t.Run("WSSE", func(t *testing.T) {
+		// WSSE generates both X-WSSE and Authorization; the user set both names.
+		res := buildWith(t,
+			&model.Auth{Mode: model.AuthWSSE, Username: stringPtr("u"), Password: stringPtr("p")},
+			userAuth,
+			model.KeyValue{Name: stringPtr("X-WSSE"), Value: stringPtr("stale"), Enabled: true})
+		if got := res.Headers.Values("Authorization"); len(got) != 1 ||
+			got[0] != `WSSE profile="UsernameToken"` {
+			t.Errorf("Authorization = %v, want one WSSE profile line", got)
+		}
+		if got := res.Headers.Values("X-WSSE"); len(got) != 1 || got[0] == "stale" {
+			t.Errorf("X-WSSE = %v, want one generated value", got)
+		}
+	})
+
+	t.Run("APIKeyCustomName", func(t *testing.T) {
+		// The generated header name is user-chosen, so replacement must key on
+		// whatever name the auth produced, not on Authorization.
+		res := buildWith(t,
+			&model.Auth{
+				Mode:      model.AuthAPIKey,
+				Key:       stringPtr("X-API-KEY"),
+				Value:     stringPtr("fresh"),
+				Placement: model.APIKeyHeader,
+			},
+			model.KeyValue{Name: stringPtr("X-API-KEY"), Value: stringPtr("stale"), Enabled: true})
+		got := res.Headers.Values("X-API-KEY")
+		if len(got) != 1 {
+			t.Fatalf("X-API-KEY = %v, want exactly one value", got)
+		}
+		if got[0] != "fresh" {
+			t.Errorf("X-API-KEY = %q, want the generated value", got[0])
+		}
+	})
+
+	t.Run("UnrelatedUserHeadersSurvive", func(t *testing.T) {
+		// Replacement must be narrow: only the auth-managed name is touched.
+		res := buildWith(t,
+			&model.Auth{Mode: model.AuthBearer, Token: stringPtr("GENERATED")},
+			userAuth,
+			model.KeyValue{Name: stringPtr("X-Trace"), Value: stringPtr("abc"), Enabled: true})
+		if got := res.Headers.Get("X-Trace"); got != "abc" {
+			t.Errorf("X-Trace = %q, want abc: an unrelated header was dropped", got)
+		}
+	})
+
+	t.Run("DuplicatesCollapse", func(t *testing.T) {
+		// Two user entries under the same name (different casing) collapse to one
+		// generated value, and HeaderEntries stays in sync with the map.
+		res := buildWith(t,
+			&model.Auth{Mode: model.AuthBearer, Token: stringPtr("GENERATED")},
+			model.KeyValue{Name: stringPtr("Authorization"), Value: stringPtr("one"), Enabled: true},
+			model.KeyValue{Name: stringPtr("authorization"), Value: stringPtr("two"), Enabled: true})
+		if got := res.Headers.Values("Authorization"); len(got) != 1 || got[0] != "Bearer GENERATED" {
+			t.Errorf("Authorization = %v, want one generated value", got)
+		}
+		var authEntries int
+		for _, e := range res.HeaderEntries {
+			if strings.EqualFold(e.Name, "Authorization") {
+				authEntries++
+				if e.Value != "Bearer GENERATED" {
+					t.Errorf("HeaderEntries has stale value %q", e.Value)
+				}
+			}
+		}
+		if authEntries != 1 {
+			t.Errorf("HeaderEntries has %d Authorization entries, want 1", authEntries)
+		}
+	})
+}
