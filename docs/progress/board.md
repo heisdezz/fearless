@@ -90,7 +90,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 | Package         | State | Agent | Claimed (UTC) | Updated (UTC) | Notes |
 | --------------- | ----- | ----- | ------------- | ------------- | ----- |
-| `CONV-POSTMAN`  | Ready | —     | —             | —             |       |
+| `CONV-POSTMAN`  | Claimed | antigravity | 2026-11-11T01:38Z | 2026-11-11T01:38Z | Postman v2/v2.1 collection importer and converter |
 | `CONV-INSOMNIA` | Ready | —     | —             | —             |       |
 | `CONV-OPENAPI`  | Ready | —     | —             | —             |       |
 | `CONV-CURL`     | InReview   | antigravity | 2026-11-11T01:18Z | 2026-11-11T01:25Z | Builds, vet-clean, race-clean, 87.6 % cov, import+export+round-trip |
