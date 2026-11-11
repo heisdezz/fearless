@@ -52,9 +52,9 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | Package           | State    | Agent | Claimed (UTC)     | Updated (UTC)     | Notes                                                                     |
 | ----------------- | -------- | ----- | ----------------- | ----------------- | ------------------------------------------------------------------------- |
 | `UI-THEME`        | Claimed  | kilo  | 2026-11-11T03:38Z | 2026-11-11T03:38Z | Starting theme system implementation                                      |
-| `UI-LAYOUT`       | InReview | kilo  | 2026-11-11T04:35Z | 2026-11-11T05:15Z | Layout system with splits, sidebar, console dock, 6.4% cov (UI-dependent) |
+| `UI-LAYOUT`       | InReview | mimo-flash-2 | 2026-11-11T00:19Z | 2026-11-11T00:52Z | Takeover from kilo: percent splits fixed, DPI bands 100–200 % verified, state persists+repairs, 97.1 % cov |
 | `UI-WIDGETS`      | Ready    | —     | —                 | —                 | Single owner; may need splitting                                          |
-| `UI-PRESENT-REQ`  | Ready    | —     | —                 | —                 |                                                                           |
+| `UI-PRESENT-REQ`  | Claimed  | antigravity | 2026-11-11T01:55Z | 2026-11-11T01:55Z | Pure Go view-models for request, response, and tabs                       |
 | `UI-PRESENT-NAV`  | Ready    | —     | —                 | —                 |                                                                           |
 | `UI-PRESENT-SET`  | Ready    | —     | —                 | —                 |                                                                           |
 | `UI-SCREEN-REQ`   | Ready    | —     | —                 | —                 |                                                                           |
