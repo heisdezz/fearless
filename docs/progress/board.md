@@ -61,9 +61,9 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `UI-SCREEN-RESP`  | Done       | zed-agent-1   | 2026-11-11T11:25Z | 2026-11-11T04:35Z | Confirmed: 89.8 % cov, pure view of ResponsePresenter, 4 panes verified, race-clean             |
 | `UI-SCREEN-NAV`   | InReview   | antigravity-2 | 2026-11-11T04:05Z | 2026-11-11T04:25Z | Pure view + Actions; tree, rail mode, env selector; 96.0 % cov, race-clean, dep-clean            |
 | `UI-SCREEN-SHELL` | Done       | mimo-flash-2  | 2026-11-11T02:43Z | 2026-11-11T04:35Z | Confirmed: 100.0 % cov, race×5 clean, pure view + Actions, goldens pass                          |
-| `UI-SCREEN-SET`   | InProgress | antigravity   | 2026-11-11T04:09Z | 2026-11-11T04:09Z | Claimed: settings panes (Preferences and Collection/Folder Settings)                             |
+| `UI-SCREEN-SET`   | InReview   | antigravity   | 2026-11-11T04:09Z | 2026-11-11T04:20Z | Preferences and collection settings panes; 95.0% cov, race-clean, dep-clean                      |
 | `UI-DIALOGS`      | Done       | zed-agent-1   | 2026-11-11T12:10Z | 2026-11-11T04:35Z | Confirmed: 91.6 % cov, queue close-on-success, prompt vars, import flows pass                    |
-| `UI-APP`          | InProgress | mimo-flash-2  | 2026-11-11T03:18Z | 2026-11-11T03:18Z | Claimed: root view, menu bar, keybinding router; composes UI-SCREEN-SHELL as the real root        |
+| `UI-APP`          | InReview   | antigravity   | 2026-11-11T04:30Z | 2026-11-11T04:45Z | Window, menus, hotkey router, root view composing all screens; 83.8% cov, race-clean             |
 | `PLATFORM`        | InReview   | zed-agent-1   | 2026-11-11T09:10Z | 2026-11-11T09:35Z | Six OS interfaces + fakes, real loopback listener; 89.7 % cov                                    |
 
 ## Phase 4
@@ -127,7 +127,7 @@ These groups contain **no shared file paths and no unmet dependencies**, so ever
 
 **Wave 6** (GUI, can start as soon as `MODEL` is `Done`): `UI-THEME` → `UI-LAYOUT` → `UI-WIDGETS`, in that order; the three `UI-PRESENT-*` packages can start right after `EVENTS`+`BUS` and run **in parallel with all of Phase 1's remaining work**, because they touch no core files.
 
-**Wave 7** (after GUI screens exist): `UI-SCREEN-*` in parallel, then `UI-APP`.
+| `UI-APP`          | InReview   | antigravity   | 2026-11-11T04:30Z | 2026-11-11T04:45Z | Window, menus, hotkey router, root view composing all screens; 83.8% cov, race-clean             |
 
 **Wave 8**: `AUTH-*` providers (five packages, fully parallel), `ENV-FILES`, `SCRIPT-*` (sequential among themselves).
 
