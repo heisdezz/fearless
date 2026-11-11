@@ -139,33 +139,31 @@ builder does not re-open them.
   every other operator shows its raw id (`gt`, `startsWith`, ...)
   (`components/RequestPane/Assertions/AssertionOperator/index.js:72-82`). This
   is source-accurate; keep it or normalise all — decide once and document.
-- **Secret masking** — the editor uses a per-character mask via CodeMirror
-  `isSecret` with a reveal eye (`SecretEyeButton`); inherited rows use literal
-  `*` per character (`InheritedVariableRow/index.js:8-9`). Unify to one style in
-  the Go port.
+- **Secret masking** — one character everywhere: `*` per character, newlines
+  preserved, reveal via `SecretEyeButton` (`utils/common/masked-editor.js:65`,
+  `MultiLineEditor/index.js:271`, `InheritedVariableRow/index.js:8-9`). The
+  "three masking styles" note this section used to carry was wrong; see
+  `decisions.md` R-5.
 
-### Remaining (needs a decision or a fresh capture)
+### Decisions taken (see `decisions.md`)
+
+The former "decide" items are now decided and recorded in
+[`decisions.md`](decisions.md): sidebar verbs (R-1), request-tab hover (R-2),
+preview tabs (R-3), assertion operator labels (R-4), secret masking (R-5),
+`input.background` (R-6), global shortcuts (R-7).
+
+### Remaining (needs a fresh capture, not a decision)
 
 - **Screenshot vs source drift.** `refs/side_bar_bruno.png`,
   `folder_bruno.png`, `workspace_switcher_bruno.png` are from a build with a
   top-level tab bar and a `Mock Servers` section the pinned commit renders
-  differently. The map follows source at `60d7517`. Needs: fresh captures from
-  `npm run dev:electron` at the pinned commit before locking visuals.
+  differently. The map follows source at `60d7517`. Needs: captures from a
+  build at that commit.
 - **Sidebar indent geometry** at depth >= 1 is flex-derived; only the 16 px
   indent cell and 1 px guide are certain. Needs: a pixel check against a fresh
   capture.
-- **`MethodBadge` vs sidebar text slot.** The sidebar uses a `min-width: 34px`
-  text slot, not `MethodBadge`. Decide: adopt the badge or keep the slot.
-- **Light hover == selection** (`#eaeaea` both). Source-accurate; decide
-  whether to keep only the accent rail as the differentiator.
-- **Request tab hover/preview.** No hover token; preview is italics only.
-  Decide whether to add a hover tint (the design system has none).
-- **`ResponsiveTabs` 60 px overflow reserve** for an 18 px chevron. Decide
-  reproduce or right-size.
-- **Assertion operator normalisation** (see Resolved) — keep raw ids or relabel
-  all.
-- **Preferences/AI/OpenAPI/gRPC/WebSocket have no captures**; those specs are
-  source-derived only. Fine for deferred scope; needs capture if promoted.
+- **Preferences / environments surfaces have no captures**; those specs are
+  source-derived only. Needs: capture if those screens get a visual pass.
 
 ## 6. Verification plan
 

@@ -70,3 +70,21 @@ Owner history: zed-design (claimed 2026-11-11T16:30Z)
   0 past EOF. `go build ./...` and `go test ./...` green.
 - Notes: the map now states it is COMPLETE for the pinned commit, with only
   capture-dependent items open. Agents can run verify.py after edits.
+
+### 2026-11-11T18:40Z — zed-design
+
+- Did: resolved the map's remaining "decide" items and recorded them as
+  `ui-map/decisions.md` (R-1..R-7), so implementers are not blocked on them.
+  - R-1 sidebar verbs use `RequestMethod` (11px, 34px slot, >5-char verbs
+    truncated to 3, grpc/ws/gql labels), not `MethodBadge`.
+  - R-2 no request-tab hover tint (source has none; only the close gradient).
+  - R-3 preview tabs are italic only; no preview colour token.
+  - R-4 assertion operators keep raw ids except eq/neq -> equals/notEquals.
+  - R-5 secret masking is one `*` per character everywhere (corrects an
+    earlier wrong "three styles" note).
+  - R-6 `input.background` is a source bug; use `input.bg`.
+  - R-7 shortcuts are global (Cmd/Ctrl J at providers/Hotkeys/index.js:386).
+- Tests: `python3 ui-map/_tools/verify.py` -> 1,577 citations, 0 unresolved,
+  0 past EOF. `go build ./...` and `go test ./...` green.
+- Notes: only capture-dependent items remain open (sidebar indent depth,
+  screenshot drift, uncaptured Preferences/environments surfaces).

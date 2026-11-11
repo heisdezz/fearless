@@ -248,10 +248,10 @@ error variant (`components/StatusDot/index.js:3-9`).
 1. **Script pill tab pre-selection rule** is verified
    (`utils/tabs:15-19`): with no stored sub-tab, an existing Pre Request script
    opens `pre-request`, otherwise `post-response`.
-2. **Assert operator labels** are raw ids (`gt`, `gte`, `startsWith` …) except
-   `eq`/`neq`; source comments describe display names (`greater than`,
-   `starts with` …) that are not used (`AssertionOperator/index.js:3-29` vs
-   `:72-83`). Which form the Go port should show is a product decision.
+2. **RESOLVED — assert operator labels** are raw ids (`gt`, `gte`, `startsWith` …)
+   except `eq`/`neq` (`equals`/`notEquals`), matching source
+   (`components/RequestPane/Assertions/AssertionOperator/index.js:72-83`).
+   Keep this; see `decisions.md` R-4.
 3. **Assert add-row pre-filled value `'eq '`** means an untouched new row still
    round-trips a string; verify the persisted JSON shape matches
    (`value: 'eq '`).

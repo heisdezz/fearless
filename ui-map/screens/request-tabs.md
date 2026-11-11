@@ -380,11 +380,11 @@ All tab labels above are literal JSX text. `src/i18n/translation/en.json` has no
    from a different theme preset (e.g. cyberdream/dracula) where `bg` and `requestTabs.bg`
    differ more strongly. This file follows source; a visual diff is needed before locking
    the Go layout.
-2. **Hover feedback.** Source gives no background change on tab hover (`StyledWrapper.js`
-   has no `li:hover` rule); only the close gradient appears. If the Go port wants a hover
-   tint, it must pick one explicitly — the design system has no `requestTabs.hoverBg` token.
-3. **Preview tabs.** `tab.preview` drives italics only. No separate `preview` colour token
-   exists; a Go port should not invent one.
+2. **RESOLVED — no hover tint.** Source has no `:hover` rule on request tabs
+   (`components/RequestTabs/StyledWrapper.js`); the close gradient is the only
+   hover feedback. Do not add a tint; see `decisions.md` R-2.
+3. **RESOLVED — preview tabs are italic only.** No preview colour token exists;
+   see `decisions.md` R-3.
 4. **`CreateUntitledRequest`** is not mounted by `RequestTabs` at this commit (no import in
    the tree). Its menu order (HTTP, GraphQL, WebSocket, gRPC) therefore has no live
    placement; recorded for checklist completeness.

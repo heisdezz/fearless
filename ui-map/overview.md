@@ -47,6 +47,7 @@ come from `ui-map/_tools/dump-theme.mjs` (run from `bruno/`).
 | `components/*.md`  | One file per reusable component: visual spec, variants, states                                          |
 | `widgets.md`       | Rich-widget requirements ranked MUST-HAVE / NICE-TO-HAVE, editor syntax colours                         |
 | `go-ui-notes.md`   | Build order, browser-only behaviour needing a native approach, open questions                           |
+| `decisions.md`     | Resolved product/source choices (sidebar verbs, hover, labels, masking) so implementers do not guess |
 
 ## Checklist — every `src/components/*` entry appears in the map
 

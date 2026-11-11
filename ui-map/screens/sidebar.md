@@ -544,11 +544,13 @@ strings in the cited source lines.
    `RequestTabs/index.js:139-144,191-198`) and gates Mock Servers behind a beta flag
    (`Sidebar/index.js:20,33-38`). The capture is therefore from an older/newer build than the
    pinned commit; this file follows source.
-4. **`MethodBadge` in the sidebar.** The component exists but is unused by the sidebar
-   (`ui/MethodBadge/index.js` has no sidebar import). If the Go port wants the badge look,
-   the 52 px slot and `font.size.xs`/weight `600` are available; otherwise use the
-   `min-width: 34px` text slot described in §4.4.
-5. **Delete dark token.** `design-system.md` §1.5 says DELETE dark `#e06552`, `tokens.json`
+4. **RESOLVED — sidebar verbs use `RequestMethod`, not `MethodBadge`.**
+   `components/Sidebar/Collections/Collection/CollectionItem/RequestMethod/index.js:15-17`
+   truncates verbs longer than 5 characters to 3 (`OPTIONS` -> `OPT`), shows
+   `grpc`/`ws`/`gql` for non-HTTP items, and is 11 px in a `min-width: 34px` slot
+   (`StyledWrapper.js:3-8`). See `decisions.md` R-1. `MethodBadge` (52 px, full
+   verb) is only for the request editor and tabs.
+5. **RESOLVED — DELETE dark token.** `design-system.md` §1.5 says DELETE dark `#e06552`, `tokens.json`
    resolves `#dd5540`. Source of truth is the palette (`themes/dark/dark.js`); documentation
    should be reconciled.
 6. **Light theme hover equals selection.** In light both `sidebar.collection.item.bg` and
