@@ -32,6 +32,7 @@ func RegisterBase() {
 	Register(digestProvider{})
 	Register(awsv4Provider{})
 	Register(oauth1Provider{})
+	Register(ntlmProvider{})
 }
 
 // ChainFor builds the auth inheritance chain for one request.

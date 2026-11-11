@@ -87,7 +87,7 @@ _None yet._
 - **Problem:** `internal/core/persistence/spool.go:243` assigns one variable from `s.evictLocked`, which returns two. `go build ./...` and `go vet ./...` fail tree-wide; `internal/core/model`, `internal/core/events` and `internal/app/bus` build and vet clean in isolation.
 - **What I need:** nothing from me; logged so the tree-wide gates are not mistaken for a regression in another package.
 - **Proposed resolution:** `n, err := s.evictLocked(...)` (or `_, err :=`).
-- **Status:** OPEN
+- **Status:** RESOLVED 2026-11-11T05:40Z — `go build ./internal/core/persistence/` is clean.
 
 ## B-005 — ENGINE calls template/model with field names that do not exist
 
@@ -101,4 +101,17 @@ _None yet._
   - `build.BuildInput{Ancestors: ...}` — no such field on the current `BUILD` type.
 - **What I need:** nothing from me; logged so it is not mistaken for a regression in `MODEL`/`TPL`.
 - **Proposed resolution:** use `Vars.PreRequest` and iterate `tplRes.AsMap()`; reconcile the `BUILD` input field with that package's owner.
+- **Status:** RESOLVED 2026-11-11T05:40Z — `go build ./internal/core/engine/` is clean.
+
+## B-006 — transport.Options cannot accept an auth-supplied RoundTripper
+
+- **Date:** 2026-11-11T05:40Z
+- **Package:** `TRANSPORT` (and its `ENGINE` caller)
+- **Agent:** zed-agent-1 (reporter)
+- **Blocked on:** `antigravity` (current `TRANSPORT` owner)
+- **Problem:** `auth.Prepared.Transport` exists and `digestProvider`/`ntlmProvider` both populate it, but nothing consumes it. `transport.Options` (`internal/core/engine/transport/transport.go:52`) has no field for a wrapping `http.RoundTripper`, and `pipeline.go` never reads `authPrep.Transport`. The consequence is that **Digest and NTLM both silently behave as no-ops in a real execution** — their unit tests pass because they drive the provider through `http.Client` directly, not through the pipeline.
+- **Evidence:** `grep -rn "RoundTripper" internal/core/engine/transport/` returns nothing; `transport.Execute` builds its client in `newClient` (`client.go:44`) with no injection point.
+- **What I need:** a field on `Options`, e.g. `WrapTransport func(http.RoundTripper) http.RoundTripper`, applied in `newClient` _before_ assigning to `http.Client.Transport`. `pipeline.go` then passes `authPrep.Transport.Wrap` when non-nil.
+- **Note for the fixer:** wrapping must happen once, around the whole client, not per hop. Digest's retry logic calls `next.RoundTrip` itself, so double-wrapping would double the handshake. Also keep `CheckRedirect` returning `ErrUseLastResponse`, or NTLM will lose its connection between the 401 and the type 3 message (NTLM authenticates a connection, not a request).
+- **Workaround until fixed:** none. Digest/NTLM e2e cannot pass through the pipeline.
 - **Status:** OPEN
