@@ -94,7 +94,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `CONV-INSOMNIA` | Ready | —     | —             | —             |       |
 | `CONV-OPENAPI`  | Ready | —     | —             | —             |       |
 | `CONV-CURL`     | InReview   | antigravity | 2026-11-11T01:18Z | 2026-11-11T01:25Z | Builds, vet-clean, race-clean, 87.6 % cov, import+export+round-trip |
-| `CODEGEN`       | Ready | —     | —             | —             |       |
+| `CODEGEN`       | Claimed | antigravity | 2026-11-11T01:30Z | 2026-11-11T01:30Z | Code snippet generators for cURL, Go, JavaScript, and Python |
 
 ## Phase 7
 
