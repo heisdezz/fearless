@@ -83,7 +83,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | Package          | State | Agent | Claimed (UTC) | Updated (UTC) | Notes |
 | ---------------- | ----- | ----- | ------------- | ------------- | ----- |
 | `SCRIPT-RUNTIME` | InReview   | zed-agent-1 | 2026-11-11T06:55Z | 2026-11-11T07:15Z | goja sandbox; interrupt+promise await; inbuilt-lib gap logged (UQ-B5) |
-| `SCRIPT-BRU-API` | Ready | —     | —             | —             |       |
+| `SCRIPT-BRU-API` | InProgress | zed-agent-1 | 2026-11-11T07:20Z | 2026-11-11T07:20Z | bru/req/res/test/expect host bindings |
 | `SCRIPT-POST`    | Ready | —     | —             | —             |       |
 
 ## Phase 6
@@ -93,7 +93,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `CONV-POSTMAN`  | Ready | —     | —             | —             |       |
 | `CONV-INSOMNIA` | Ready | —     | —             | —             |       |
 | `CONV-OPENAPI`  | Ready | —     | —             | —             |       |
-| `CONV-CURL`     | InProgress | antigravity | 2026-11-11T01:18Z | 2026-11-11T01:18Z | Importer/exporter for cURL commands into model.Item |
+| `CONV-CURL`     | InReview   | antigravity | 2026-11-11T01:18Z | 2026-11-11T01:25Z | Builds, vet-clean, race-clean, 87.6 % cov, import+export+round-trip |
 | `CODEGEN`       | Ready | —     | —             | —             |       |
 
 ## Phase 7
