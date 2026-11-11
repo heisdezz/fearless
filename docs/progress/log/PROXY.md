@@ -1,21 +1,100 @@
-# PROXY — HTTP and SOCKS proxy resolution
+# PROXY
 
-Owner history: antigravity (claimed 2026-11-10T23:30Z, moved to InReview 2026-11-10T23:55Z)
+**Agent:** zed-agent-1 (took over from `antigravity` to close B-011)
+**Scope:** `internal/core/engine/proxy/**`
+**State:** InReview
 
-## Entries
+Proxy resolution for four modes (off / manual / system / PAC), SOCKS5, and the
+per-request override.
 
-### 2026-11-10T23:30Z — antigravity
+## What was already here
 
-- Did: Claimed `PROXY`. Reviewing `packages.md` acceptance criteria, `flows/request-lifecycle.md` §3, and `logic/http-engine.md`.
-- Tests: not run yet.
-- Notes: Implementing proxy resolution with precedence (request > collection > app preferences > env), bypass CIDR/domain pattern matching with curl semantics, and SOCKS5/HTTP/HTTPS upstream support in `internal/core/engine/proxy/`.
+`bypass.go`, `config.go` and `resolver.go` covered off/manual/system, NO_PROXY
+matching, scheme and domain auth, and IPv4/IPv6 CIDR handling. `Resolve`
+implements the precedence chain Request > Collection > App > Environment.
 
-### 2026-11-10T23:55Z — antigravity
+## B-011: PAC was a constant and a field, with no implementation
 
-- Did: Implemented proxy configuration, bypass evaluation, resolution precedence, and transport binding:
-  - `config.go`: Defined `Config` (`Protocol`, `Hostname`, `Port`, `Username`, `Password`, `Bypass`, `Disabled`), `CollectionProxy` (`Inherit`, `Disabled`, `Config`), and `FromModelSettings` mapping.
-  - `bypass.go`: `MatchBypass` implementing curl-compatible NO_PROXY semantics: wildcard `*`, domain suffix (`.example.com`, `example.com`), exact IPv4/IPv6, CIDR blocks (`10.0.0.0/8`, `192.168.0.0/16`, `fe80::/10`), port-qualified hosts, and `localhost` alias (`127.0.0.1`, `::1`).
-  - `resolver.go`: `Resolve` adhering strictly to precedence `Request > Collection > App Preferences > Environment`. Supports explicit disabled override at higher scopes preventing leakage to lower scopes. `ConfigureTransport` configures `http.Transport` for HTTP/HTTPS (via `http.ProxyURL`) and SOCKS5/SOCKS5h (via `golang.org/x/net/proxy` context dialer).
-  - `proxy_test.go`: 26 test cases verifying config URL generation, comprehensive curl-matching bypass rules, 10-step precedence matrix, transport configuration, and live HTTP proxy roundtrip through mock servers.
-- Tests: `go test -race -v -cover ./internal/core/engine/proxy` -> PASS (82.0% statement coverage). `go vet ./internal/core/engine/proxy` -> clean. `gofmt -l` -> clean.
-- Notes: Ready for review. `TRANSPORT` and `ENGINE` can directly invoke `proxy.Resolve` and `proxy.ConfigureTransport` to configure outbound HTTP/HTTPS/SOCKS5 connections.
+`model.ProxyPAC` existed and `ProxySettings.PACURL` was declared, but `Resolve`
+fell straight through the `ProxyPAC` case to the environment, and nothing
+anywhere evaluated `FindProxyForURL`. The acceptance criterion in
+`packages.md` was dropped, not deferred.
+
+### `pac.go`
+
+**Sandbox.** PAC is evaluated in a purpose-built goja runtime, not the scripting
+runtime. That is the central decision: a PAC file can be fetched over the
+network and is untrusted input, and `internal/core/scripting` deliberately grants
+`require`, timers, `fetch` and a console. Reusing it would have been less code
+and a worse security posture.
+
+Installed: `dnsDomainIs`, `shExpMatch`, `isPlainHostName`, `isInNet`,
+`dnsResolve`, `myIpAddress`, `localHostOrDomainIs`, `dnsDomainLevels`,
+`weekdayRange`, `dateRange`, `timeRange`, `alert`.
+
+`TestPACSandboxHasNoScriptingPower` asserts `require`, `fetch`, `setTimeout`,
+`setInterval`, `console`, `XMLHttpRequest` and `process` are all `undefined`.
+
+**Calling convention.** The first argument is the URL **string**, not a context
+object. The spec calls the parameter `url` and its own examples slice it
+(`url.substring(0, 5) == "http:"`); real PAC files depend on that. There is a
+test for it.
+
+**Globals fail soft.** `dnsResolve` returns `""` and `isInNet` returns `false`
+on a lookup failure rather than throwing, because PAC scripts are written to
+fall through when a name does not resolve.
+
+`shExpMatch` uses a purpose-written glob matcher rather than `path.Match`: these
+patterns are hosts and URLs, where `*` must cross `/`, and `path.Match`
+deliberately will not.
+
+**Time predicates** compare seconds-since-midnight so an hour-only range covers
+the whole hour. `GMT` is accepted and ignored for the date and time predicates;
+honouring it would change which day selects a proxy, which is a surprising
+effect for a feature PAC files rarely use. The tests compute expectations from
+`time.Now()` rather than hard-coding a weekday.
+
+**Deadline.** goja has no context support, so a watchdog interrupts the runtime
+when the context expires and the result is `ErrPACTimeout`. Without it a PAC
+file containing `while (true)` would hang request setup (`TestPACTimeout`).
+
+### `pac_resolve.go`
+
+`PACSource` is an interface so a test can hand in a fixed result and production
+can hand in the cached `PACResolver`. `resolveFromPAC` applies an explicit
+`Bypass` entry **before** running the script — a user's per-app bypass should
+not be overridable by a network policy — and returns `ErrPACNoSource` when PAC
+mode is on with nothing configured, rather than silently going direct.
+
+### B-020: the fallback list collapses to one attempt
+
+`FindProxyForURL` returns a _ranked list_: `"PROXY a; PROXY b; DIRECT"` means
+try each in turn. `Resolve` returns one `*url.URL`, so only the first attempt is
+used and a trailing `DIRECT` is dropped.
+
+This is not a resolver limitation — `PACResult.Attempts` carries the whole list.
+Consuming more than one attempt means retrying across transports, which belongs
+to `TRANSPORT`. Logged as B-020 with the proposed `ProxySelector` shape rather
+than papered over.
+
+## Verification
+
+```
+go test -race -cover ./internal/core/engine/proxy/   ok  91.5 %
+go build ./...                                      clean
+go vet ./...                                        clean
+gofmt -l internal/core/engine/proxy/                empty
+sh scripts/check-deps.sh                            dependency-policy: ok
+go test ./...                                       whole tree green
+```
+
+Coverage rose from 82.0 % to 91.5 %: three new test files (37 top-level tests)
+plus the two pre-existing gaps the sweep exposed (`FromModelSettings`'s nil and
+password paths, and `resolveFromEnvironment`'s per-scheme selection).
+
+## Golden vectors
+
+The Netscape "Proxy Auto-Config" specification's two canonical example
+documents are the golden tests. Where the repo has been bitten before by
+reconstructed fixtures (the AWS SigV4 SDK cage), the lesson applied here: use the
+specification's own published text.

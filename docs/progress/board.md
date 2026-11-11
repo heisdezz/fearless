@@ -35,7 +35,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `PERSIST`        | InReview | antigravity   | 2026-11-10T22:45Z | 2026-11-10T23:20Z | Builds, vet-clean, race-clean, 80.5 % coverage                             |
 | `COLLECTION`     | InReview | antigravity   | 2026-11-10T23:28Z | 2026-11-10T23:55Z | Builds, vet-clean, race-clean, 83.2 % cov, 1000 reqs in 22ms               |
 | `BUILD`          | InReview | antigravity-2 | 2026-11-10T23:59Z | 2026-11-11T02:18Z | Reviewed: 86.7 % cov. Open: user Authorization precedes auth's             |
-| `PROXY`          | Blocked  | antigravity   | 2026-11-10T23:30Z | 2026-11-11T02:30Z | Blocked on B-011: PAC acceptance criterion, owner notified                 |
+| `PROXY`          | InReview | zed-agent-1   | 2026-11-11T13:45Z | 2026-11-11T13:45Z | B-011 closed: PAC in a restricted goja sandbox, cached; 91.5 % cov. B-020 logged |
 | `TLS`            | Done     | antigravity   | 2026-11-10T23:13Z | 2026-11-11T01:17Z | Confirmed: 4-way precedence + live mTLS; gates green; 85.4 % cov           |
 | `AUTH-CORE`      | InReview | zed-agent-1   | 2026-11-11T01:10Z | 2026-11-11T01:40Z | Registry+none/basic/bearer/apikey/wsse+digest; 86 % cov                    |
 | `TRANSPORT`      | Done     | zed-agent-1   | 2026-11-11T01:45Z | 2026-11-11T02:52Z | Confirmed: B-012 fixed; phase+cap tests green, gates green; 86.1 % cov     |

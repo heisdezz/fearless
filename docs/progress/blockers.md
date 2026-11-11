@@ -515,3 +515,83 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
 - **Why I did not fix it:** `FORMAT-BRU` is not in my ownership set
   (`docs/progress/ownership.md`), and deleting another owner's file is exactly
   the kind of cross-agent edit the protocol forbids.
+
+## B-020 — PAC's ranked fallback list collapses to one attempt
+
+- **Date:** 2026-11-11T13:40Z
+- **Package:** `PROXY` / `TRANSPORT`
+- **Agent:** zed-agent-1
+- **Blocked on:** `TRANSPORT`'s owner (a design change, not a bug fix)
+- **Problem:** `FindProxyForURL` returns a **ranked list**: `"PROXY a:3128;
+  PROXY b:3128; DIRECT"` means *try a, then b, then go direct*. `Resolve`
+  returns a single `*url.URL` and `ConfigureTransport` sets
+  `http.Transport.Proxy` to `http.ProxyURL` or a socks5 `DialContext`, so
+  exactly one attempt is expressible. `resolveFromPAC`
+  (`internal/core/engine/proxy/pac_resolve.go`) therefore uses the **first**
+  attempt and drops the rest, including a trailing `DIRECT` fallback.
+- **Impact:** a client whose first PAC proxy is down fails the request where a
+  full PAC client would fall through to the second proxy. That is a real
+  behavioural gap against browsers, and PAC files *do* rely on the fallback —
+  it is the reason the syntax is a list. It does not affect the common
+  single-proxy PAC file.
+- **Why this is not a `PROXY` bug:** producing a *ranked list* is `PROXY`'s job
+  and it does that (`PACResult.Attempts`). Consuming more than one attempt means
+  retrying across transports, which is `TRANSPORT`'s terrain. Pinning it in the
+  resolver would put retry policy in the wrong layer.
+- **Proposed resolution:** add a `ProxySelector` interface to `TRANSPORT` whose
+  `Proxy(req)` returns the next attempt after a dial failure, driven by
+  `PACResult.Attempts`; `Resolve` keeps returning the first attempt so the
+  current single-URL call sites keep working. Alternatively, accept it and
+  record the decision — Bruno itself delegates PAC to the OS, so matching Bruno
+  does not require it.
+- **Status:** OPEN — documented, not blocking the `B-011` acceptance criterion,
+  which asks for PAC *evaluation* with the restricted globals (now implemented).
+
+## B-011 — RESOLVED
+
+- **Date:** 2026-11-11T13:45Z
+- **Resolved by:** zed-agent-1 (took `PROXY` over from `antigravity` after it
+  sat idle; the original owner is free to review)
+- **Refers to:** B-011
+- **What was wrong:** the PAC mode existed as a `model.ProxyMode` constant and a
+  `PACURL` field, but `Resolve` fell straight through to the environment, and
+  nothing anywhere evaluated `FindProxyForURL`. The acceptance criterion
+  (`docs/progress/packages.md`, `PROXY`) was silently dropped rather than
+  deferred.
+- **Fix — `internal/core/engine/proxy/pac.go` (new):**
+  - `PACEvaluator` runs a PAC document in a **purpose-built goja runtime** with
+    only the Netscape safe subset installed: `dnsDomainIs`, `shExpMatch`,
+    `isPlainHostName`, `isInNet`, `dnsResolve`, `myIpAddress`,
+    `localHostOrDomainIs`, `dnsDomainLevels`, `weekdayRange`, `dateRange`,
+    `timeRange`, `alert`. No `require`, timers, `fetch` or `console` — a PAC
+    file may be fetched from the network and is untrusted
+    (`TestPACSandboxHasNoScriptingPower` pins this). This is deliberate: the
+    scripting sandbox is the wrong base, because it grants exactly the power PAC
+    must not have.
+  - `ParsePACResult` implements the return grammar (`PROXY`/`HTTPS`/`SOCKS5`/
+    `SOCKS`/`DIRECT`, semicolon-separated), skipping unknown directives and
+    tolerating a missing port.
+  - `PACResolver` fetches the document, caches it for `CacheTTL`
+    (default 15 min), caches a **fetch failure for at most one minute** so a
+    transient error does not pin the app to "no proxy", and exposes
+    `Invalidate()` for a settings change.
+- **Fix — `resolver.go`:** `ProxyPAC` now calls `resolveFromPAC` instead of
+  falling through. It returns `ErrPACNoSource` when PAC mode is on with no
+  resolver rather than quietly going direct through the environment, and an
+  explicit `Bypass` entry is applied *before* the script runs.
+- **Fix — `pac_resolve.go` (new):** the `PACSource` interface, the
+  first-attempt conversion, and `NewPACSource`.
+- **Verified against published behaviour:** the two canonical examples from the
+  Netscape PAC specification are the golden tests
+  (`TestPACSpecExamples`, `TestPACLocalSubnetExample`), plus the calling
+  convention that the first argument is the URL **string**
+  (`TestPACReceivesURLString`), which real PAC files slice with `substring`.
+  `dnsResolve`/`isInNet` are tested with an injected resolver, and the
+  infinite-loop case is interrupted by the deadline (`TestPACTimeout`).
+- **Remaining gap, logged separately:** B-020 — PAC's ranked fallback list
+  collapses to its first attempt. The acceptance criterion asks for evaluation,
+  not for multi-attempt failover, and the split is a `TRANSPORT` concern.
+- **Verification:** `go test -race -cover ./internal/core/engine/proxy/` →
+  **91.5 %** (was 82.0 %; 3 new test files, 37 new top-level tests). `go build ./...`,
+  `go vet ./...`, `gofmt -l`, `scripts/check-deps.sh` all clean; whole tree
+  green. No new dependency — goja was already present under B-007.

@@ -30,6 +30,15 @@ type ResolutionInput struct {
 	// AppSettings is the global proxy configuration from application preferences.
 	AppSettings *model.ProxySettings
 
+	// PACResolver evaluates PAC mode. It is required only when AppSettings.Mode
+	// is ProxyPAC; a nil resolver there is an error rather than a silent fall
+	// through to the environment, because silently ignoring a PAC file would
+	// send traffic through the wrong route.
+	PACResolver PACSource
+
+	// Context bounds PAC fetching and evaluation. Nil means Background.
+	Context context.Context
+
 	// LookupEnv allows overriding os.LookupEnv for deterministic testing.
 	LookupEnv func(string) (string, bool)
 }
@@ -116,7 +125,7 @@ func Resolve(input ResolutionInput) (*url.URL, error) {
 		case model.ProxySystem:
 			// Fall through to system environment variables
 		case model.ProxyPAC:
-			// PAC script support is deferred; fall through to environment
+			return resolveFromPAC(input)
 		}
 	}
 
