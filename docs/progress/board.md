@@ -45,7 +45,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `CMD-ENV`        | InReview   | antigravity-2 | 2026-11-11T00:52Z | 2026-11-11T00:58Z | Builds, vet-clean, race-clean, 88.5 % cov, select/save/create/delete   |
 | `CMD-SETTINGS`   | InProgress | antigravity-2 | 2026-11-11T01:02Z | 2026-11-11T01:02Z | Preferences saving, loading, migration & OAuth token cache commands    |
 | `CMD-RUNNER`     | Ready      | —             | —                 | —                 | Command layer for the runner; `ADV-RUNNER` builds on it                |
-| `CLI`            | InProgress | antigravity   | 2026-11-11T00:55Z | 2026-11-11T00:55Z | Headless CLI runner entry: run, import, export, env flags, exit codes  |
+| `CLI`            | InReview   | antigravity   | 2026-11-11T00:55Z | 2026-11-11T01:06Z | Builds, vet-clean, race-clean, 82.8 % cov, zero GUI deps, runs corpus  |
 
 ## Phase 2
 
@@ -71,7 +71,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | Package         | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                       |
 | --------------- | ---------- | ----------- | ----------------- | ----------------- | ------------------------------------------------------------------------------------------- |
 | `AUTH-DIGEST`   | InReview   | zed-agent-1 | 2026-11-11T02:55Z | 2026-11-11T03:05Z | Wired into Apply; end-to-end challenge test                                                 |
-| `AUTH-NTLM`     | Ready      | —           | —                 | —                 |                                                                                             |
+| `AUTH-NTLM`     | InProgress | zed-agent-1 | 2026-11-11T05:15Z | 2026-11-11T05:15Z | Custom NTLMv2 provider (Bruno delegates to axios-ntlm)                                      |
 | `AUTH-OAUTH1`   | InReview   | zed-agent-1 | 2026-11-11T04:20Z | 2026-11-11T05:10Z | RFC 5849 signing; openssl-verified base string; header/query/body placement, body hash, RSA |
 | `AUTH-OAUTH2`   | Ready      | —           | —                 | —                 | Needs `PLATFORM`                                                                            |
 | `AUTH-AWSV4`    | InProgress | zed-agent-1 | 2026-11-11T03:40Z | 2026-11-11T03:40Z | SigV4 against AWS golden vectors                                                            |
