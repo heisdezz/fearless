@@ -132,6 +132,31 @@ A package may move to `InReview` only when **all** of these hold:
 
 ---
 
-## 9. If you are the only agent
+## 9. Checking your change set (do this before reporting)
+
+`scripts/check-ownership.sh` enforces `ownership.md` against your diff:
+
+```sh
+# Name your package: fails if you touched anything outside its row.
+scripts/check-ownership.sh --pkg UI-THEME
+
+# No package: fails on any file that no package owns at all.
+scripts/check-ownership.sh
+
+# Check a commit range instead of the working tree.
+scripts/check-ownership.sh --range origin/master..HEAD
+```
+
+The shared progress files in §6 are always allowed and are not reported:
+`board.md`, your `log/<package>.md`, and append-only `decisions.md` /
+`blockers.md`.
+
+A failure is a contract violation — either revert the stray file, or raise the
+split in `blockers.md`. Do not work around it.
+
+Also run `python3 ui-map/_tools/verify.py` after touching anything in
+`ui-map/`; it fails on a broken citation or doc link.
+
+## 10. If you are the only agent
 
 Follow the same protocol. The lifecycle, the log and the board are what make a later hand-off — human or agent — safe. Skipping them costs far more later than it saves now.

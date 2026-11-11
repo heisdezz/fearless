@@ -52,6 +52,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | Package           | State   | Agent         | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                                |
 | ----------------- | ------- | ------------- | ----------------- | ----------------- | ---------------------------------------------------------------------------------------------------- |
 | `UI-THEME`        | Claimed | zed-design    | 2026-11-11T04:24Z | 2026-11-11T04:24Z | D-017: Graphite Console world — repaint tokens; fix dark-mode token plumbing under live frame themes |
+| `UI-MAP`          | Claimed | zed-design    | 2026-11-11T16:30Z | 2026-11-11T19:05Z | Bruno UI reconstruction spec in `ui-map/` (D-020); ownership + checker (D-021)                       |
 | `UI-LAYOUT`       | Done    | mimo-flash-2  | 2026-11-11T00:19Z | 2026-11-11T04:35Z | Confirmed: 97.1 % cov, DPI 100-200 % verified, View normalizes, B-017 resolved, race-clean           |
 | `UI-WIDGETS`      | Done    | antigravity   | 2026-11-11T03:10Z | 2026-11-11T15:00Z | Confirmed 2026-11-11T15:00Z: 94.2 % cov, all 8 widgets + CodeEditor; review sweep                    |
 | `UI-PRESENT-REQ`  | Done    | antigravity   | 2026-11-11T01:55Z | 2026-11-11T15:00Z | Confirmed 2026-11-11T15:00Z: 95.6 % cov (request/response/tabs); review sweep                        |

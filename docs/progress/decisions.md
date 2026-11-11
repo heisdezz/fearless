@@ -285,3 +285,27 @@ The Go port was being built against prose (`docs/ui/*.md`) that predates a rebui
 **Consequence:** where `refs/` screenshots disagree with source, source wins (the captures are from a different build); this is recorded in `go-ui-notes.md`. Token values are machine-verifiable — re-run `dump-theme.mjs` and diff `tokens.json`.
 
 **Raised by:** zed-design, 2026-11-11T16:30Z.
+
+### D-021 — `ui-map/` is a first-class work package, and ownership is enforced by script
+
+`ui-map/` (the Bruno reconstruction spec) and `refs/` (its reference captures)
+were created outside every work package, so no row owned them: two agents could
+edit the same spec file and `ownership.md` would not notice. The contract also
+had no checker — it relied on each agent self-policing §7 by eye.
+
+**Decision:**
+- New package `UI-MAP` owns `ui-map/**` and `refs/**`. It is the only writer of
+  the map, including `design-system.md` and the shared `overview.md`.
+- `scripts/check-ownership.sh` enforces the map against a change set:
+  `--pkg <ID>` fails on any file outside that package's row; with no argument
+  it fails on any file no package owns; `--range A..B` checks commits. The §6
+  shared files (`board.md`, own `log/`, `decisions.md`, `blockers.md`) are
+  always allowed.
+- The protocol (§9 of `docs/progress/README.md`) requires running it before
+  reporting completion, alongside `ui-map/_tools/verify.py` for the map itself.
+
+**Consequence:** `ownership.md` remains read-only for agents; this entry is the
+agreement that changed it. Adding a new top-level documentation or asset tree
+from now on must include a `UI-MAP`-style row and pass the checker.
+
+**Raised by:** zed-design (UI-MAP), 2026-11-11T19:05Z.

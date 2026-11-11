@@ -88,3 +88,20 @@ Owner history: zed-design (claimed 2026-11-11T16:30Z)
   0 past EOF. `go build ./...` and `go test ./...` green.
 - Notes: only capture-dependent items remain open (sidebar indent depth,
   screenshot drift, uncaptured Preferences/environments surfaces).
+
+### 2026-11-11T19:05Z — zed-design
+
+- Did: made the parallel-agent protocol cover this package and enforced it.
+  - Registered `UI-MAP` in `ownership.md` (`ui-map/**`, `refs/**`) — the map and
+    its captures were previously owned by no row (D-021).
+  - Added `scripts/check-ownership.sh`: `--pkg <ID>` fails on a file outside
+    that package's row, no argument fails on unowned files, `--range` checks
+    commits. §6 shared files are always allowed.
+  - Documented the check as protocol step §9 in `docs/progress/README.md`.
+- Tests: checker verified in both directions — `--pkg UI-MAP` passes on UI-MAP
+  work, `--pkg UI-THEME` fails on it, and an unowned path is reported. The
+  checker also flagged my own edit to `ownership.md`, which is the intended
+  behaviour for a read-only contract file.
+  `python3 ui-map/_tools/verify.py`: 1,577 citations, 0 unresolved, 0 past EOF.
+- Notes: `ownership.md` is read-only under §6; the edit is authorised by D-021,
+  and any future top-level doc/asset tree must add a row and pass the checker.

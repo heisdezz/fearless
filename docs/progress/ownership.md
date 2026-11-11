@@ -75,6 +75,7 @@ Split so that no two UI packages share a file. The rule of thumb: **one screen p
 | `UI-SCREEN-SET`   | `internal/ui/screens/settings/**`                                                                |
 | `UI-DIALOGS`      | `internal/ui/dialogs/**`                                                                         |
 | `PLATFORM`        | `internal/platform/**` (`dialog/`, `secrets/`, `browser/`, `watcher/`, `windowstate/`)           |
+| `UI-MAP`          | `ui-map/**`, `refs/**`, `scripts/check-ownership.sh`                                             |
 
 ---
 
