@@ -93,7 +93,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `CONV-POSTMAN`  | Ready | —     | —             | —             |       |
 | `CONV-INSOMNIA` | Ready | —     | —             | —             |       |
 | `CONV-OPENAPI`  | Ready | —     | —             | —             |       |
-| `CONV-CURL`     | Ready | —     | —             | —             |       |
+| `CONV-CURL`     | Claimed | antigravity | 2026-11-11T01:18Z | 2026-11-11T01:18Z | Importer/exporter for cURL commands into model.Item |
 | `CODEGEN`       | Ready | —     | —             | —             |       |
 
 ## Phase 7
