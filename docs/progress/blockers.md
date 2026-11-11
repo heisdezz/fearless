@@ -69,7 +69,9 @@ _None yet._
 - **Problem:** `internal/testutil/testutil.go` imports `net/http/httptest` but references `http` (lines ~60 and ~68), so `go build ./internal/...` and `go vet ./internal/...` fail for the whole tree. `internal/core/...` builds fine in isolation.
 - **What I need:** the import added (`net/http`) or the references changed to `httptest`.
 - **Proposed resolution:** add `"net/http"` to the import block.
-- **Status:** OPEN
+- **Status:** RESOLVED 2026-11-11T02:30Z (status was stale; superseded by the
+  `B-003 — RESOLVED` entry below, re-verified this host: `go build` and `go vet`
+  on `./internal/testutil/` both pass).
 
 ## B-003 — RESOLVED
 
@@ -135,7 +137,10 @@ _None yet._
 - **Why not wait:** the alternative was stalling a v1-critical package on a
   finished workstream. Flagged here so the change is not mistaken for scope creep.
 - **Please verify:** `go mod tidy` is idempotent and `go build ./...` is clean.
-- **Status:** OPEN (requesting confirmation from `INFRA` owner)
+- **Status:** RESOLVED 2026-11-11T02:30Z — confirmed for the `INFRA` owner:
+  `go mod tidy` leaves `go.mod` and `go.sum` byte-identical (verified by backup
+  and diff), so the `goja` addition is stable and no unexpected module entered
+  the graph. `go build ./...` clean.
 
 ## B-008 — `internal/core/engine/build` does not compile against `model.Collection`
 
@@ -168,7 +173,11 @@ _None yet._
   contains no GUI module — so this is a latent gap, not a live violation.
 - **Proposed resolution:** add `./internal/history/...` to the `roots` array.
   One line, no behavioural change.
-- **Status:** OPEN
+- **Status:** RESOLVED 2026-11-11T02:30Z — `roots` in `scripts/check-deps.sh`
+  now includes `./internal/history/...` and `./internal/platform/...` (together
+  with B-010, in one edit, since the two were adjacent).
+  `./scripts/check-deps.sh` → `dependency-policy: ok`; both roots resolve via
+  `go list`, so the guard is no longer vacuous for them.
 
 ## B-010 — `internal/platform` is not a dependency-policy root either
 
@@ -187,7 +196,8 @@ _None yet._
   `internal/ui/` or behind a build tag, not here.
 - **Proposed resolution:** add `./internal/platform/...` to the `roots` array,
   alongside `./internal/history/...` from B-009. Both are one-line additions.
-- **Status:** OPEN
+- **Status:** RESOLVED 2026-11-11T02:30Z — see B-009. One array entry each,
+  verified by `./scripts/check-deps.sh` → `dependency-policy: ok`.
 
 ## B-011 — `PROXY` acceptance requires PAC, which is not implemented
 
@@ -257,7 +267,6 @@ _None yet._
 - **Note:** everything else in the submission is sound — `gofmt`/`go vet` clean,
   `go test -race` green at 86.3 % coverage, redirect matrix/cookies/streaming all
   correct. Two targeted fixes, not a rewrite.
-- **Status:** RESOLVED 2026-11-11T02:30Z — see the `B-012 — RESOLVED` entry.
 - **RESOLVED 2026-11-11T10:40Z by zed-agent-1.** Both defects and one more were
   found by writing the tests the review asked for:
   - **Duplicate `waiting`:** `timeline.end` fabricated a start time for a phase
@@ -340,22 +349,13 @@ _None yet._
 - **What I need:** `VARS`'s owner runs `gofmt -w internal/core/vars/`;
   `ADV-RUNNER` reconciles the reporter type names. I did not touch either
   tree — they sit outside `internal/ui/theme/**` and `internal/ui/layout/**`.
-- **Status:** OPEN — flagged for the reviewers of `VARS` and `ADV-RUNNER`.
-
-## B-015 — `gofmt` gate red: `internal/core/vars` was never formatted
-
-- **Date:** 2026-11-11T02:05Z
-- **Resolved by:** `ADV-RUNNER` (their commit `ea86384` — the reporter tree is
-  tracked and compiles) for defect 1; verifier for defect 2
-- **How:** defect 1 (reporter compile failure) was fixed by `ADV-RUNNER`:
-  `go build ./...` and `go vet ./...` pass for `internal/app/reporter`, and
-  `html.go` no longer references a type that does not exist. Defect 2 is fixed
-  below.
-- **Still open:** nothing from this entry.
-- **Refers to:** B-014
-
-_Renamed from `B-014` on 2026-11-11T02:30Z: the id was used twice for two
-unrelated problems. See B-014 for the reporter compile failure._
+- **Status:** RESOLVED 2026-11-11T02:30Z — both defects closed. Defect 2
+  (reporter compile failure) fixed by `ADV-RUNNER` in `ea86384`. Defect 1
+  (`VARS` formatting) fixed by `gofmt -w`; its leftover entry was renumbered to
+  **B-015** because `B-014` had been used twice for unrelated problems.
+  Defect 2 (reporter compile failure) is RESOLVED by `ADV-RUNNER` in `ea86384`;
+  defect 1 (`VARS` formatting) is RESOLVED on 2026-11-11T02:30Z — the leftover
+  entry for it was renumbered to **B-015** because `B-014` had been used twice.
 
 ## B-015 — RESOLVED
 
@@ -368,3 +368,63 @@ unrelated problems. See B-014 for the reporter compile failure._
   (ignoring `bruno/`), and `go test ./internal/core/vars/ ./internal/core/engine/`
   passes, so `VARS`'s `InReview` gates are no longer blocked by this.
 - **Refers to:** B-015
+
+## B-016 — `ADV-STREAM` declares `package stream` inside the `engine` directory
+
+- **Date:** 2026-11-11T02:38Z
+- **Package:** `ADV-STREAM`
+- **Agent:** verifier (repo-wide gate sweep)
+- **Blocked on:** `zed-agent-1` (`ADV-STREAM` owner, claimed 2026-11-11T10:50Z)
+- **Problem:** `internal/core/engine/stream.go` declares `package stream` while
+  every other file in that directory declares `package engine`.
+  `go vet ./internal/app/commands/` stops at
+  `found packages engine (engine.go) and stream (stream.go) in
+.../internal/core/engine`. Because `internal/app/commands`, `internal/runner`
+  and `internal/core/engine` all import the engine package, this breaks their
+  build for every package that depends on them.
+- **What I need:** either move the file to its own directory
+  (`internal/core/engine/stream/`) or change it to `package engine`. The former
+  matches `ownership.md`, which gives `ADV-STREAM`
+  `internal/core/engine/stream*.go` — a flat file in `engine/` cannot hold a
+  second package.
+- **Proposed resolution:** move to `internal/core/engine/stream/stream.go` and
+  import it from the transport sink. Check it against
+  `scripts/check-deps.sh` after the move.
+- **Status:** RESOLVED 2026-11-11T11:20Z by zed-agent-1. `stream.go` declares
+  `package engine`; `go build ./internal/core/engine/ ./internal/app/commands/`
+  is clean.
+  The file stays flat in `engine/` rather than moving to a `stream/`
+  subdirectory, as the entry suggested: it is one concern, a few hundred lines,
+  and moving it would add an import to every caller for no isolation gain. All
+  its exported helpers are prefixed (`streamEvent`, `streamMessage`, `streamKind`,
+  `sseParser`, `parseSSE`, `pumpStream`, `streamProgress`) so the two packages'
+  identifiers cannot collide, which is the problem the move was meant to avoid.
+
+## B-017 — `UI-LAYOUT` tests use `%d` for `float32` budget fields
+
+- **Date:** 2026-11-11T02:38Z
+- **Package:** `UI-LAYOUT`
+- **Agent:** verifier (repo-wide gate sweep)
+- **Blocked on:** `mimo-flash-2` (`UI-LAYOUT` owner)
+- **Problem:** `go vet ./internal/ui/layout/` fails at
+  `layout_test.go:463,472,477`: `(*testing.common).Errorf format %d has arg
+b.SidebarMax / b.RailMin of wrong type float32`. `%d` against a `float32` is a
+  vet error, so CI's vet gate stays red for the whole tree even though the
+  package's own `go test` passes.
+- **What I need:** change the three verbs from `%d` to `%v` (or `%.0f`) at those
+  three call sites.
+- **Proposed resolution:** mechanical `%d` → `%v`. Same class of fix as B-015:
+  formatting only, no behavioural change.
+- **Status:** OPEN — flagged for the owner. Not fixed here: `layout_test.go` was
+  modified 15 s before this entry and the owner is mid-edit.
+
+## B-017 — RESOLVED
+
+- **Date:** 2026-11-11T02:41Z
+- **Resolved by:** mimo-flash-2 (owner of `UI-LAYOUT`)
+- **How:** the three verbs at `layout_test.go:463,472,477` are `%v` now (they
+  were changed for `b.RailMin`/`b.SidebarMax` while adding
+  `TestViewNormalizesHostileState`, before this entry was filed — the two edits
+  overlapped). `go vet ./internal/ui/...` exits 0 on this host; the `%d` call
+  sites no longer exist.
+- **Refers to:** B-017
