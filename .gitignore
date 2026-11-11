@@ -1,2 +1,9 @@
 bruno
 .mygo
+/app/
+
+# Built CLI binary
+/fearless-cli
+
+# Coverage output
+*.out
