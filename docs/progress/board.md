@@ -62,8 +62,8 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `UI-SCREEN-NAV`   | InProgress | antigravity-2 | 2026-11-11T04:05Z | 2026-11-11T04:05Z | Claimed: navigation/sidebar explorer screen (collection tree, folders, environment selector)     |
 | `UI-SCREEN-SHELL` | InReview   | mimo-flash-2  | 2026-11-11T02:43Z | 2026-11-11T03:01Z | 100 % cov, race×5 clean. Pure view + Actions; goldens for light/dark theme change                |
 | `UI-SCREEN-SET`   | InProgress | antigravity   | 2026-11-11T04:09Z | 2026-11-11T04:09Z | Claimed: settings panes (Preferences and Collection/Folder Settings)                             |
-| `UI-DIALOGS`      | Ready      | —             | —                 | —                 |                                                                                                  |
-| `UI-APP`          | Ready      | —             | —                 | —                 |                                                                                                  |
+| `UI-DIALOGS`      | InProgress | zed-agent-1   | 2026-11-11T12:10Z | 2026-11-11T12:10Z | Claimed: confirmations, prompt-variable modal, import/export, save-transient                     |
+| `UI-APP`          | InProgress | mimo-flash-2  | 2026-11-11T03:18Z | 2026-11-11T03:18Z | Claimed: root view, menu bar, keybinding router; composes UI-SCREEN-SHELL as the real root        |
 | `PLATFORM`        | InReview   | zed-agent-1   | 2026-11-11T09:10Z | 2026-11-11T09:35Z | Six OS interfaces + fakes, real loopback listener; 89.7 % cov                                    |
 
 ## Phase 4
@@ -98,14 +98,14 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 
 ## Phase 7
 
-| Package          | State      | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                                |
-| ---------------- | ---------- | ----------- | ----------------- | ----------------- | -------------------------------------------------------------------- |
-| `ADV-STREAM`     | InReview   | zed-agent-1 | 2026-11-11T10:50Z | 2026-11-11T12:02Z | B-018 fixed: post-cancel fragment dropped, cancel beats EOF; 2 new tests; 84.9 % cov |
-| `ADV-RUNNER`     | InReview   | antigravity | 2026-11-11T02:35Z | 2026-11-11T02:18Z | Owner-reported only; not reviewed                                    |
-| `ADV-GRPC`       | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                                                    |
-| `ADV-WS`         | Deferred   | —           | —                 | —                 | Out of v1 (D-011)                                                    |
-| `ADV-HISTORY`    | InReview   | zed-agent-1 | 2026-11-11T08:50Z | 2026-11-11T09:05Z | JSONL store per D-011; UI half blocked on UI-SCREEN-RESP; 87.5 % cov |
-| `ADV-EXTENSIONS` | InReview   | antigravity | 2026-11-11T02:50Z | 2026-11-11T02:18Z | Reviewed: 83.3 % cov. Open: unwired                                  |
+| Package          | State    | Agent       | Claimed (UTC)     | Updated (UTC)     | Notes                                                                                |
+| ---------------- | -------- | ----------- | ----------------- | ----------------- | ------------------------------------------------------------------------------------ |
+| `ADV-STREAM`     | InReview | zed-agent-1 | 2026-11-11T10:50Z | 2026-11-11T12:02Z | B-018 fixed: post-cancel fragment dropped, cancel beats EOF; 2 new tests; 84.9 % cov |
+| `ADV-RUNNER`     | InReview | antigravity | 2026-11-11T02:35Z | 2026-11-11T02:18Z | Owner-reported only; not reviewed                                                    |
+| `ADV-GRPC`       | Deferred | —           | —                 | —                 | Out of v1 (D-011)                                                                    |
+| `ADV-WS`         | Deferred | —           | —                 | —                 | Out of v1 (D-011)                                                                    |
+| `ADV-HISTORY`    | InReview | zed-agent-1 | 2026-11-11T08:50Z | 2026-11-11T09:05Z | JSONL store per D-011; UI half blocked on UI-SCREEN-RESP; 87.5 % cov                 |
+| `ADV-EXTENSIONS` | InReview | antigravity | 2026-11-11T02:50Z | 2026-11-11T02:18Z | Reviewed: 83.3 % cov. Open: unwired                                                  |
 
 ---
 
