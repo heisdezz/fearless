@@ -595,3 +595,55 @@ reader, the reader hands back the third fragment, `Pump` writes it to the parser
   **91.5 %** (was 82.0 %; 3 new test files, 37 new top-level tests). `go build ./...`,
   `go vet ./...`, `gofmt -l`, `scripts/check-deps.sh` all clean; whole tree
   green. No new dependency — goja was already present under B-007.
+
+## B-021 — `HEAD` does not build: `internal/core/cookies` was never committed
+
+- **Date:** 2026-11-11T13:55Z
+- **Package:** `COOKIES` (and anyone who imports it)
+- **Agent:** zed-agent-1 (found while verifying a clean checkout)
+- **Blocked on:** `mimo-flash` (`COOKIES`' owner)
+- **Problem:** committed code imports `fearless/internal/core/cookies` —
+  `internal/app/commands/send_request.go:14`, `internal/core/engine/engine.go:7`,
+  `internal/core/engine/transport/transport.go:26`, plus two test files — but
+  `git ls-files internal/core/cookies/` is **empty**. The package exists only as
+  an untracked working-tree directory (`git status` → `?? internal/core/cookies/`).
+- **Proof:** `git archive HEAD | tar -x -C /tmp/cx && cd /tmp/cx && go build ./...`
+  fails with
+  `internal/app/commands/send_request.go:14:2: package fearless/internal/core/cookies is not in std`.
+  A fresh clone of this repository cannot build.
+- **Why it went unnoticed:** every agent verifies in the shared working tree,
+  where the untracked directory is present, so `go build ./...` passes locally.
+  `TRANSPORT`, `ENGINE`, `CMD-SEND` and `COOKIES` were all marked green on that
+  basis.
+- **Impact:** blocks CI and any fresh checkout. Not visible in the working tree,
+  which makes it dangerous — it can survive arbitrarily long and then surface
+  when someone else clones.
+- **What I need:** `mimo-flash` to `git add internal/core/cookies/` and commit it.
+  Nothing else needs to change; the code is present and its tests pass.
+- **Why I did not fix it:** `COOKIES` is not in my ownership set, and committing
+  another owner's package would take responsibility for code I have not
+  reviewed. Flagging rather than adopting.
+- **Related:** the same class of problem is worth a CI guard — a
+  `go build ./...` in a `git archive` of `HEAD`, so an uncommitted dependency
+  fails the build immediately instead of silently.
+
+## B-022 — untracked source directories that committed code depends on
+
+- **Date:** 2026-11-11T13:58Z
+- **Packages:** `UI-APP`, `UI-SCREEN-SHELL`, `UI-LAYOUT` (demo)
+- **Agent:** zed-agent-1 (observer)
+- **Blocked on:** the respective owners
+- **Problem:** besides `internal/core/cookies/` (B-021), these source trees are
+  untracked: `internal/ui/app/` (UI-APP, claimed by mimo-flash-2),
+  `internal/ui/screens/shell/` (UI-SCREEN-SHELL, marked `InReview` on the board),
+  and `internal/ui/layout/demo/`. `internal/ui/app/` currently does **not**
+  compile (`presenters.NewEnvironmentPresenter` argument count,
+  `SidebarPresenter.SetSection`, `LayoutState.SidebarCollapsed`, and more), which
+  is expected mid-write but means `go build ./...` is red in the shared tree for
+  every agent until it lands.
+- **Impact:** `UI-SCREEN-SHELL` shows `InReview` on the board while its source is
+  not in the repository at all — the reviewable artifact is missing. `UI-APP`
+  being red tree-wide will confuse anyone who runs the gate and assumes it is
+  their own regression.
+- **What I need:** owners to commit their trees; a note in each row while it is
+  red rather than after.
