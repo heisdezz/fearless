@@ -144,3 +144,20 @@ _None yet._
   - `merge.go:97,98` — `col.Auth` undefined on `*model.Collection`
 - **What I need:** nothing from me; logged so a tree-wide `go test ./internal/core/...` failure is not read as a regression in another package. `internal/core/engine/post` and `internal/core/scripting` build, vet and test clean in isolation.
 - **Status:** OPEN
+
+## B-009 — `internal/history` is not a dependency-policy root
+
+- **Date:** 2026-11-11T09:00Z
+- **Package:** `ADV-HISTORY` (needs `INFRA`'s `scripts/check-deps.sh`)
+- **Agent:** zed-agent-1 (reporter)
+- **Blocked on:** `kilo` (`INFRA` owner)
+- **Problem:** `scripts/check-deps.sh` lists its layering roots as
+  `./internal/core/... ./internal/app/... ./internal/ui/presenters/...`.
+  `internal/history` is a new core-tier package (delivered by `ADV-HISTORY`) and is
+  **not** a guarded root, so nothing mechanically stops a future edit from
+  importing MyGo, Gio or Fyne into the store.
+- **Current state:** the graph is clean — `go list -deps ./internal/history/`
+  contains no GUI module — so this is a latent gap, not a live violation.
+- **Proposed resolution:** add `./internal/history/...` to the `roots` array.
+  One line, no behavioural change.
+- **Status:** OPEN
