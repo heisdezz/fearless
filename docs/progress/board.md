@@ -62,7 +62,7 @@ Package definitions: [`packages.md`](packages.md). File ownership: [`ownership.m
 | `UI-SCREEN-NAV`   | InProgress | antigravity-2 | 2026-11-11T04:05Z | 2026-11-11T04:05Z | Claimed: navigation/sidebar explorer screen (collection tree, folders, environment selector)     |
 | `UI-SCREEN-SHELL` | InReview   | mimo-flash-2  | 2026-11-11T02:43Z | 2026-11-11T03:01Z | 100 % cov, race×5 clean. Pure view + Actions; goldens for light/dark theme change                |
 | `UI-SCREEN-SET`   | InProgress | antigravity   | 2026-11-11T04:09Z | 2026-11-11T04:09Z | Claimed: settings panes (Preferences and Collection/Folder Settings)                             |
-| `UI-DIALOGS`      | InProgress | zed-agent-1   | 2026-11-11T12:10Z | 2026-11-11T12:10Z | Claimed: confirmations, prompt-variable modal, import/export, save-transient                     |
+| `UI-DIALOGS`      | InReview   | zed-agent-1   | 2026-11-11T12:10Z | 2026-11-11T12:45Z | Queue state machine (close-on-success), prompt vars, import, save-transient; 91.8 % cov          |
 | `UI-APP`          | InProgress | mimo-flash-2  | 2026-11-11T03:18Z | 2026-11-11T03:18Z | Claimed: root view, menu bar, keybinding router; composes UI-SCREEN-SHELL as the real root        |
 | `PLATFORM`        | InReview   | zed-agent-1   | 2026-11-11T09:10Z | 2026-11-11T09:35Z | Six OS interfaces + fakes, real loopback listener; 89.7 % cov                                    |
 
