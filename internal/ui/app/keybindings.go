@@ -34,6 +34,7 @@ const (
 	ActionGlobalSearch  = "edit.global_search"
 	ActionPreferences   = "app.preferences"
 	ActionToggleSidebar = "view.toggle_sidebar"
+	ActionChangeLayout  = "view.change_layout"
 	ActionToggleConsole = "view.toggle_console"
 	ActionZoomIn        = "view.zoom_in"
 	ActionZoomOut       = "view.zoom_out"
@@ -304,7 +305,8 @@ func DefaultKeybindingRouter() *KeybindingRouter {
 
 	// View
 	r.Register(ActionToggleSidebar, "Toggle Sidebar", "mod+\\", nil)
-	r.Register(ActionToggleConsole, "Toggle Console", "mod+j", nil)
+	r.Register(ActionChangeLayout, "Change Orientation", "mod+j", nil)
+	r.Register(ActionToggleConsole, "Toggle Console", "mod+t", nil)
 	r.Register(ActionZoomIn, "Zoom In", "mod+=", nil)
 	r.Register(ActionZoomOut, "Zoom Out", "mod+-", nil)
 	r.Register(ActionResetZoom, "Reset Zoom", "mod+0", nil)

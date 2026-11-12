@@ -802,3 +802,97 @@ Gate baseline: `go build ./...`, `go vet ./...`, `gofmt`, `check-deps.sh`,
   snapshot from the store and modify that copy.
 - **Status:** OPEN — needs a follow-up in `CMD-ENV`, which is now `Done`; this
   is a test-quality defect, not an acceptance-criteria failure.
+## B-024 — two agents in the same UI packages during the visual pass
+
+- **Date:** 2026-11-11T23:35Z
+- **Packages:** `UI-WIDGETS`, `UI-SCREEN-REQ` vs `UI-THEME`, `UI-LAYOUT`, `UI-SCREEN-SHELL`, `UI-SCREEN-RESP`, `UI-SCREEN-NAV`, `UI-APP`
+- **Agent:** mimo-flash-3 (the D-017 first-viewport build)
+- **Problem:** a second agent is actively editing `internal/ui/widgets/**`
+  (`method_badge.go`, `tree_row.go`, `tab_bar.go`, `widgets_test.go`) and
+  `internal/ui/screens/request/auth.go` — implementing ui-map decisions R-1/R-2/R-3
+  and the auth-mode list — while the brief's first-viewport pass
+  (`.impeccable/briefs/internal-ui-app.md`) also needs those two packages for the
+  monospace URL, method cell, right-aligned Send and hairline section strip.
+  One package = one owning agent (README §1), so both cannot claim them at once.
+- **Resolution (agreed with the human, 2026-11-11T23:35Z): split by file and run
+  in parallel.**
+  - The other agent keeps `internal/ui/widgets/**` and
+    `internal/ui/screens/request/**` for this pass.
+  - mimo-flash-3 owns, for this pass: `internal/ui/theme/**`,
+    `internal/ui/layout/**`, `internal/ui/screens/shell/**`,
+    `internal/ui/screens/response/**`, `internal/ui/screens/navigation/**`,
+    `internal/ui/app/**`, and the shared render helpers live in
+    `internal/ui/theme` (the type world) rather than in `widgets`, so no file is
+    written by both.
+  - Deferred to mimo-flash-3's second phase, after the other agent's writes
+    land: the request screen's first-viewport restyle (mono URL, method cell,
+    right-aligned primary Send, hairline tab strip, small-caps section
+    headers) and the sidebar selected-row accent in `tree_row.go`.
+- **Status:** RESOLVED 2026-11-12T01:20Z — Phase 2 completed.
+
+## B-023 — RESOLVED
+
+- **Date:** 2026-11-12T00:50Z
+- **Resolved by:** CMD-ENV / antigravity
+- **How:** In `internal/app/commands/environment_test.go`, cloned the environment's `Variables` slice before appending to prevent data race with background store clone.
+- **Refers to:** B-023
+
+## B-024 — RESOLVED
+
+- **Date:** 2026-11-12T01:20Z
+- **Resolved by:** antigravity / mimo-flash-3
+- **How:** Both phases of the first-viewport visual restyle have landed. Phase 1 landed the Graphite Console tokens, 30 DIP title strip, 248 px collections sidebar, status seam, hairline subtabs in response viewer, and shell composition. Phase 2 completed the request screen restyle with `uitheme.DataGroup` monospace tabular URL input, `uitheme.PanelHeader` small-caps headers across all sub-tab panels, primary Send button styling, and sidebar selected accent in tree rows. Design captures verified in `testdata/design/` and full test suite is green.
+- **Refers to:** B-024, B-025
+
+## B-025 — B-024's overlap widened to `UI-APP` (and coexistence protocol)
+
+- **Date:** 2026-11-11T23:55Z
+- **Packages:** `UI-APP` (mimo-flash-3) vs the concurrent ui-map implementer
+- **Agent:** mimo-flash-3
+- **Problem:** between B-024 and now the other agent's writes reached
+  `internal/ui/app/{app,app_test,keybindings,menu,menu_test}.go` (ui-map R-7:
+  the global `changeLayout` hotkey and menu entry), plus
+  `internal/ui/presenters/environment*.go`, `internal/app/commands/environment_test.go`
+  and a new `internal/ui/screens/history/`. `UI-APP`'s row was already claimed
+  by mimo-flash-3 for the first-viewport pass (D-023), so the same file is now
+  written by two agents.
+- **Resolution:** coexist by region, not by package, for the duration of both
+  passes —
+  - the other agent owns `app.go`'s keybinding/menu/toggle region
+    (`wireKeybindingHandlers`, `MenuActions`, `ToggleLayout`),
+    `presenters/environment*`, `commands/environment_test.go`,
+    `internal/ui/screens/history/`, `internal/ui/widgets/**`,
+    `internal/ui/screens/request/**`;
+  - mimo-flash-3 owns `app.go`'s composition region (`initScreens`,
+    `renderMainView`, `design_capture_test.go`), `internal/ui/theme/**`,
+    `internal/ui/layout/**`, `internal/ui/screens/{shell,response,navigation}/**`;
+  - both edit with targeted replacements only — never a whole-file rewrite —
+    so a failed anchor match means "re-read and retry", never "overwrite".
+- **Status:** RESOLVED 2026-11-12T01:20Z — both passes landed; resolved with B-024.
+
+## B-026 — the response package is being written in two agents' hands
+
+- **Date:** 2026-11-12T02:05Z
+- **Packages:** `UI-SCREEN-RESP` (mimo-flash-3, D-023) vs the concurrent
+  ui-map implementer (antigravity)
+- **Agent:** mimo-flash-3
+- **Problem:** `internal/ui/screens/response/**` is `UI-SCREEN-RESP`'s file set
+  (D-023), and antigravity is writing it for the SSE stream feature
+  (`stream.go`, `stream_test.go`, and edits to `response.go` and
+  `response_test.go` at 01:45–01:53Z). Their `response.go` replaced the
+  world's shared section strip (`theme.TabStrip`, D-025) in `SubTabs` with a
+  hand-rolled copy: 12 px sans labels, the count folded into the label string,
+  no accessible name on the tab. That is the drift D-025 exists to prevent —
+  the three section strips are meant to be one strip.
+- **How mimo-flash-3 handled it:** targeted re-application only — `SubTabs`
+  routed back through `theme.TabStrip`, the tab named by its own label
+  ("Headers"), the figure kept in the data face. Nothing else in the
+  concurrent agent's stream work was touched, and their `stream.go`,
+  `stream_test.go` and seam changes were left as they are.
+- **Ask:** the response screen's `SubTabs` must stay on `theme.TabStrip`. If a
+  later edit in that package replaces it again, the strip has to be routed
+  back through the shared helper — a second hand-rolled copy is a second
+  voice, and a second voice in the response pane is the regression the
+  finish review named.
+- **Status:** OPEN until the concurrent agent's pass lands; the shared strip
+  is in place as of 02:05Z.

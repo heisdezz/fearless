@@ -35,9 +35,9 @@ const (
 // recorder counts the commands the chrome reports. Nothing else in the test
 // writes, so any state change during a frame is the view's doing.
 type recorder struct {
-	menu, workspace, settings, environment, consoleClose int
-	statuses                                             []int
-	consoleTabs                                          []int
+	menu, workspace, settings, envSelect, envManage, run, stop, consoleClose int
+	statuses                                                                 []int
+	consoleTabs                                                              []int
 }
 
 func testScreen(rec *recorder) *Screen {
@@ -53,6 +53,7 @@ func testScreen(rec *recorder) *Screen {
 			RequestCount:    12,
 			SelectedCount:   3,
 			EnvironmentName: "dev",
+			Environments:    []string{"dev", "prod"},
 			Status: []StatusEntry{
 				{Label: "idle", Tooltip: "engine (demo)", Index: -1},
 				{Label: "Console", Tooltip: "toggle the console", Index: 0},
@@ -60,22 +61,25 @@ func testScreen(rec *recorder) *Screen {
 			ActiveConsoleTab: 1,
 		},
 		Actions: Actions{
-			OnMenu:         func() { rec.menu++ },
-			OnWorkspace:    func() { rec.workspace++ },
-			OnSettings:     func() { rec.settings++ },
-			OnEnvironment:  func() { rec.environment++ },
-			OnConsoleClose: func() { rec.consoleClose++ },
-			OnStatus:       func(i int) { rec.statuses = append(rec.statuses, i) },
-			OnConsoleTab:   func(i int) { rec.consoleTabs = append(rec.consoleTabs, i) },
+			OnMenu:              func() { rec.menu++ },
+			OnWorkspace:         func() { rec.workspace++ },
+			OnSettings:          func() { rec.settings++ },
+			OnSelectEnvironment: func(string) { rec.envSelect++ },
+			OnManageEnvironment: func() { rec.envManage++ },
+			OnRun:               func() { rec.run++ },
+			OnStop:              func() { rec.stop++ },
+			OnConsoleClose:      func() { rec.consoleClose++ },
+			OnStatus:            func(i int) { rec.statuses = append(rec.statuses, i) },
+			OnConsoleTab:        func(i int) { rec.consoleTabs = append(rec.consoleTabs, i) },
 		},
 		ConsoleTabs: []layout.ConsoleTab{
 			{Label: "Logs", Content: func(c *ui.Context) { ui.Text(c, "logs-body") }},
 			{Label: "Network", Content: func(c *ui.Context) { ui.Text(c, "network-body") }},
 		},
-		Sidebar:          func(c *ui.Context, _ lobe.SideNavState) { ui.Text(c, "SIDEBAR") },
-		CollectionHeader: func(c *ui.Context) { ui.Text(c, "HEADER") },
-		RequestPane:      func(c *ui.Context) { ui.Text(c, "REQUEST") },
-		ResponsePane:     func(c *ui.Context) { ui.Text(c, "RESPONSE") },
+		Sidebar:                func(c *ui.Context, _ lobe.SideNavState) { ui.Text(c, "SIDEBAR") },
+		CollectionHeaderRegion: func(c *ui.Context) { ui.Text(c, "HEADER") },
+		RequestPane:            func(c *ui.Context) { ui.Text(c, "REQUEST") },
+		ResponsePane:           func(c *ui.Context) { ui.Text(c, "RESPONSE") },
 	}
 }
 
@@ -97,9 +101,9 @@ func TestShellSmokeTest(t *testing.T) {
 	tt := newTester(s)
 
 	for _, want := range []string{
-		"Fearless", "demo", "local", // title bar
-		"12 requests", "3 selected", "dev", // status row
-		"idle", "Console", // status chips
+		"demo", "dev", "Run", // title strip: collection, environment, run/stop
+		"12 requests", "3 selected", // status strip counts
+		"idle", "Console", "local", // status chips, workspace
 		"SIDEBAR", "HEADER", "REQUEST", "RESPONSE", // injected regions
 		"Logs", "Network", "network-body", // dock, active tab from the snapshot
 	} {
@@ -148,14 +152,32 @@ func TestActionsAreTheOnlyWrites(t *testing.T) {
 	s := testScreen(rec)
 	tt := newTester(s)
 
-	for _, click := range []string{"⚙", "dev", "Console"} {
+	for _, click := range []string{"Settings", "Console", "Run"} {
 		if err := tt.Click(click); err != nil {
 			t.Fatalf("click %q: %v (texts: %v)", click, err, tt.Texts())
 		}
 	}
-	if rec.settings != 1 || rec.environment != 1 || !reflect.DeepEqual(rec.statuses, []int{0}) {
-		t.Errorf("actions fired: settings=%d environment=%d statuses=%v, want 1/1/[0]",
-			rec.settings, rec.environment, rec.statuses)
+	// The environment is a select: its click opens the option list, so the
+	// selection is reported the way the app receives it.
+	s.Actions.OnSelectEnvironment("prod")
+	s.Actions.OnManageEnvironment()
+	if rec.settings != 1 || rec.run != 1 || rec.envSelect != 1 || rec.envManage != 1 ||
+		!reflect.DeepEqual(rec.statuses, []int{0}) {
+		t.Errorf("actions fired: settings=%d run=%d envSelect=%d envManage=%d statuses=%v, want 1/1/1/1/[0]",
+			rec.settings, rec.run, rec.envSelect, rec.envManage, rec.statuses)
+	}
+
+	// In flight, the same slot offers Stop.
+	s.Snapshot.InFlight = true
+	tt.Frame()
+	if err := tt.Click("Stop"); err != nil {
+		t.Fatalf("click Stop: %v (texts: %v)", err, tt.Texts())
+	}
+	if rec.stop != 1 {
+		t.Errorf("Stop reported %d times, want 1", rec.stop)
+	}
+	if tt.HasText("Run") {
+		t.Error("Run still offered while a request is in flight")
 	}
 	if !s.State.ConsoleOpen {
 		t.Error("the view closed the console itself; only the app may change state")
@@ -220,7 +242,7 @@ func TestNilStateRendersDefaults(t *testing.T) {
 	s := testScreen(&recorder{})
 	s.State = nil
 	tt := newTester(s)
-	if !tt.HasText("Fearless") {
+	if !tt.HasText("demo") {
 		t.Errorf("title bar missing with nil State; texts: %v", tt.Texts())
 	}
 }
@@ -263,7 +285,7 @@ func TestNoDomainImports(t *testing.T) {
 func geometry(t *testing.T, tt *ui.Tester) map[string]ui.Rect {
 	t.Helper()
 	out := map[string]ui.Rect{}
-	for _, want := range []string{"Fearless", "demo", "dev", "12 requests", "SIDEBAR", "REQUEST", "RESPONSE", "Network"} {
+	for _, want := range []string{"demo", "dev", "12 requests", "SIDEBAR", "REQUEST", "RESPONSE", "Network"} {
 		r, ok := tt.Find(want)
 		if !ok {
 			t.Errorf("%q not rendered", want)

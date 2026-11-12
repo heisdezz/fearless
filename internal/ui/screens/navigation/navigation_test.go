@@ -154,17 +154,51 @@ func TestNavigationSmokeTest(t *testing.T) {
 	s := testScreen(rec)
 	tt := newTester(s)
 
+	// The section switcher is set in small caps; the tree and the toolbar
+	// keep their prose.
 	expectedTexts := []string{
-		"My API", "Collections", "History", "Runner",
+		"COLLECTIONS", "HISTORY", "RUNNER",
 		"+ Request", "+ Folder", "Open",
 		"Users", "Get Users", "Create User",
-		"Env:", "Staging", "⚙ Env", "Run",
 	}
 
 	for _, want := range expectedTexts {
 		if !tt.HasText(want) {
 			t.Errorf("navigation missing expected text %q; texts: %v", want, tt.Texts())
 		}
+	}
+}
+
+// TestCollectionHeaderStrip covers the optional environment strip: the main
+// window does not mount it — the title strip owns the environment now — but
+// it stays available for a window that embeds the sidebar on its own.
+func TestCollectionHeaderStrip(t *testing.T) {
+	rec := &actionRecorder{}
+	s := testScreen(rec)
+
+	tt := ui.NewTester(func(c *ui.Context) {
+		s.CollectionHeader(c)
+	}, testW, 200)
+	tt.Frame()
+
+	for _, want := range []string{"My API", "ENVIRONMENT", "Staging", "Environment settings", "Run"} {
+		if !tt.HasText(want) {
+			t.Errorf("collection header missing expected text %q; texts: %v", want, tt.Texts())
+		}
+	}
+
+	if err := tt.Click("Environment settings"); err != nil {
+		t.Fatalf("click the environment settings button: %v", err)
+	}
+	if rec.manageEnvs != 1 {
+		t.Errorf("OnManageEnvironments: got %d, want 1", rec.manageEnvs)
+	}
+
+	if err := tt.Click("Run"); err != nil {
+		t.Fatalf("click Run: %v", err)
+	}
+	if len(rec.runCollection) != 1 || rec.runCollection[0] != "col-1" {
+		t.Errorf("OnRunCollection: got %v, want ['col-1']", rec.runCollection)
 	}
 }
 
@@ -223,35 +257,19 @@ func TestActionsAreTheOnlyWrites(t *testing.T) {
 	}
 
 	// Click on Section Tab: History
-	if err := tt.Click("History"); err != nil {
-		t.Fatalf("click History tab: %v", err)
+	if err := tt.Click("HISTORY"); err != nil {
+		t.Fatalf("click HISTORY tab: %v", err)
 	}
 	if len(rec.sections) != 1 || rec.sections[0] != presenters.SidebarSectionHistory {
 		t.Errorf("OnSelectSection: got %v, want [history]", rec.sections)
 	}
 
 	// Click on Section Tab: Runner
-	if err := tt.Click("Runner"); err != nil {
-		t.Fatalf("click Runner tab: %v", err)
+	if err := tt.Click("RUNNER"); err != nil {
+		t.Fatalf("click RUNNER tab: %v", err)
 	}
 	if len(rec.sections) != 2 || rec.sections[1] != presenters.SidebarSectionRunner {
 		t.Errorf("OnSelectSection: got %v, want runner as second entry", rec.sections)
-	}
-
-	// Click on Manage Env button
-	if err := tt.Click("⚙ Env"); err != nil {
-		t.Fatalf("click ⚙ Env: %v", err)
-	}
-	if rec.manageEnvs != 1 {
-		t.Errorf("OnManageEnvironments: got %d, want 1", rec.manageEnvs)
-	}
-
-	// Click on Run button
-	if err := tt.Click("Run"); err != nil {
-		t.Fatalf("click Run: %v", err)
-	}
-	if len(rec.runCollection) != 1 || rec.runCollection[0] != "col-1" {
-		t.Errorf("OnRunCollection: got %v, want ['col-1']", rec.runCollection)
 	}
 
 	// Click on a node row
@@ -263,16 +281,16 @@ func TestActionsAreTheOnlyWrites(t *testing.T) {
 	}
 
 	// Click on folder toggle chevron
-	if err := tt.Click("▾"); err != nil {
-		t.Fatalf("click chevron ▾: %v", err)
+	if err := tt.Click("Collapse Users"); err != nil {
+		t.Fatalf("click the folder disclosure control: %v", err)
 	}
 	if len(rec.toggledNodes) == 0 {
 		t.Error("OnToggleNode not triggered when chevron clicked")
 	}
 
 	// Click on collapse toggle button in expanded header
-	if err := tt.Click("«"); err != nil {
-		t.Fatalf("click « collapse: %v", err)
+	if err := tt.Click("Collapse sidebar"); err != nil {
+		t.Fatalf("click the collapse control: %v", err)
 	}
 	if rec.collapseToggle != 1 {
 		t.Errorf("OnToggleCollapse: got %d, want 1", rec.collapseToggle)
@@ -295,8 +313,8 @@ func TestRailCollapsedMode(t *testing.T) {
 	tt.Advance(600 * time.Millisecond)
 	tt.Frame()
 
-	// Verify rail section labels/icons
-	for _, want := range []string{"Collections", "History", "Runner", "»"} {
+	// Verify rail section icons
+	for _, want := range []string{"Collections", "History", "Runner", "Expand sidebar"} {
 		if !tt.HasText(want) {
 			t.Errorf("rail mode missing %q; texts: %v", want, tt.Texts())
 		}
@@ -322,8 +340,8 @@ func TestRailCollapsedMode(t *testing.T) {
 	}
 
 	// Click on rail expand button
-	if err := tt.Click("»"); err != nil {
-		t.Fatalf("click expand button »: %v", err)
+	if err := tt.Click("Expand sidebar"); err != nil {
+		t.Fatalf("click the expand control: %v", err)
 	}
 	if rec.collapseToggle != 1 {
 		t.Errorf("OnToggleCollapse got %d, want 1", rec.collapseToggle)
@@ -399,7 +417,7 @@ func TestEmptyCollectionState(t *testing.T) {
 	s.Snapshot.VisibleNodes = nil
 
 	tt := newTester(s)
-	if !tt.HasText("No requests found") {
+	if !tt.HasText("NO REQUESTS FOUND") {
 		t.Errorf("missing empty state message; texts: %v", tt.Texts())
 	}
 }
@@ -412,14 +430,14 @@ func TestHistoryAndRunnerSections(t *testing.T) {
 	// History section
 	s.Snapshot.ActiveSection = presenters.SidebarSectionHistory
 	tt := newTester(s)
-	if !tt.HasText("Request History") {
+	if !tt.HasText("REQUEST HISTORY") {
 		t.Errorf("history section missing header; texts: %v", tt.Texts())
 	}
 
 	// Runner section
 	s.Snapshot.ActiveSection = presenters.SidebarSectionRunner
 	tt2 := newTester(s)
-	if !tt2.HasText("Collection Runner") || !tt2.HasText("Target: My API") {
+	if !tt2.HasText("COLLECTION RUNNER") || !tt2.HasText("Target: My API") {
 		t.Errorf("runner section missing contents; texts: %v", tt2.Texts())
 	}
 

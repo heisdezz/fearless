@@ -71,7 +71,7 @@ func TestRegionBudgetAtDPIScales(t *testing.T) {
 	b := DefaultRegionBudget()
 
 	// Bands for console open, stacked, from §8.1:
-	// title [0,32) header [32,72) panes [72,476) status [476,500) console [500,800)
+	// title [0,30) header [30,70) panes [70,476) status [476,500) console [500,800)
 	bands := map[string][2]float32{
 		"TITLE":    {0, b.TitleBar},
 		"HEADER":   {b.TitleBar, b.TitleBar + b.CollectionHeader},
@@ -403,13 +403,24 @@ func TestChromeViewsRender(t *testing.T) {
 	st := DefaultLayoutState()
 	st.ConsoleOpen = true
 
-	title := &TitleBarView{AppName: "Fearless", CollectionName: "demo", ShowMenu: true, OnMenu: func() {}}
+	title := &TitleBarView{
+		AppName:             "Fearless",
+		CollectionName:      "demo",
+		ShowMenu:            true,
+		OnMenu:              func() {},
+		Environments:        []string{"dev", "prod"},
+		ActiveEnvironment:   "dev",
+		OnSelectEnvironment: func(string) {},
+		OnManageEnvironment: func() {},
+		OnRun:               func() {},
+	}
 	status := &StatusBarView{
-		RequestCount:    12,
-		SelectedCount:   3,
-		EnvironmentName: "dev",
-		OnEnvironment:   func() {},
-		RightStatus:     []StatusItem{{Label: "idle"}},
+		RequestCount:  12,
+		SelectedCount: 3,
+		WorkspaceName: "local",
+		OnWorkspace:   func() {},
+		OnSettings:    func() {},
+		RightStatus:   []StatusItem{{Label: "idle"}},
 	}
 	dock := &ConsoleDockView{
 		Tabs: []ConsoleTab{
@@ -432,7 +443,7 @@ func TestChromeViewsRender(t *testing.T) {
 	}
 
 	tt := newTester(root)
-	for _, want := range []string{"Fearless", "demo", "12 requests", "3 selected", "dev", "idle", "Logs", "logs-body"} {
+	for _, want := range []string{"demo", "local", "12 requests", "3 selected", "dev", "idle", "Logs", "logs-body"} {
 		if !tt.HasText(want) {
 			t.Errorf("chrome missing %q; texts: %v", want, tt.Texts())
 		}
@@ -443,6 +454,31 @@ func TestChromeViewsRender(t *testing.T) {
 	}
 	if !tt.HasText("network-body") {
 		t.Errorf("tab switch did not render; texts: %v", tt.Texts())
+	}
+}
+
+// TestNilCollectionHeaderUnmountsTheRegion: the main window leaves this
+// callback nil now that the environment selector and run live in the title
+// strip, and nil must cost zero height. An empty 40 DIP band above the
+// request pane would be a hole in the first viewport, not chrome.
+func TestNilCollectionHeaderUnmountsTheRegion(t *testing.T) {
+	st := DefaultLayoutState()
+	root := sentinelRoot(st, false)
+	root.CollectionHeader = nil
+
+	tt := newTester(root)
+	if tt.HasText("HEADER") {
+		t.Error("HEADER rendered with a nil CollectionHeader callback")
+	}
+	b := DefaultRegionBudget()
+	r, ok := tt.Find("REQUEST")
+	if !ok {
+		t.Fatal("request pane not rendered")
+	}
+	requireIn(t, 1, "REQUEST(nil header)", r, b.TitleBar, testH-b.StatusBar)
+	if r.Y > b.TitleBar+tol {
+		t.Errorf("request pane starts at Y=%.1f, want at the title strip's edge (%.1f): the unmounted region still costs height",
+			r.Y, b.TitleBar)
 	}
 }
 
@@ -492,7 +528,7 @@ func TestViewNormalizesHostileState(t *testing.T) {
 func TestDefaultRegionBudget(t *testing.T) {
 	b := DefaultRegionBudget()
 	want := RegionBudget{
-		TitleBar:         32,
+		TitleBar:         30,
 		SidebarMin:       220,
 		SidebarMax:       600,
 		SidebarCollapsed: 64,
@@ -511,7 +547,7 @@ func TestDefaultRegionBudget(t *testing.T) {
 		t.Errorf("zero budget withDefaults() = %+v, want %+v", got, want)
 	}
 	partial := RegionBudget{ConsoleDock: 250}.withDefaults()
-	if partial.ConsoleDock != 250 || partial.TitleBar != 32 {
+	if partial.ConsoleDock != 250 || partial.TitleBar != 30 {
 		t.Errorf("partial budget withDefaults() = %+v", partial)
 	}
 }
@@ -519,7 +555,7 @@ func TestDefaultRegionBudget(t *testing.T) {
 func TestDefaultLayoutState(t *testing.T) {
 	s := DefaultLayoutState()
 	want := LayoutState{
-		SidebarWidth:               280,
+		SidebarWidth:               248,
 		SidebarExpanded:            true,
 		RequestResponseOrientation: OrientationStacked,
 		SplitPercent:               55,

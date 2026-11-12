@@ -1,11 +1,15 @@
 package response
 
 import (
+	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/egoist/mygo/ui"
+	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/core/events"
 	"fearless/internal/core/model"
@@ -71,7 +75,7 @@ func TestScreenRendersIdleWithoutPanicking(t *testing.T) {
 	tt.Frame()
 
 	// The tabs are still present so the pane does not appear broken.
-	if !tt.HasText("Body") || !tt.HasText("Headers") {
+	if !tt.HasText("BODY") || !tt.HasText("HEADERS") {
 		t.Error("expected the sub-tabs to render when idle")
 	}
 	if !tt.HasText("Send a request to see its response.") {
@@ -95,6 +99,99 @@ func TestScreenRendersError(t *testing.T) {
 	}
 	if !tt.HasText("dial tcp: connection refused") {
 		t.Error("expected the failure text")
+	}
+}
+
+// TestStatusSeamIsOneDataRow covers the seam's shape: the figures are one row,
+// separated by "·" separator nodes, inside a 28 DIP seam rather than a boxed
+// strip.
+func TestStatusSeamIsOneDataRow(t *testing.T) {
+	p := completedPresenter(t)
+
+	tt := ui.NewTester(func(c *ui.Context) {
+		Screen(c, Props{Presenter: p})
+	}, 800, 400)
+	tt.Frame()
+
+	if !tt.HasText("·") {
+		t.Errorf("expected dim separators between the figures; texts: %v", tt.Texts())
+	}
+
+	status, ok := tt.Find("200 OK")
+	if !ok {
+		t.Fatal("status text not rendered")
+	}
+	if bottom := status.Y + status.H; bottom > 28 {
+		t.Errorf("status text bottom = %.0f, want it inside the 28 DIP seam", bottom)
+	}
+}
+
+// TestActiveTabCarriesTheAccentUnderline covers the seam's one accent: the
+// active tab is marked by an underline, not by a chip.
+func TestActiveTabCarriesTheAccentUnderline(t *testing.T) {
+	p := completedPresenter(t)
+
+	var primary ui.Color
+	tt := ui.NewTester(func(c *ui.Context) {
+		primary = lobetheme.TokensOf(c).Primary
+		Screen(c, Props{Presenter: p})
+	}, 800, 400)
+	tt.Frame()
+
+	label, ok := tt.Find("BODY")
+	if !ok {
+		t.Fatal("Body tab not rendered")
+	}
+
+	img := tt.Image()
+	bounds := img.Bounds()
+
+	// accentUnder reports whether the accent colour appears under a label.
+	accentUnder := func(label ui.Rect) bool {
+		for y := int(label.Y + label.H); y < int(label.Y+label.H+16) && y < bounds.Max.Y; y++ {
+			for x := int(label.X) - 8; x < int(label.X+label.W)+8 && x < bounds.Max.X; x++ {
+				if x < bounds.Min.X || y < bounds.Min.Y {
+					continue
+				}
+				r, g, b, _ := img.At(x, y).RGBA()
+				if uint8(r>>8) == primary.R && uint8(g>>8) == primary.G && uint8(b>>8) == primary.B {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	if !accentUnder(label) {
+		t.Error("expected the active tab to carry the accent underline")
+	}
+
+	// An inactive tab carries no accent: one underline marks the selection.
+	if other, ok := tt.Find("HEADERS"); ok && accentUnder(other) {
+		t.Error("expected the inactive tab to carry no accent")
+	}
+}
+
+// TestNoHardCodedColors is the D-017 guard for this package: the screen draws
+// with theme tokens only, so a colour can never be pinned to one screen.
+func TestNoHardCodedColors(t *testing.T) {
+	files, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatalf("glob: %v", err)
+	}
+	for _, f := range files {
+		if strings.HasSuffix(f, "_test.go") {
+			continue
+		}
+		src, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatalf("read %s: %v", f, err)
+		}
+		for _, literal := range []string{"ui.RGB(", "ui.RGBA(", "ui.Hex("} {
+			if bytes.Contains(src, []byte(literal)) {
+				t.Errorf("%s hard-codes a colour (%s): the screen must draw with theme tokens", f, literal)
+			}
+		}
 	}
 }
 
@@ -130,7 +227,7 @@ func TestTabClickSwitchesPane(t *testing.T) {
 	tt := ui.NewTester(view, 800, 400)
 	tt.Frame()
 
-	if err := tt.Click("Headers (2)"); err != nil {
+	if err := tt.Click("Headers"); err != nil {
 		t.Fatalf("click Headers: %v", err)
 	}
 	if selected != presenters.RespSubTabHeaders {

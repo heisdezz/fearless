@@ -1,6 +1,6 @@
 # Ownership Map — File Paths per Work Package
 
-**This file is the anti-collision contract.** Each row owns a disjoint set of paths under `module fearless`.
+**This file is the anti-collision contract.** Each row owns a disjoint set of paths under `module fearless` .
 
 Rules:
 
@@ -59,23 +59,23 @@ Rules:
 
 Split so that no two UI packages share a file. The rule of thumb: **one screen package per screen**, plus shared widget and presenter trees.
 
-| Package           | Owned paths                                                                                      |
-| ----------------- | ------------------------------------------------------------------------------------------------ |
-| `UI-THEME`        | `internal/ui/theme/**`                                                                           |
-| `UI-LAYOUT`       | `internal/ui/layout/**`                                                                          |
-| `UI-WIDGETS`      | `internal/ui/widgets/**` (MethodBadge, key-value grid cells, tree rows, variable input, tab bar) |
-| `UI-APP`          | `internal/ui/app/**` (window, menu bar, keybinding router, root view)                            |
-| `UI-PRESENT-REQ`  | `internal/ui/presenters/request*.go`, `response*.go`, `tabs*.go`                                 |
-| `UI-PRESENT-NAV`  | `internal/ui/presenters/sidebar*.go`, `collection*.go`, `environment*.go`                        |
-| `UI-PRESENT-SET`  | `internal/ui/presenters/preferences*.go`, `settings*.go`                                         |
-| `UI-SCREEN-SHELL` | `internal/ui/screens/shell/**`                                                                   |
-| `UI-SCREEN-REQ`   | `internal/ui/screens/request/**`                                                                 |
-| `UI-SCREEN-RESP`  | `internal/ui/screens/response/**`                                                                |
-| `UI-SCREEN-NAV`   | `internal/ui/screens/sidebar/**`, `screens/collection/**`                                        |
-| `UI-SCREEN-SET`   | `internal/ui/screens/settings/**`                                                                |
-| `UI-DIALOGS`      | `internal/ui/dialogs/**`                                                                         |
-| `PLATFORM`        | `internal/platform/**` (`dialog/`, `secrets/`, `browser/`, `watcher/`, `windowstate/`)           |
-| `UI-MAP`          | `ui-map/**`, `refs/**`, `scripts/check-ownership.sh`                                             |
+| Package           | Owned paths                                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `UI-THEME`        | `internal/ui/theme/**`                                                                                                  |
+| `UI-LAYOUT`       | `internal/ui/layout/**`                                                                                                 |
+| `UI-WIDGETS`      | `internal/ui/widgets/**` (MethodBadge, key-value grid cells, tree rows, variable input, tab bar)                        |
+| `UI-APP`          | `internal/ui/app/**` (window, menu bar, keybinding router, root view)                                                   |
+| `UI-PRESENT-REQ`  | `internal/ui/presenters/request*.go`, `internal/ui/presenters/response*.go`, `internal/ui/presenters/tabs*.go`          |
+| `UI-PRESENT-NAV`  | `internal/ui/presenters/sidebar*.go`, `internal/ui/presenters/collection*.go`, `internal/ui/presenters/environment*.go` |
+| `UI-PRESENT-SET`  | `internal/ui/presenters/preferences*.go`, `internal/ui/presenters/settings*.go`                                         |
+| `UI-SCREEN-SHELL` | `internal/ui/screens/shell/**`                                                                                          |
+| `UI-SCREEN-REQ`   | `internal/ui/screens/request/**`                                                                                        |
+| `UI-SCREEN-RESP`  | `internal/ui/screens/response/**`                                                                                       |
+| `UI-SCREEN-NAV`   | `internal/ui/screens/navigation/**` (D-023: replaces old unmapped `screens/sidebar` and `screens/collection`)           |
+| `UI-SCREEN-SET`   | `internal/ui/screens/settings/**`                                                                                       |
+| `UI-DIALOGS`      | `internal/ui/dialogs/**`                                                                                                |
+| `PLATFORM`        | `internal/platform/**` (`dialog/`, `secrets/`, `browser/`, `watcher/`, `windowstate/`)                                  |
+| `UI-MAP`          | `ui-map/**`, `refs/**`, `scripts/check-ownership.sh`                                                                    |
 
 ---
 

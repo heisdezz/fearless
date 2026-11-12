@@ -45,3 +45,12 @@ Owner history: kilo (claimed 2026-11-11T04:35Z); mimo-flash-2 (took over 2026-11
   - B-017 closed.
   - Tests: 16/16 tests pass clean under -race, 97.1% statement coverage, go vet and gofmt clean.
 - Confirmed: Done.
+
+### 2026-11-12T02:20Z — mimo-flash-3
+
+- Did: the first-viewport composition (D-017, D-023), plus the finish review's icon and action-weight findings.
+  - `internal/ui/layout/layout.go`: a 30 DIP title strip (collection name left; environment selector, environment control and run/stop right), a 248 px default sidebar (220–600 DIP bounds), a 24 DIP status strip (counts left; workspace and settings right). The collection-header strip is unmounted — the title strip answers the same question twice otherwise.
+  - The chrome's controls are drawn, not typed: the menu, the environment control and the settings gear are Lucide SVGs through `widgets.IconButton`; the environment control keeps the word "Env" because two identical gears with two meanings is one meaning too many.
+  - The action hierarchy is one accent (Send), one seam-outlined secondary (Save) and quiet text controls elsewhere, so the window no longer gives every action the same weight. The status strip's counts are set in the data face.
+- Tests: `go test ./internal/ui/layout/ ./internal/ui/screens/shell/` green; `layout_test.go` updated for the 30/248/24 budget, the nil collection-header region and the new title/status composition; shell goldens regenerated (`UPDATE_GOLDEN=1`).
+- Notes: `shell.Screen.CollectionHeader` became a **method** and the region itself the new field `CollectionHeaderRegion`, so a caller can ask for the region without knowing whether one exists — D-024. The budget still carries the §8.1 collection-header height for a screen that asks for one; the main window does not.

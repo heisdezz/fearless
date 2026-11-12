@@ -3,6 +3,7 @@ package presenters
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"fearless/internal/core/model"
@@ -424,15 +425,29 @@ func (p *EnvironmentPresenter) IsSecretMasked(v model.Variable) bool {
 	return !p.revealedSecrets[name]
 }
 
-// FormattedVariableValue returns the value string or "••••••••" if masked.
+// FormattedVariableValue returns the value string or masked with '*' per character (preserving newlines) if masked (Decision R-5).
 func (p *EnvironmentPresenter) FormattedVariableValue(v model.Variable) string {
-	if p.IsSecretMasked(v) {
-		return "••••••••"
-	}
 	if v.Value == nil {
 		return ""
 	}
-	return fmt.Sprintf("%v", v.Value)
+	valStr := fmt.Sprintf("%v", v.Value)
+	if p.IsSecretMasked(v) {
+		return MaskSecret(valStr)
+	}
+	return valStr
+}
+
+// MaskSecret masks a secret value with literal '*' per character, preserving newlines (Decision R-5).
+func MaskSecret(s string) string {
+	var sb strings.Builder
+	for _, r := range s {
+		if r == '\n' || r == '\r' {
+			sb.WriteRune(r)
+		} else {
+			sb.WriteRune('*')
+		}
+	}
+	return sb.String()
 }
 
 // OnChanged registers an invalidation callback hook.

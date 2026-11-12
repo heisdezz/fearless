@@ -140,16 +140,20 @@ func TestNewAndSaveEnvironment(t *testing.T) {
 		t.Errorf("expected CollectionChanged Added event")
 	}
 
-	// 2. Modify and SaveEnvironment
-	env.Variables = append(env.Variables, model.Variable{
+	// 2. Modify and SaveEnvironment (copy env to prevent data race with store snapshot, B-023)
+	varsCopy := make([]model.Variable, len(env.Variables), len(env.Variables)+1)
+	copy(varsCopy, env.Variables)
+	varsCopy = append(varsCopy, model.Variable{
 		Name:    stringRef("timeout"),
 		Value:   5000,
 		Enabled: true,
 	})
+	modifiedEnv := *env
+	modifiedEnv.Variables = varsCopy
 
 	if err := svc.SaveEnvironment(ctx, commands.SaveEnvironmentCmd{
 		CollectionUID: colUID,
-		Environment:   env,
+		Environment:   &modifiedEnv,
 	}); err != nil {
 		t.Fatalf("SaveEnvironment failed: %v", err)
 	}

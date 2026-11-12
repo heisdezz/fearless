@@ -71,6 +71,9 @@ If you are new to this package, read in this order:
 
 ### 3. UI — what the interface does and why
 
+> [!NOTE]
+> The UI specification is synchronized with the machine-verifiable reconstruction specification in [`../ui-map/overview.md`](../ui-map/overview.md) and concrete token dumps in `../ui-map/_tools/tokens.json`.
+
 | Document                                                   | Covers                                                                                                                                        |
 | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`ui/design-system.md`](ui/design-system.md)               | Tokens, typography, colour, spacing; §7 Go-native design system, §7.2 Lobe MyGo token API and widget mapping                                  |
@@ -166,16 +169,16 @@ flowchart LR
     G --> N["Go application"]
 ```
 
-| Area           | Docs                  | State                                               |
-| -------------- | --------------------- | --------------------------------------------------- |
-| Architecture   | 5                     | complete                                            |
-| Flows          | 9                     | complete                                            |
-| UI             | 10                    | complete, MyGo mapping integrated                   |
-| Logic          | 13                    | complete (incl. `persistence.md`)                   |
-| Plugins        | 5                     | complete — documents the absence of a plugin system |
-| Data           | 6 (incl. persistence) | complete                                            |
-| Implementation | 6                     | complete, Go-only and MyGo-bound                    |
-| Research       | 5                     | complete                                            |
+| Area           | Docs                  | State                                                                                                 |
+| -------------- | --------------------- | ----------------------------------------------------------------------------------------------------- |
+| Architecture   | 5                     | complete                                                                                              |
+| Flows          | 9                     | complete                                                                                              |
+| UI             | 10                    | complete, upgraded with exact tokens and reconstruction specs from `ui-map/`, MyGo mapping integrated |
+| Logic          | 13                    | complete (incl. `persistence.md`)                                                                     |
+| Plugins        | 5                     | complete — documents the absence of a plugin system                                                   |
+| Data           | 6 (incl. persistence) | complete                                                                                              |
+| Implementation | 6                     | complete, Go-only and MyGo-bound                                                                      |
+| Research       | 5                     | complete                                                                                              |
 
 ### Decisions that need input
 

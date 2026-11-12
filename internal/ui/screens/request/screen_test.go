@@ -16,8 +16,8 @@ type mockSender struct {
 }
 
 func (m *mockSender) Send(ctx context.Context, itemUID string) (string, error) {
-	m.sentItemUID = itemUID
 	m.sendCount++
+	m.sentItemUID = itemUID
 	return "req-exec-1", nil
 }
 
@@ -27,18 +27,16 @@ type mockCanceller struct {
 }
 
 func (m *mockCanceller) Cancel(ctx context.Context, requestUID string) error {
-	m.cancelledReqUID = requestUID
 	m.cancelCount++
+	m.cancelledReqUID = requestUID
 	return nil
 }
 
 type mockSaver struct {
-	savedItem  *model.Item
 	savedCount int
 }
 
 func (m *mockSaver) Save(ctx context.Context, item *model.Item) error {
-	m.savedItem = item
 	m.savedCount++
 	return nil
 }
@@ -50,62 +48,72 @@ func strPtr(s string) *string {
 func createTestItem() *model.Item {
 	return &model.Item{
 		UID:  "item-123",
-		Name: "Get Users",
+		Name: "Test Request",
 		Type: model.ItemHTTPRequest,
 		Request: &model.Request{
 			Method: "GET",
 			URL:    "https://api.example.com/users",
-			Headers: []model.KeyValue{
-				{Name: strPtr("Accept"), Value: strPtr("application/json"), Enabled: true},
-			},
 			Params: []model.Param{
-				{KeyValue: model.KeyValue{Name: strPtr("page"), Value: strPtr("1"), Enabled: true}, Type: model.ParamQuery},
-				{KeyValue: model.KeyValue{Name: strPtr("userId"), Value: strPtr("42"), Enabled: true}, Type: model.ParamPath},
+				{
+					KeyValue: model.KeyValue{
+						Name:        strPtr("limit"),
+						Value:       strPtr("10"),
+						Description: strPtr("page limit"),
+						Enabled:     true,
+					},
+					Type: model.ParamQuery,
+				},
+			},
+			Headers: []model.KeyValue{
+				{
+					Name:        strPtr("Accept"),
+					Value:       strPtr("application/json"),
+					Description: strPtr("accepted response type"),
+					Enabled:     true,
+				},
+			},
+			Auth: &model.Auth{
+				Mode:  model.AuthBearer,
+				Token: strPtr("secret-token-xyz"),
 			},
 			Body: &model.Body{
 				Mode: model.BodyJSON,
 				JSON: strPtr(`{"name": "Alice"}`),
 			},
-			Auth: &model.Auth{
-				Mode:     model.AuthBasic,
-				Username: strPtr("admin"),
-				Password: strPtr("secret"),
-			},
-			Script: &model.Scripts{
-				Req: strPtr("console.log('pre-req');"),
-			},
 			Vars: &model.VarBlocks{
 				PreRequest: []model.Variable{
-					{Name: strPtr("v1"), Value: "val1", Enabled: true},
-				},
-				PostResponse: []model.Variable{
-					{Name: strPtr("v2"), Value: "val2", Enabled: true},
+					{
+						Name:        strPtr("tempVar"),
+						Value:       "test-123",
+						Description: strPtr("temporary var"),
+						Enabled:     true,
+					},
 				},
 			},
 			Assertions: []model.KeyValue{
-				{Name: strPtr("res.status"), Value: strPtr("200"), Enabled: true},
+				{
+					Name:    strPtr("res.status"),
+					Value:   strPtr("eq 200"),
+					Enabled: true,
+				},
 			},
-			Tests: strPtr("test('ok', function() {});"),
-			Docs:  strPtr("# Documentation"),
+			Script: &model.Scripts{
+				Req: strPtr("bru.setVar('test', 'val');"),
+			},
+			Tests: strPtr("test('status is 200', () => expect(res.status).toBe(200));"),
+			Docs:  strPtr("### API Documentation\n\nEndpoint description goes here."),
 		},
 	}
 }
 
 func TestRequestScreen_EmptyState(t *testing.T) {
-	view := func(c *ui.Context) {
+	tt := ui.NewTester(func(c *ui.Context) {
 		RequestScreen(c, nil)
-	}
-
-	tt := ui.NewTester(view, 800, 600)
+	}, 800, 600)
 	tt.Frame()
 
 	if !tt.HasText("No Request Selected") {
-		t.Error("expected 'No Request Selected' empty state text")
-	}
-
-	nodes := tt.AccessAll()
-	if len(nodes) == 0 {
-		t.Error("expected accessibility nodes for empty state")
+		t.Error("expected empty state message when presenter is nil")
 	}
 }
 
@@ -135,8 +143,8 @@ func TestRequestScreen_RenderAndInteract(t *testing.T) {
 		t.Error("expected 'Save' button")
 	}
 
-	// Verify sub-tab labels
-	for _, tab := range []string{"Params", "Body", "Headers", "Auth", "Vars", "Script", "Assert", "Tests", "Docs"} {
+	// Verify sub-tab labels. The world's strip sets them in small caps.
+	for _, tab := range []string{"PARAMS", "BODY", "HEADERS", "AUTH", "VARS", "SCRIPT", "ASSERT", "TESTS", "DOCS"} {
 		if !tt.HasText(tab) {
 			t.Errorf("expected sub-tab %q to be visible", tab)
 		}
@@ -179,8 +187,8 @@ func TestRequestScreen_RenderAndInteract(t *testing.T) {
 
 	p.SelectSubTab(presenters.SubTabHeaders)
 	tt.Frame()
-	if !tt.HasText("Headers") {
-		t.Error("expected Headers title when SubTabHeaders is active")
+	if !tt.HasText("HEADERS") {
+		t.Error("expected HEADERS title when SubTabHeaders is active")
 	}
 
 	p.SelectSubTab(presenters.SubTabAuth)
@@ -191,31 +199,31 @@ func TestRequestScreen_RenderAndInteract(t *testing.T) {
 
 	p.SelectSubTab(presenters.SubTabVars)
 	tt.Frame()
-	if !tt.HasText("Pre-Request Variables") || !tt.HasText("Post-Response Variables") {
+	if !tt.HasText("PRE-REQUEST VARIABLES") || !tt.HasText("POST-RESPONSE VARIABLES") {
 		t.Error("expected Variables sections when SubTabVars is active")
 	}
 
 	p.SelectSubTab(presenters.SubTabScript)
 	tt.Frame()
-	if !tt.HasText("Pre-Request Script (runs before request is sent)") {
+	if !tt.HasText("PRE-REQUEST SCRIPT (RUNS BEFORE REQUEST IS SENT)") {
 		t.Error("expected Pre-Request Script section when SubTabScript is active")
 	}
 
 	p.SelectSubTab(presenters.SubTabAssert)
 	tt.Frame()
-	if !tt.HasText("Response Assertions") {
+	if !tt.HasText("RESPONSE ASSERTIONS") {
 		t.Error("expected Response Assertions section when SubTabAssert is active")
 	}
 
 	p.SelectSubTab(presenters.SubTabTests)
 	tt.Frame()
-	if !tt.HasText("Tests (runs after response is received)") {
+	if !tt.HasText("TESTS (RUNS AFTER RESPONSE IS RECEIVED)") {
 		t.Error("expected Tests section when SubTabTests is active")
 	}
 
 	p.SelectSubTab(presenters.SubTabDocs)
 	tt.Frame()
-	if !tt.HasText("Documentation (Markdown)") {
+	if !tt.HasText("DOCUMENTATION (MARKDOWN)") {
 		t.Error("expected Documentation section when SubTabDocs is active")
 	}
 

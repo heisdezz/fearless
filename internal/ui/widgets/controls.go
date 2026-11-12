@@ -143,6 +143,72 @@ func Button(c *ui.Context, label string, p ButtonProps) ui.Element {
 	return b
 }
 
+// IconButtonProps configures the app's icon button.
+type IconButtonProps struct {
+	// Icon is the drawn glyph — a Lucide SVG, never a Unicode character.
+	Icon *ui.SVG
+	// Text is an optional word drawn beside the icon. An icon that stands for
+	// one thing — a gear for the application settings — cannot also stand for
+	// another, so a control that needs its own word keeps it.
+	Text string
+	// Label names the button for assistive technology and for finding it in
+	// a test, since an icon carries no text of its own.
+	Label string
+	// Size is the control's size step.
+	Size lobetheme.Size
+	// Variant picks the surface, as ButtonProps's.
+	Variant action.ButtonVariant
+	// Tooltip is the hover hint; the label is the accessible name.
+	Tooltip string
+}
+
+// IconButton is a button that carries a drawn icon instead of a word.
+//
+// The app draws its icons from one library at one stroke weight. A Unicode
+// glyph standing in for an icon — a ☰ for a menu, a ⚙ for settings — is the
+// cheapest way to make a tool look assembled rather than designed, and it
+// renders at a different weight on every platform.
+func IconButton(c *ui.Context, p IconButtonProps) ui.Element {
+	tk := lobetheme.TokensOf(c)
+	height, paddingX, radius, iconSize := float32(32), float32(8), tk.BorderRadiusSM, float32(16)
+	switch p.Size {
+	case lobetheme.Small:
+		height, paddingX, iconSize = 24, 6, 14
+	case lobetheme.Large:
+		height, paddingX, radius, iconSize = 40, 12, tk.BorderRadius, 18
+	}
+
+	bg, border, fg := buttonColors(tk, p.Variant)
+	b := ui.ButtonBase(c).
+		Height(height).
+		PaddingX(paddingX).
+		Radius(radius).
+		Cursor(ui.CursorPointer).
+		Background(bg).
+		Border(1, border).
+		TextColor(fg).
+		Label(p.Label)
+	if p.Icon != nil && p.Text != "" {
+		// The icon and the word need air between them: a circle that
+		// touches its own label reads as one smudge.
+		b.Gap(5)
+	}
+	if p.Tooltip != "" {
+		b.Tooltip(p.Tooltip)
+	}
+	if p.Icon != nil {
+		b.Children(func() {
+			ui.Icon(c, p.Icon).Size(iconSize, iconSize).TextColor(fg)
+		})
+	}
+	if p.Text != "" {
+		b.Children(func() {
+			ui.Text(c, p.Text).FontSize(12).TextColor(fg).SingleLine()
+		})
+	}
+	return b
+}
+
 // buttonColors is the world's button table: the primary action carries the one
 // accent, a normal button sits on the panel with a seam, and text buttons have
 // no surface at all.

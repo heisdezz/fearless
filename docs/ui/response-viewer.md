@@ -1,137 +1,90 @@
 # Response Viewer
 
-Status: VERIFIED unless marked.
-
-Root: `packages/bruno-app/src/components/ResponsePane/`
+Status: VERIFIED against `bruno/packages/bruno-app/src/components/ResponsePane/` at commit `60d7517` and cross-referenced with `ui-map/screens/response-pane.md` and `ui-map/screens/response-viewer.md`.
 
 ---
 
-## 1. Layout
+## 1. Response Pane Structure
 
 ```text
-┌───────────────────────────────────────────────────────────────┐
-│ [Response] [Headers n] [Timeline] [Tests •]     200 · 42 ms · 1.2 KB · ⋯ │
-├───────────────────────────────────────────────────────────────┤
-│  format bar: [JSON ▾]   view: [Editor | Preview]   [filter 🔍]  │
-│                                                               │
-│  body view                                                    │
-│                                                               │
-└───────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│ [Response] [Headers (6)] [Timeline] [Tests (4/4)]  200 OK · 42ms · 1.2 KB  [⋯]│
+├───────────────────────────────────────────────────────────────────────────┤
+│ Format: [JSON ▾]  View: [Editor | Preview]   [Filter 🔍]                   │
+├───────────────────────────────────────────────────────────────────────────┤
+│ (Formatted Response Body Viewer / CodeMirror read-only)                   │
+│                                                                           │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
-| Piece | Component | Notes |
-|---|---|---|
-| Tabs | `ResponsiveTabs` | Collapses on narrow widths |
-| Status | `StatusCode` | Colored by class (2xx green, 3xx amber, 4xx/5xx red) |
-| Time | `ResponseTime`, `ResponseStopWatch` (live while sending) | |
-| Size | `ResponseSize` | From `response.size` or decoded buffer |
-| Actions | `ResponsePaneActions` | Copy, download, save-to-file, bookmark, clear; collapses below 135 px |
-| Body | `QueryResult` | |
-| Headers | `ResponseHeaders` | Count badge |
-| Timeline | `Timeline` | Network trace |
-| Tests | `TestResults` | Tests + assertions + pre/post script tests |
+### 1.1 Status Strip Metrics
 
-Source: `ResponsePane/index.js` `allTabs` memo (lines 122–148).
+| Element                 | Specification & Sizing           | Theme Token / Behavior                                                                                                                                                |
+| ----------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Response Status**     | `13px/600`, monospace figures    | 2xx: `requestTabPanel.responseOk` (`#2e8a54` L / `#73e89a` D)<br/>3xx: `status.warning.text`<br/>4xx/5xx: `requestTabPanel.responseError` (`#ce4f3b` L / `#da462f` D) |
+| **Response Time**       | `12px/400`, monospace figures    | Live stopwatch (`ResponseStopWatch`) ticks during active execution; final elapsed time on completion.                                                                 |
+| **Response Size**       | `12px/400`, monospace figures    | Formatted bytes/KB/MB calculated from response buffer length.                                                                                                         |
+| **Action Icons**        | 16 px icons, 24 px click targets | Copy, Download file, Save to file, Bookmark, Clear response.                                                                                                          |
+| **Responsive Collapse** | Collapses below `135px`          | When pane width drops below `135px` (`RIGHT_CONTENT_EXPANDED_WIDTH = 135`), action buttons collapse into a `⋯` popover menu.                                          |
 
 ---
 
-## 2. Body viewer (`QueryResult`)
+## 2. Body Viewer (`QueryResult`)
 
-### Formats
+### 2.1 Supported Formats and Renderers
 
-| Group | Options |
-|---|---|
-| Structured (preview) | `json`, `html`, `xml`, `javascript` |
-| Raw (byte) | `raw`, `hex`, `base64` |
+| Format       | View Options       | Renderer                                                                                |
+| ------------ | ------------------ | --------------------------------------------------------------------------------------- |
+| `json`       | Editor / Preview   | Read-only CodeMirror with JSON syntax highlight; collapsible tree structure in preview. |
+| `xml`        | Editor / Preview   | XML syntax highlighting with auto-formatting.                                           |
+| `html`       | Editor / Preview   | DOMPurify-sanitized web preview in sandbox.                                             |
+| `javascript` | Editor / Preview   | Highlighted JS code.                                                                    |
+| `raw`        | Text view          | Unformatted plaintext.                                                                  |
+| `hex`        | Hex dump           | Byte-level hex viewer with ASCII sidebar.                                               |
+| `base64`     | Image / PDF / Text | Content sniffing: renders images directly (`preview-image`) or opens PDF preview.       |
 
-`useInitialResponseFormat(dataBuffer, headers)` picks a starting format from `content-type`, and an initial **view tab** (`editor` | `preview`).
+### 2.2 Safety Thresholds for Large Payloads (VERIFIED)
 
-### Rendering modes
+| Threshold | Trigger Location                                   | Protective Action                                                                                                              |
+| --------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **10 MB** | `QueryResult/index.js:125` (`isLargeResponse`)     | Disables automatic pretty-printing to prevent main thread lockup; displays `LargeResponseWarning` with manual override button. |
+| **50 MB** | `utils/common/index.js` (`LARGE_BUFFER_THRESHOLD`) | Skips decoding raw binary buffer to string; renders summary and requires user to save to disk.                                 |
 
-| Format | `previewMode` | Renderer |
-|---|---|---|
-| `json` | `preview-json` | Pretty JSON in CodeMirror; tree collapse in preview |
-| `html` | `preview-web` | **Sanitized** HTML (DOMPurify) |
-| `xml` | `preview-xml` | Formatted XML |
-| `javascript` | `preview-web` | Sandboxed preview |
-| `raw` | `preview-text` | Plain |
-| `base64`/`hex` | content sniffing → `preview-image`, `preview-pdf`, or text | |
+### 2.3 Interactive JSON Filter
 
-### Large-response protection (three thresholds — VERIFIED)
-
-| Threshold | Location | Behavior |
-|---|---|---|
-| **10 MB** | `QueryResult/index.js` line 125 (`isLargeResponse`) | Body not formatted; `LargeResponseWarning` shown until user opts in |
-| **50 MB** | `utils/common/index.js` `LARGE_BUFFER_THRESHOLD` | `formatResponse` skips decoding the buffer to a string; JSON path renders from parsed `data` only |
-| **2.5 MB** | Main-process watcher (collections) | Unrelated to responses; included to avoid confusion |
-
-Also `promisifyStream` in main buffers the whole body for non-stream responses, so a 500 MB download is fully in memory **on both sides** today. See `research/limitations.md`.
-
-### JSON filter
-
-`QueryResultFilter` applies a JSONPath-like expression (`applyJSONPathFilter`) to the parsed body before display, with an expandable input at the bottom.
+- Filter toggle opens an inline query bar at the bottom of the body.
+- Evaluates JSONPath expressions in real time (`applyJSONPathFilter`), filtering the rendered tree/editor to matching nodes.
 
 ---
 
-## 3. Headers tab
+## 3. Headers Tab
 
-Table of `name: value`, raw toggle, copy-all. Includes hop-by-hop headers as the server sent them (e.g. `content-encoding: gzip` remains, because axios decompresses transparently).
-
----
-
-## 4. Timeline tab
-
-Renders `response.timeline` entries: separators, request line, sent headers, response line, response headers, timings, errors, redirect notes, and any nested `scripted-request` entries from `bru.runRequest`/`bru.sendRequest`.
-
-`utils/timeline/index.js` → `sentHeadersFromTimeline` reconstructs the outgoing header set from the trace.
+- Table displaying all response headers received from the server.
+- Shows raw header names and values, preserving hop-by-hop headers and compression status (`content-encoding: gzip`).
+- "Copy All Headers" action for quick export.
 
 ---
 
-## 5. Tests tab
+## 4. Timeline Tab (Network Diagnostics)
 
-`TestResultsLabel` aggregates:
-
-```text
-item.testResults              (tests block)
-item.assertionResults         (assert block)
-item.preRequestTestResults    (test() in pre-request script)
-item.postResponseTestResults  (test() in post-response script)
-```
-
-Each row shows description, pass/fail, expected vs actual, and error text. A failed assertion shows `lhsExpr`, operator, `rhsExpr`, and values.
+- Structured event log displaying the complete HTTP/TLS transaction:
+  - Connection initiation & DNS resolution timing
+  - TLS handshake details (cipher, certificate subject, protocol version)
+  - Full HTTP request line and headers sent
+  - Response status line and response headers received
+  - Redirect history (each hop recorded with target URI and intermediate status)
+  - Script-driven requests executed via `bru.sendRequest()` nested within trace
 
 ---
 
-## 6. States
+## 5. Tests and Assertions Tab
 
-| State | Rendering |
-|---|---|
-| No request yet | `Placeholder` |
-| Queued / sending | `Overlay` with spinner; stopwatch running |
-| Cancelled | `response === null` → placeholder with "request cancelled" |
-| Transport error | `NetworkError` (message + retry) |
-| Skipped (runner, tags) | `SkippedRequest` |
-| Stream/WS | `WsResponsePane/WSMessagesList` when `response.stream` |
-| gRPC | `GrpcResponsePane` |
-| Too large | `LargeResponseWarning` |
+Aggregates test outcomes across all evaluation phases:
 
----
+- Declarative `assert {}` blocks
+- Procedural `tests {}` block scripts
+- Pre-request script tests (`test()` calls)
+- Post-response script tests (`test()` calls)
 
-## 7. Actions
-
-| Action | Notes |
-|---|---|
-| Copy body | Respects current format |
-| Download / Save to file | Streams from main (`renderer:save-response-to-file`) |
-| Bookmark → response example | Creates an `example` block |
-| Clear | Removes response from Redux |
-| Set as variable | Select text → `SetAsVariableMenu` → creates a variable in a chosen scope |
-
----
-
-## 8. Go port guidance (PROPOSED)
-
-1. Keep the three-tier large-body handling but move to **streaming preview**: render incrementally, spool to disk above N MB.
-2. Implement JSON path filtering and raw/hex/base64 toggles — cheap and expected.
-3. Sanitize HTML previews in a webview with JS disabled by default.
-4. Preserve the format-per-tab memory behavior.
+Displays total counts (e.g. `4/4 passed`), per-assertion status dots (green check / red cross), expression failure diffs, and thrown script errors.

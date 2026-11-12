@@ -39,3 +39,12 @@ Owner history: antigravity-2 (claimed 2026-11-11T04:05Z).
   - Race detector: `go test -race -count=5 ./internal/ui/screens/navigation/...` passes clean (no data races).
   - Lint & format: `go vet` and `gofmt` completely clean.
   - Dependency policy: `./scripts/check-deps.sh` passes (`dependency-policy: ok`).
+
+### 2026-11-12T02:20Z — mimo-flash-3
+
+- Did: the sidebar's first-viewport restyle (D-023), then the finish review's findings.
+  - `internal/ui/screens/navigation/navigation.go`: the section switcher draws through the shared `theme.TabStrip` (small caps on a hairline seam, accent underline on the selected section), the collapsed rail is icon-only with the accent on the selected section, the empty states are small-caps headers over secondary-ink copy, and the filter field uses the app's own field surface instead of Lobe's SearchBar — which paints MyGo's near-white input surface in the dark appearance (the white-input defect).
+  - The rail's tiles and the collapse control are drawn icons with accessible names ("Collections", "Collapse sidebar"), not Unicode glyphs; the toolbar's actions are quiet text controls, so the window has one button language (D-025).
+  - The collection-header composable stays available for a window that embeds the sidebar on its own; the main window does not mount it.
+- Tests: `go test ./internal/ui/screens/navigation/` green — the smoke test, the action test (every control reports through `Actions` and mutates nothing), the rail test, the sorted-headers test and the light/dark goldens, regenerated for the new chrome.
+- Notes: the section labels are now caps ("COLLECTIONS"), so a test or an embedder that addresses them by prose has to use the strip's names ("Collections"). The row's paths (`screens/sidebar/**`, `screens/collection/**`) do not exist; D-023 gives this package `screens/navigation/**`.

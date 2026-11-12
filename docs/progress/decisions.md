@@ -294,6 +294,7 @@ edit the same spec file and `ownership.md` would not notice. The contract also
 had no checker — it relied on each agent self-policing §7 by eye.
 
 **Decision:**
+
 - New package `UI-MAP` owns `ui-map/**` and `refs/**`. It is the only writer of
   the map, including `design-system.md` and the shared `overview.md`.
 - `scripts/check-ownership.sh` enforces the map against a change set:
@@ -309,3 +310,131 @@ agreement that changed it. Adding a new top-level documentation or asset tree
 from now on must include a `UI-MAP`-style row and pass the checker.
 
 **Raised by:** zed-design (UI-MAP), 2026-11-11T19:05Z.
+
+### D-022 — `docs/ui/` upgraded and synchronized with `ui-map/`
+
+The UI documentation in `docs/ui/*.md` was upgraded to align with the framework-agnostic reconstruction specification in `ui-map/`, concrete token dumps, and resolved decisions (R-1 through R-7).
+
+**Key changes synchronized:**
+
+- `docs/ui/design-system.md`: exact light/dark hex tokens from `ui-map/_tools/tokens.json`, DELETE dark corrected to `#e06552`, `input.bg` established, Graphite Console world (D-017, D-018) and D-019 control shimming documented.
+- `docs/ui/application-layout.md`: exact 36 px title bar, 24 px status bar, macOS traffic light insets (70 px / 6 px), and 220–600 px resizable sidebar.
+- `docs/ui/collections-sidebar.md`: 28 px section headers, 26 px row height, 16 px indentation per level, and Decision R-1 (`RequestMethod` 11px, 34px fixed slot, 3-char truncation).
+- `docs/ui/components.md`: exact button sizes (xs: 20px, sm: 24px, md: 30px, lg: 38px), select/dropdown geometry, R-2 (no request-tab hover tint), R-3 (italic preview tabs), R-5 (one `*` per char secret masking), and D-019 control shims.
+- `docs/ui/request-editor.md`: 32 px URL bar, sub-tab indicators, auth modes, body modes, and Decision R-4 (raw operator IDs).
+- `docs/ui/response-viewer.md`: status strip tokens, format renderers, 10 MB / 50 MB safety thresholds, and JSONPath filter bar.
+- `docs/ui/environment-selector.md`: two-tier selector, secret masking (R-5), `.env` precedence hierarchy.
+- `docs/ui/settings.md`: Preferences modal tabs, `SettingsInput` geometry, and collection/folder settings.
+- `docs/ui/navigation.md`: Decision R-7 (global shortcuts: `Cmd/Ctrl+J` layout toggle, `Cmd/Ctrl+\`, `Cmd/Ctrl+Enter`), global search, cookies dialog, and runner screen.
+- `docs/ui/interaction-patterns.md`: draft model, full keyboard shortcut registry, autocomplete, and set-as-variable flow.
+
+**Raised by:** antigravity (authorized by user request 'begin ui upgrade docs/ ui-map/'), 2026-11-12T00:12Z.
+
+### D-023 — the D-017 first-viewport pass spans six rows; `screens/navigation/**` belongs to `UI-SCREEN-NAV`
+
+- **Date:** 2026-11-11T23:36Z
+- **Raised by:** mimo-flash-3 (UI-THEME, UI-LAYOUT)
+- **Affects:** `UI-THEME`, `UI-LAYOUT`, `UI-SCREEN-SHELL`, `UI-SCREEN-RESP`, `UI-SCREEN-NAV`, `UI-APP`, `UI-WIDGETS`, `UI-SCREEN-REQ`
+
+The pinned brief (`.impeccable/briefs/internal-ui-app.md`) puts the first
+viewport across chrome, sidebar, request column, response seam and status strip
+at once — D-017's "no screen restyles itself" means the type world and the
+region budget have to be built *into* the screens that render them, not beside
+them. `UI-THEME` and `UI-LAYOUT` alone cannot deliver a 30 DIP title strip with
+the environment selector in it.
+
+**Decision:**
+
+- `mimo-flash-3` claims `UI-SCREEN-SHELL`, `UI-SCREEN-RESP`, `UI-SCREEN-NAV`
+  and `UI-APP` alongside `UI-THEME` and `UI-LAYOUT` for this pass (rows updated
+  in `board.md`). The former owners are `Done` with no open work; the claim is
+  recorded here because README §4 caps an agent at two adjacent packages.
+- `internal/ui/screens/navigation/**` — the actual sidebar screen — is named by
+  **no** row: `UI-SCREEN-NAV`'s row lists `screens/sidebar/**` and
+  `screens/collection/**`, neither of which exists. From this entry
+  `UI-SCREEN-NAV` owns `internal/ui/screens/navigation/**`; `ownership.md`
+  stays read-only (§6), the same way D-021 changed it.
+- The concurrent edits to `internal/ui/widgets/**` and
+  `internal/ui/screens/request/**` (ui-map R-1/R-2/R-3, auth modes) stay with
+  their writer; the file split and the deferred phase-2 scope are recorded in
+  `blockers.md` **B-024**. Shared render helpers for this pass live in
+  `internal/ui/theme` rather than `internal/ui/widgets` so no file is written
+  by two agents.
+
+**Consequence:** `check-ownership.sh` should be run per claimed row; the
+navigation path is now covered by this entry rather than reported unowned.
+
+### D-024 — the collection-header region unmounts; `shell.Screen.CollectionHeader` becomes a method
+
+- **Date:** 2026-11-12T01:35Z
+- **Raised by:** mimo-flash-3 (UI-SCREEN-SHELL, UI-APP)
+- **Affects:** `UI-SCREEN-SHELL` (`internal/ui/screens/shell`), `UI-APP`
+  (`internal/ui/app`), and any embedder of the shell screen
+
+The pinned brief puts the collection name, the environment selector and the
+run/stop control in the 30 DIP title strip, so the second strip under it
+(the §8.1 "collection header") would answer the same question twice. The main
+window therefore mounts no collection-header region, and `layout.RootView`
+skips the band entirely when the region is absent (the empty 40 DIP band
+would be a hole in the first viewport).
+
+**Decision:**
+
+- `shell.Screen.CollectionHeader` changes from a `func(*ui.Context)` **field**
+  to a **method** that renders the region when one is mounted and does
+  nothing when one is not. The region itself is the new field
+  `CollectionHeaderRegion`. A method keeps `screen.CollectionHeader(c)` valid
+  for callers that only want to ask for the region, so an unmounted region is
+  a no-op instead of a nil-call panic; the field's name could not be kept,
+  because a field and a method cannot share one.
+- `UI-APP` leaves `CollectionHeaderRegion` unset. `navigation.Screen`'s own
+  `CollectionHeader` composable stays available for a window that embeds the
+  sidebar on its own, but the main window does not mount it.
+
+**Consequence:** a caller that *assigns* `screen.CollectionHeader = f` must
+move to `screen.CollectionHeaderRegion = f`; a caller that *calls*
+`screen.CollectionHeader(c)` needs no change.
+
+### D-025 — one section strip, one icon set: the world's shared helpers win over per-screen copies
+
+- **Date:** 2026-11-12T02:05Z
+- **Raised by:** mimo-flash-3 (UI-THEME, UI-SCREEN-NAV, UI-SCREEN-RESP)
+- **Affects:** `UI-THEME` (`internal/ui/theme`), `UI-WIDGETS`
+  (`internal/ui/widgets`), `UI-SCREEN-NAV`, `UI-SCREEN-RESP`,
+  `UI-SCREEN-REQ`, `UI-SCREEN-SET`, `UI-APP`
+
+The finish review of the first-viewport build found two drifts that D-017
+forbids and that no per-screen edit can fix:
+
+- **Two blues for one selection.** The request column's section strip came
+  from a component library and painted its own underline colour, so the
+  window carried two accents. The sidebar's switcher, the request column's
+  sections and the response pane's sub-tabs are now one strip:
+  `theme.TabStrip` in `internal/ui/theme/tabs.go` — small-caps labels on a
+  hairline seam, a 2 DIP accent underline on the selected tab, the figure in
+  the data face, and the tab named by its own label for assistive technology.
+  A screen that wants a strip calls the helper; it does not draw one.
+- **Glyphs standing in for icons.** `☰ ⚙ ✕ ▸ ▾ « » 📁 ⏱ ▶ +` were Unicode
+  characters used as an icon system. The app now draws its icons from one
+  library at one stroke weight: `widgets.IconButton`
+  (`internal/ui/widgets/controls.go`) takes a Lucide SVG, an optional word
+  and an accessible name. The tree row's disclosure control is drawn, the
+  key-value grid's remove control is drawn, the tab bar's close and new-tab
+  controls are drawn, and the history screen's close control is drawn.
+
+**Cross-package touch, stated plainly:** the icon fix reaches files outside
+the six rows this agent claimed — `internal/ui/widgets/**`,
+`internal/ui/screens/request/**`, `internal/ui/screens/history/**` — because
+the glyphs they carried were the floor's ban and a tool that draws half its
+icons in one system and half in another reads as assembled. The concurrent
+agent's pass had already landed and closed B-024/B-025 at 01:20Z, so no live
+work was overwritten; the changes are mechanical (a label replaced by a drawn
+control), behaviour-preserving, and each control keeps its callback. The
+response package is the exception and is recorded as B-026: there the other
+agent is still writing.
+
+**Also settled here:** the placeholder ink is its own token, lifted clear of
+4.5:1 on the ground and the panel (`internal/ui/theme/graphite.go`); the three
+pinned text levels are untouched. The world's action hierarchy is one
+accent (Send), one seam-outlined secondary (Save) and quiet text controls
+everywhere else.

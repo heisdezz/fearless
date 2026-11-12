@@ -22,7 +22,9 @@ import (
 	"github.com/egoist/mygo/ui"
 	"github.com/lobehub/lobe-mygo/pkg/action"
 	"github.com/lobehub/lobe-mygo/pkg/feedback"
+	"github.com/lobehub/lobe-mygo/pkg/field"
 	lobe "github.com/lobehub/lobe-mygo/pkg/layout"
+	"github.com/lobehub/lobe-mygo/pkg/lucide"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	uitheme "fearless/internal/ui/theme"
@@ -50,9 +52,15 @@ type RegionBudget struct {
 // DefaultRegionBudget returns the §8.1 budget at 100 % DPI. MyGo scales
 // DIPs itself, so these numbers hold at every DPI; they are never
 // multiplied by a scale factor here.
+//
+// The chrome heights are the direction contract's: a 30 DIP title strip
+// carrying the collection name and the environment selector, and a 24 DIP
+// status strip closing the window (the collection-header strip of §8.1 is
+// still budgeted for a screen that asks for it, but the main window no
+// longer mounts one — see RootView.View).
 func DefaultRegionBudget() RegionBudget {
 	return RegionBudget{
-		TitleBar:         32,
+		TitleBar:         30,
 		SidebarMin:       220,
 		SidebarMax:       600,
 		SidebarCollapsed: 64,
@@ -149,12 +157,12 @@ type LayoutState struct {
 	RailExpanded bool    `json:"rail_expanded"`
 }
 
-// DefaultLayoutState returns the default §8 structure: expanded 280 DIP
-// sidebar, stacked panes at a 55 % request share, console closed, rail
-// hidden.
+// DefaultLayoutState returns the default §8 structure: expanded 248 DIP
+// sidebar (the direction contract's first viewport), stacked panes at a
+// 55 % request share, console closed, rail hidden.
 func DefaultLayoutState() LayoutState {
 	return LayoutState{
-		SidebarWidth:               280,
+		SidebarWidth:               248,
 		SidebarExpanded:            true,
 		RequestResponseOrientation: OrientationStacked,
 		SplitPercent:               55,
@@ -312,12 +320,17 @@ func (r *RootView) View(c *ui.Context) {
 			}
 
 			ui.Column(c).Fill().Grow(1).Children(func() {
-				// Collection header strip: fixed budget, content optional.
-				ui.Box(c).Height(b.CollectionHeader).FillWidth().Children(func() {
-					if r.CollectionHeader != nil {
+				// Collection header strip: fixed budget, content optional —
+				// and no box at all when nothing is mounted. The main window
+				// leaves this callback nil now (the environment selector and
+				// run moved up into the title strip), and an empty 40 DIP
+				// band above the request pane would be a hole in the first
+				// viewport rather than chrome.
+				if r.CollectionHeader != nil {
+					ui.Box(c).Height(b.CollectionHeader).FillWidth().Children(func() {
 						r.CollectionHeader(c)
-					}
-				})
+					})
+				}
 
 				// Request/response split. Percent-based so the persisted
 				// ratio survives resizes; the orientation flag is the
@@ -375,55 +388,118 @@ func (r *RootView) View(c *ui.Context) {
 	})
 }
 
-// TitleBarView is the content of the title-bar region: app menu, active
-// collection, workspace trigger, settings. RootView supplies the height,
-// the window-control insets and the drag region.
+// TitleBarView is the content of the title-strip region: the collection name
+// at left, and at right the environment selector, its manage button and the
+// run/stop control — the three things the first viewport has to answer
+// (which collection, which environment, run it) before the eye reaches the
+// request column. The environment strip that used to sit under this bar is
+// unmounted; RootView supplies the height, the window-control insets and the
+// drag region.
 type TitleBarView struct {
 	AppName        string
 	CollectionName string
-	WorkspaceName  string
 	ShowMenu       bool
 	OnMenu         func()
-	OnWorkspace    func()
-	OnSettings     func()
+
+	// Environments are the names the selector offers, in order. The
+	// selector is always drawn: a strip that hides the environment when
+	// there is none cannot say "no environment" either, and that fact is
+	// one of the three the viewport leads with.
+	Environments []string
+	// ActiveEnvironment is the selected name; "" means none.
+	ActiveEnvironment string
+	// OnSelectEnvironment reports a selection made in the strip;
+	// OnManageEnvironment opens the environment settings.
+	OnSelectEnvironment func(name string)
+	OnManageEnvironment func()
+
+	// InFlight swaps Run for Stop: the control keeps its slot on the right
+	// edge and its meaning follows the wire. Run opens the collection
+	// runner; Stop cancels what is in flight.
+	InFlight bool
+	OnRun    func()
+	OnStop   func()
 }
 
-// View renders the title-bar row; it fills whatever height RootView gives.
+// View renders the title-strip row; it fills whatever height RootView gives.
 func (t *TitleBarView) View(c *ui.Context) {
 	tk := uitheme.TokensOf(c)
 
 	ui.Row(c).Fill().AlignItems(ui.Center).Gap(8).Children(func() {
 		// App menu (Windows/Linux)
 		if t.ShowMenu && t.OnMenu != nil {
-			widgets.Button(c, "☰", widgets.ButtonProps{
+			widgets.IconButton(c, widgets.IconButtonProps{
+				Icon:    lucide.Menu(),
+				Label:   "Menu",
+				Tooltip: "Open the menu",
 				Variant: action.Text,
 				Size:    lobetheme.Small,
-			}).OnClick(t.OnMenu).Tooltip("Menu")
+			}).OnClick(t.OnMenu)
 		}
 
-		// App name / collection
-		ui.Text(c, t.AppName).TextColor(tk.Text).Bold()
-		if t.CollectionName != "" {
-			ui.Text(c, " — ").TextColor(tk.TextSecondary)
-			ui.Text(c, t.CollectionName).TextColor(tk.Text)
+		// Collection name: the strip leads with what is open. The app name
+		// stands in only while no collection is mounted, so the window is
+		// never anonymous.
+		name := t.CollectionName
+		if name == "" {
+			name = t.AppName
+		}
+		if name != "" {
+			ui.Text(c, name).
+				FontSize(uitheme.TitleSize).
+				FontWeight(500).
+				TextColor(tk.Text).
+				SingleLine()
 		}
 
 		ui.Box(c).Grow(1) // spacer
 
-		// Workspace selector
-		if t.WorkspaceName != "" && t.OnWorkspace != nil {
-			widgets.Button(c, t.WorkspaceName, widgets.ButtonProps{
-				Variant: action.Text,
+		// Environment selector: the active name, chosen here rather than
+		// in a preferences screen.
+		env := t.ActiveEnvironment
+		opts := make([]field.SelectOption, 0, len(t.Environments)+1)
+		opts = append(opts, field.SelectOption{Value: "", Label: "No Environment"})
+		for _, e := range t.Environments {
+			opts = append(opts, field.SelectOption{Value: e, Label: e})
+		}
+		ui.Box(c).Width(150).Children(func() {
+			widgets.FieldSelect(c, &env, widgets.FieldSelectProps{
+				Options: opts,
 				Size:    lobetheme.Small,
-			}).OnClick(t.OnWorkspace).Tooltip("Switch workspace")
+			})
+		})
+		if env != t.ActiveEnvironment && t.OnSelectEnvironment != nil {
+			t.OnSelectEnvironment(env)
 		}
 
-		// Settings
-		if t.OnSettings != nil {
-			widgets.Button(c, "⚙", widgets.ButtonProps{
+		// Environment settings, next to the selector it configures. It
+		// keeps its word: the application settings are a gear at the other
+		// end of the window, and two identical gears with two meanings is
+		// one meaning too many.
+		if t.OnManageEnvironment != nil {
+			widgets.IconButton(c, widgets.IconButtonProps{
+				Icon:    lucide.Globe(),
+				Text:    "Env",
+				Label:   "Environment settings",
+				Tooltip: "Environment settings",
 				Variant: action.Text,
 				Size:    lobetheme.Small,
-			}).OnClick(t.OnSettings).Tooltip("Settings")
+			}).OnClick(t.OnManageEnvironment)
+		}
+
+		// Run / Stop.
+		if t.InFlight {
+			if t.OnStop != nil {
+				widgets.Button(c, "Stop", widgets.ButtonProps{
+					Variant: action.Default,
+					Size:    lobetheme.Small,
+				}).OnClick(t.OnStop).Tooltip("Cancel the in-flight request")
+			}
+		} else if t.OnRun != nil {
+			widgets.Button(c, "Run", widgets.ButtonProps{
+				Variant: action.Text,
+				Size:    lobetheme.Small,
+			}).OnClick(t.OnRun).Tooltip("Run this collection")
 		}
 	})
 }
@@ -436,14 +512,20 @@ type StatusItem struct {
 	OnClick func()
 }
 
-// StatusBarView is the content of the status-bar region. RootView supplies
-// the height; this fills it.
+// StatusBarView is the content of the status-bar region: the counts and
+// engine facts on the left, the workspace and settings controls closing the
+// window on the right. RootView supplies the height; this fills it.
 type StatusBarView struct {
-	RequestCount    int
-	SelectedCount   int
-	EnvironmentName string
-	OnEnvironment   func()
-	RightStatus     []StatusItem
+	RequestCount  int
+	SelectedCount int
+	RightStatus   []StatusItem
+
+	// Workspace and settings live here rather than in the title strip: the
+	// title strip is spoken for by the three facts the request leads with,
+	// and these two are app-level controls that close the window.
+	WorkspaceName string
+	OnWorkspace   func()
+	OnSettings    func()
 }
 
 // View renders the status row.
@@ -454,23 +536,19 @@ func (s *StatusBarView) View(c *ui.Context) {
 	// than chrome, especially in dark mode where BgBase and the content
 	// surface are near-neighbours.
 	ui.Row(c).Fill().AlignItems(ui.Center).Gap(12).Padding(0, 12).
-		BorderWidth(1, 0, 0, 0).BorderColor(tk.BorderSecondary).
+		BorderWidth(1, 0, 0, 0).BorderColor(tk.Border).
 		Children(func() {
-			// Left: request counts
+			// Left: request counts. A count is a figure, so it is set in the
+			// data face and lines up on its digits with the rest of the
+			// window's numbers.
 			if s.RequestCount > 0 {
-				ui.Text(c, formatCount(s.RequestCount, "request", "requests")).TextColor(tk.TextSecondary).FontSize(tk.FontSizeSM)
+				uitheme.DataText(c, formatCount(s.RequestCount, "request", "requests")).
+					TextColor(tk.TextSecondary).FontSize(tk.FontSizeSM)
 				if s.SelectedCount > 0 {
-					ui.Text(c, " · ").TextColor(tk.TextSecondary)
-					ui.Text(c, formatCount(s.SelectedCount, "selected", "selected")).TextColor(tk.TextSecondary)
+					uitheme.DataText(c, " · ").TextColor(tk.TextSecondary).FontSize(tk.FontSizeSM)
+					uitheme.DataText(c, formatCount(s.SelectedCount, "selected", "selected")).
+						TextColor(tk.TextSecondary).FontSize(tk.FontSizeSM)
 				}
-			}
-
-			// Environment selector
-			if s.EnvironmentName != "" && s.OnEnvironment != nil {
-				widgets.Button(c, s.EnvironmentName, widgets.ButtonProps{
-					Variant: action.Text,
-					Size:    lobetheme.Small,
-				}).OnClick(s.OnEnvironment).Tooltip("Change environment")
 			}
 
 			ui.Box(c).Grow(1) // spacer
@@ -485,6 +563,23 @@ func (s *StatusBarView) View(c *ui.Context) {
 				} else {
 					ui.Text(c, item.Label).TextColor(item.Color).FontSize(tk.FontSizeSM)
 				}
+			}
+
+			// Workspace selector and settings, last in the window.
+			if s.WorkspaceName != "" && s.OnWorkspace != nil {
+				widgets.Button(c, s.WorkspaceName, widgets.ButtonProps{
+					Variant: action.Text,
+					Size:    lobetheme.Small,
+				}).OnClick(s.OnWorkspace).Tooltip("Switch workspace")
+			}
+			if s.OnSettings != nil {
+				widgets.IconButton(c, widgets.IconButtonProps{
+					Icon:    lucide.Settings(),
+					Label:   "Settings",
+					Tooltip: "Settings",
+					Variant: action.Text,
+					Size:    lobetheme.Small,
+				}).OnClick(s.OnSettings)
 			}
 		})
 }
@@ -540,10 +635,13 @@ func (d *ConsoleDockView) View(c *ui.Context) {
 			}
 			ui.Box(c).Grow(1)
 			if d.OnClose != nil {
-				widgets.Button(c, "✕", widgets.ButtonProps{
+				widgets.IconButton(c, widgets.IconButtonProps{
+					Icon:    lucide.X(),
+					Label:   "Close console",
+					Tooltip: "Close console",
 					Variant: action.Text,
 					Size:    lobetheme.Small,
-				}).OnClick(d.OnClose).Tooltip("Close console")
+				}).OnClick(d.OnClose)
 			}
 		})
 

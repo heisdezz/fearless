@@ -2,17 +2,15 @@ package request
 
 import (
 	"github.com/egoist/mygo/ui"
-	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/core/model"
 	"fearless/internal/ui/presenters"
+	uitheme "fearless/internal/ui/theme"
 	"fearless/internal/ui/widgets"
 )
 
 // renderParamsTab renders the Query and Path parameter grids.
 func renderParamsTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Request) ui.Element {
-	tk := lobetheme.TokensOf(c)
-
 	// Filter Query and Path params from req.Params
 	var queryRows []model.KeyValue
 	var pathRows []model.KeyValue
@@ -28,10 +26,7 @@ func renderParamsTab(c *ui.Context, p *presenters.RequestPresenter, req *model.R
 	return ui.Column(c).FillWidth().Gap(16).Children(func() {
 		// 1. Query Parameters
 		ui.Column(c).FillWidth().Gap(6).Children(func() {
-			ui.Text(c, "Query Parameters").
-				FontSize(12).
-				Bold().
-				TextColor(tk.Text)
+			uitheme.PanelHeader(c, "Query Parameters")
 
 			widgets.KeyValueGrid(c, &queryRows, widgets.KeyValueGridProps{
 				ShowDescription: true,
@@ -59,10 +54,7 @@ func renderParamsTab(c *ui.Context, p *presenters.RequestPresenter, req *model.R
 
 		// 2. Path Parameters
 		ui.Column(c).FillWidth().Gap(6).Children(func() {
-			ui.Text(c, "Path Parameters").
-				FontSize(12).
-				Bold().
-				TextColor(tk.Text)
+			uitheme.PanelHeader(c, "Path Parameters")
 
 			widgets.KeyValueGrid(c, &pathRows, widgets.KeyValueGridProps{
 				ShowDescription: true,

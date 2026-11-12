@@ -52,6 +52,14 @@ var (
 	paperBlue = ui.Hex("#2563EB")
 )
 
+// The placeholder ink, one per appearance. Both clear 4.5:1 against the
+// ground and the panel of their appearance, which the tertiary ink does not:
+// a field that cannot be read is a field nobody can fill.
+var (
+	darkPlaceholderInk  = ui.Hex("#868A92")
+	lightPlaceholderInk = ui.Hex("#646870")
+)
+
 // darkAccent is the accent for a single appearance: the world's blue, with a
 // hover that lightens and a press that darkens, so the pressed state is
 // readable in a dark room without a second hue.
@@ -84,11 +92,13 @@ func applyWorld(tk *lobe.Tokens, dark bool) {
 	ink := graphiteInk
 	acc := darkAccentSet
 	verb := verbDark
+	placeholderInk := darkPlaceholderInk
 	if !dark {
 		p = paper
 		ink = paperInk
 		acc = lightAccentSet
 		verb = verbLight
+		placeholderInk = lightPlaceholderInk
 	}
 
 	tk.Dark = dark
@@ -137,7 +147,12 @@ func applyWorld(tk *lobe.Tokens, dark bool) {
 	tk.TextSecondary = ink[1]
 	tk.TextTertiary = ink[2]
 	tk.TextQuaternary = mixHex(ink[2], p[1], 0.35)
-	tk.TextPlaceholder = ink[2]
+	// The placeholder is not one of the three text levels: it is the ink of a
+	// field that is empty, and it has to clear the contrast floor on both the
+	// ground and the panel (4.5:1), which the tertiary level does not. It sits
+	// between the tertiary and the secondary ink — dim enough to read as a
+	// hint, legible enough to be read.
+	tk.TextPlaceholder = placeholderInk
 	tk.TextDisabled = mixHex(ink[1], p[1], 0.45)
 	tk.Icon = ink[1]
 	tk.IconHover = ink[0]

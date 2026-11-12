@@ -15,6 +15,7 @@ func TestBuildMenu_StructureAndCallbacks(t *testing.T) {
 		sendReqCalled    bool
 		cancelReqCalled  bool
 		toggleSideCalled bool
+		changeLayCalled  bool
 		toggleConsCalled bool
 		zoomInCalled     bool
 		zoomOutCalled    bool
@@ -51,6 +52,9 @@ func TestBuildMenu_StructureAndCallbacks(t *testing.T) {
 		},
 		OnToggleSidebar: func() {
 			toggleSideCalled = true
+		},
+		OnChangeLayout: func() {
+			changeLayCalled = true
 		},
 		OnToggleConsole: func() {
 			toggleConsCalled = true
@@ -128,6 +132,9 @@ func TestBuildMenu_StructureAndCallbacks(t *testing.T) {
 	}
 	if !toggleSideCalled {
 		t.Error("OnToggleSidebar not triggered")
+	}
+	if !changeLayCalled {
+		t.Error("OnChangeLayout not triggered")
 	}
 	if !toggleConsCalled {
 		t.Error("OnToggleConsole not triggered")

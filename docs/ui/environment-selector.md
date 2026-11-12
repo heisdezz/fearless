@@ -1,102 +1,75 @@
 # Environment Selector
 
-Status: VERIFIED unless marked.
-
-Root: `packages/bruno-app/src/components/Environments/`
+Status: VERIFIED against `bruno/packages/bruno-app/src/components/Environments/` at commit `60d7517` and cross-referenced with `ui-map/screens/environments.md`.
 
 ---
 
-## 1. Two-tier selector
+## 1. Two-Tier Environment Model
 
-`EnvironmentSelector` opens a dropdown with two tabs:
+`EnvironmentSelector` renders a split popover menu:
 
 ```text
-[ Collection ]  [ Global ]
-```
-
-| Tab | Scope | Storage |
-|---|---|---|
-| Collection | Per-collection environment | `environments/*.bru` in the collection |
-| Global | App-wide environment | `electron-store` `global-environments` |
-
-Each tab lists environments with radio selection, plus actions (create, import, edit, delete, duplicate). Selecting dispatches `selectEnvironment` (collection) or `selectGlobalEnvironment` (global). The current selection is shown as a badge on the collection row in the sidebar.
-
-Source: `Environments/EnvironmentSelector/index.js` (`TABS`, `getEnvBadgeStyle`), `EnvironmentListContent`.
-
----
-
-## 2. Environment list features
-
-| Feature | Detail |
-|---|---|
-| Color tags | `environment.color`; badge shows color at 12 % alpha |
-| Inheritance | Environments with `extends` show an "inherited" marker and a parent chip |
-| Secret indicator | Lock icon; values not shown until revealed |
-| Active marker | Radio + check icon |
-| Import | `ImportEnvironmentModal` (from `.env`, Postman env JSON, Insomnia) |
-| Create | Inline modal/tab |
-| Search | Filter within the list |
-
----
-
-## 3. Environment editor (tab)
-
-Opened via `editEnvironment` (⌘/Ctrl + E) or the selector's edit action. `Environments/EnvironmentSettings` renders:
-
-```text
-┌ Name · Color · [Extends ▾] ────────────────────────────┐
-│ Variables table                                        │
-│  ☑ name | value | type | secret | description          │
-│  + Add variable                                        │
-├ Secret values are stored encrypted                     │
-├ Dotenv file section (optional)                         │
+┌────────────────────────────────────────────────────────┐
+│ [ Collection Environments ]   [ Global Environments ]  │
+├────────────────────────────────────────────────────────┤
+│ ◉ Development                    [Inherits: Base] [🔒] │
+│ ○ Staging                                         [🔒] │
+│ ○ Production                                      [🔒] │
+├────────────────────────────────────────────────────────┤
+│ [+ New Environment]    [Import Environment]   [⚙ Manage]│
 └────────────────────────────────────────────────────────┘
 ```
 
-| Control | Behavior |
-|---|---|
-| Variable row | enabled checkbox, name, value (masked if secret), `DataTypeSelector` (string/number/boolean/object), secret toggle, description |
-| Secret toggle | Moves the value to the encrypted store; file keeps only the name in `vars:secret` |
-| `Extends` | Choose a parent environment; cycles and missing parents are flagged |
-| Validation | Duplicate names, invalid characters (`[A-Za-z0-9_.-]`), missing parent shown inline |
-| Save | `saveEnvironment` thunk → file write, or global store update |
-| Discard | `ConfirmCloseEnvironment` warns on unsaved changes |
-
-`EnvironmentVariablesTable`, `VarValueCell`, `VariableScopeIcon` provide the shared table UX.
+| Scope          | Storage Mechanism                                                          | Visibility & Lifecycle                                            |
+| -------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **Collection** | Saved as `.bru` files in `environments/*.bru` within the collection folder | Scoped to active collection; checked into version control         |
+| **Global**     | Persisted in app-level store (`global-environments`)                       | Available across all open collections; local to developer machine |
 
 ---
 
-## 4. Dotenv integration
+## 2. Environment Selector Menu
 
-`DotEnvFileEditor` / `DotEnvFileDetails` manage the collection's `.env` file, whose values become `process.env.*` during interpolation.
-
-Priority (VERIFIED, `bruno-electron/src/store/process-env.js`):
-
-```text
-collection .env  >  workspace .env  >  OS process.env
-```
-
-The file header comment states this explicitly. Lines are watched by `app/dotenv-watcher.js` so edits apply without reopening.
+- **Active Badge:** Active environment appears as a badge on the collection header in the sidebar. Colors derive from `environment.color` rendered at 12 % alpha background (`getEnvBadgeStyle`).
+- **Inheritance Marker:** Environments declaring an `extends` parent display an inheritance tag linking to the parent environment.
+- **Secret Indicator:** Locked padlock icon indicates variables stored in secret storage.
+- **Import Actions:** Postman environment JSON, `.env` files, and Insomnia environments.
 
 ---
 
-## 5. Global environments editor
+## 3. Environment Editor Specification
 
-`WorkspaceHome/WorkspaceEnvironments/*` and `Preferences`-adjacent UI manage app-level environments. Secret values are encrypted with the same mechanism (`encryptStringSafe`/`decryptStringSafe`).
+Opened via **⌘/Ctrl + E** or from the selector's configure action.
 
-Workspaces add a **third** source: workspace environments (`store/workspace-environments.js`), selectable per workspace.
+### 3.1 Variables Grid
+
+| Column          | Component & Behavior        | Spec / Decision Reference                                |
+| --------------- | --------------------------- | -------------------------------------------------------- |
+| **Enabled**     | Checkbox toggle             | Controls whether variable participates in interpolation  |
+| **Name**        | Monospace text field        | Validates against `^[A-Za-z0-9_.-]+$`; flags duplicates  |
+| **Value**       | Monospace editor            | Masked with `*` when secret; reveals on hover / focus    |
+| **Type**        | `DataTypeSelector` dropdown | `string`, `number`, `boolean`, `object`                  |
+| **Secret**      | Lock toggle switch          | Moves value to encrypted store; keeps only key in `.bru` |
+| **Description** | Plain text input            | Freeform documentation                                   |
+
+> [!IMPORTANT]
+> **Decision R-5 (Secret Masking):** Secret variable values render strictly as **one `*` per character** everywhere in the UI (tables, tooltips, dialogs), matching user expectations.
 
 ---
 
-## 6. Effective value display
+## 4. DotEnv Integration
 
-When a variable is defined in multiple scopes, the UI shows the winner and its provenance (`VariableScopeList`, `VariableScopeIcon`), matching the precedence in `flows/environment-resolution.md`.
+- Collection `.env` files are monitored via filesystem watcher.
+- Values become available during interpolation under `process.env.*`.
+- **Precedence Hierarchy (VERIFIED):**
+  ```text
+  Collection .env  >  Workspace .env  >  Host OS process.env
+  ```
 
 ---
 
-## 7. Go port guidance (PROPOSED)
+## 5. Effective Variable Inspector
 
-- Keep the two-tab selector; global environments are a real feature, not a duplicate.
-- Put the encryption in the core with a pluggable key source (OS keychain preferred).
-- Implement `extends` validation (cycle detection) in core so the CLI rejects invalid envs identically.
-- Show provenance; it is the main debugging aid for variables.
+- Hovering an interpolated `{{variable}}` anywhere in the app displays an inspection popover showing:
+  - Effective resolved value (with secret masking if secret)
+  - Provenance source (Request runtime, Folder, Collection, Environment, Global, System)
+  - Full scope inheritance chain

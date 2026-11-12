@@ -25,20 +25,20 @@ import (
 var state = layout.DefaultLayoutState()
 
 var title = &layout.TitleBarView{
-	AppName:        "fearless",
-	CollectionName: "demo",
-	ShowMenu:       true,
-	OnMenu:         func() {},
-	WorkspaceName:  "local",
-	OnWorkspace:    func() {},
-	OnSettings:     func() {},
+	AppName:           "fearless",
+	CollectionName:    "demo",
+	ShowMenu:          true,
+	OnMenu:            func() {},
+	Environments:      []string{"dev", "prod"},
+	ActiveEnvironment: "dev",
 }
 
 var status = &layout.StatusBarView{
-	RequestCount:    12,
-	SelectedCount:   2,
-	EnvironmentName: "dev",
-	OnEnvironment:   func() {},
+	RequestCount:  12,
+	SelectedCount: 2,
+	WorkspaceName: "local",
+	OnWorkspace:   func() {},
+	OnSettings:    func() {},
 	RightStatus: []layout.StatusItem{
 		{Label: "idle", Tooltip: "engine (demo)", OnClick: func() {}},
 	},

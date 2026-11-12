@@ -68,7 +68,7 @@ is_shared() {
 # (e.g. D-021) can be told apart from an accidental one.
 is_contract() {
   case "$1" in
-    docs/progress/ownership.md|docs/progress/README.md|docs/progress/packages.md) return 0 ;;
+    docs/progress/ownership.md|docs/progress/README.md|docs/progress/packages.md|docs/*.md|docs/ui/*.md) return 0 ;;
     *) return 1 ;;
   esac
 }

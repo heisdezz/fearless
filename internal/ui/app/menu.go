@@ -16,6 +16,7 @@ type MenuActions struct {
 	OnSendRequest      func()
 	OnCancelRequest    func()
 	OnToggleSidebar    func()
+	OnChangeLayout     func()
 	OnToggleConsole    func()
 	OnZoomIn           func()
 	OnZoomOut          func()
@@ -129,9 +130,19 @@ func BuildMenu(actions MenuActions, router *KeybindingRouter) *mygo.Menu {
 			},
 		},
 		{
+			ID:          "change-layout",
+			Label:       "Change Orientation",
+			Accelerator: "CmdOrCtrl+J",
+			Click: func(_ *mygo.MenuItem, _ *mygo.Window) {
+				if actions.OnChangeLayout != nil {
+					actions.OnChangeLayout()
+				}
+			},
+		},
+		{
 			ID:          "toggle-console",
 			Label:       "Toggle Console",
-			Accelerator: "CmdOrCtrl+J",
+			Accelerator: "CmdOrCtrl+T",
 			Click: func(_ *mygo.MenuItem, _ *mygo.Window) {
 				if actions.OnToggleConsole != nil {
 					actions.OnToggleConsole()

@@ -203,8 +203,25 @@ func (a *App) initScreens() {
 		OnSettings: func() {
 			a.TogglePreferences()
 		},
-		OnEnvironment: func() {
+		OnSelectEnvironment: func(name string) {
+			if a.EnvironmentPresenter != nil {
+				_ = a.EnvironmentPresenter.SelectEnvironment(context.Background(), name)
+			}
+		},
+		OnManageEnvironment: func() {
 			a.ShowPreferences()
+		},
+		OnRun: func() {
+			// No runner backend is wired into the GUI yet, so Run leads to
+			// the place where running happens: the runner section of the
+			// sidebar. A button that does nothing is worse than one that
+			// moves the user closer to the action.
+			if a.SidebarPresenter != nil {
+				a.SidebarPresenter.SelectSection(presenters.SidebarSectionRunner)
+			}
+		},
+		OnStop: func() {
+			a.CancelActiveRequest()
 		},
 		OnConsoleTab: func(tab int) {
 			a.mu.Lock()
@@ -227,11 +244,10 @@ func (a *App) initScreens() {
 				a.NavScreen.Sidebar(c, nav)
 			}
 		},
-		CollectionHeader: func(c *ui.Context) {
-			if a.NavScreen != nil {
-				a.NavScreen.CollectionHeader(c)
-			}
-		},
+		// No collection-header region: the title strip carries the
+		// collection name, the environment selector and the run control,
+		// and a second strip under it would answer the same question
+		// twice.
 		RequestPane: func(c *ui.Context) {
 			if a.RequestPresenter != nil {
 				request.RequestScreen(c, a.RequestPresenter, a.RequestScreenState)
@@ -270,6 +286,9 @@ func (a *App) wireKeybindingHandlers() {
 	})
 	a.Router.SetHandler(ActionToggleSidebar, func() {
 		a.ToggleSidebar()
+	})
+	a.Router.SetHandler(ActionChangeLayout, func() {
+		a.ToggleLayout()
 	})
 	a.Router.SetHandler(ActionToggleConsole, func() {
 		a.ToggleConsole()
@@ -311,6 +330,9 @@ func (a *App) MenuActions() MenuActions {
 		},
 		OnToggleSidebar: func() {
 			a.ToggleSidebar()
+		},
+		OnChangeLayout: func() {
+			a.ToggleLayout()
 		},
 		OnToggleConsole: func() {
 			a.ToggleConsole()
@@ -442,6 +464,17 @@ func (a *App) ToggleSidebar() {
 	})
 }
 
+// ToggleLayout switches the request and response pane orientation between stacked and side-by-side (Decision R-7).
+func (a *App) ToggleLayout() {
+	a.SafeUpdate(func() {
+		if a.LayoutState.RequestResponseOrientation == layout.OrientationStacked {
+			a.LayoutState.RequestResponseOrientation = layout.OrientationSideBySide
+		} else {
+			a.LayoutState.RequestResponseOrientation = layout.OrientationStacked
+		}
+	})
+}
+
 // ToggleConsole toggles the visibility of the bottom console dock.
 func (a *App) ToggleConsole() {
 	a.SafeUpdate(func() {
@@ -537,6 +570,14 @@ func (a *App) RootView(c *ui.Context) {
 }
 
 func (a *App) renderMainView(c *ui.Context) {
+	// The sidebar draws from a plain snapshot, so it is re-read from the
+	// presenters before the frame: the tree, the selected node and the
+	// environments have to be the ones the app holds now, not the ones it
+	// held when the screen was built.
+	if a.NavScreen != nil && a.SidebarPresenter != nil {
+		a.NavScreen.Snapshot = navigation.TakeSnapshot(a.SidebarPresenter)
+	}
+
 	if a.ShellScreen != nil {
 		// Update shell snapshot from live presenters
 		colName := "fearless"
@@ -545,9 +586,19 @@ func (a *App) renderMainView(c *ui.Context) {
 				colName = cols[0].Name
 			}
 		}
+		var envNames []string
 		envName := ""
 		if a.EnvironmentPresenter != nil {
+			for _, env := range a.EnvironmentPresenter.Environments() {
+				if env != nil {
+					envNames = append(envNames, env.Name)
+				}
+			}
 			envName = a.EnvironmentPresenter.ActiveEnvironmentName()
+		}
+		inFlight := false
+		if a.RequestPresenter != nil {
+			inFlight = a.RequestPresenter.InFlight()
 		}
 
 		// The status bar shows facts, never decoration (PRODUCT.md): the
@@ -584,6 +635,8 @@ func (a *App) renderMainView(c *ui.Context) {
 			ShowMenu:         true,
 			RequestCount:     requestCount,
 			EnvironmentName:  envName,
+			Environments:     envNames,
+			InFlight:         inFlight,
 			Status:           status,
 			ActiveConsoleTab: a.activeConsoleTab,
 		}

@@ -7,9 +7,15 @@
 //
 // Layout, top to bottom:
 //
-//	status row   200 OK · 45 ms · 512 B · (error text when failed)
+//	status seam   200 OK · 45 ms · 512 B · (error text when failed)
 //	sub-tabs     Body | Headers | Timeline | Tests
 //	pane         the selected view
+//
+// Both chrome rows are hairline seams rather than boxed strips: the status
+// seam carries the one colour that means something (the status category) and
+// the sub-tab seam carries the accent underline on the active tab. Every
+// figure on them is set in the data face — theme.DataText — so codes, timings
+// and sizes line up on tabular digits.
 //
 // Source: bruno-app/src/components/ResponsePane
 package response
@@ -25,6 +31,7 @@ import (
 
 	"fearless/internal/core/model"
 	"fearless/internal/ui/presenters"
+	"fearless/internal/ui/theme"
 )
 
 // Props configure the screen.
@@ -75,108 +82,116 @@ func Screen(c *ui.Context, props Props) ui.Element {
 		})
 }
 
-// StatusRow renders the status summary line.
+// StatusRow renders the status summary as the pane's top seam.
 //
 // It is always drawn, even when idle, so the pane does not jump vertically as a
-// request starts: an empty line reserves the space.
+// request starts: an empty line reserves the space. The figures are set in the
+// data face with dim "·" separators so the line reads as one data row:
+// 200 OK · 412 ms · 2.4 kB, the code carrying the semantic colour and the
+// rest staying secondary.
 func StatusRow(c *ui.Context, p *presenters.ResponsePresenter) ui.Element {
 	tk := lobetheme.TokensOf(c)
 
 	state := p.State()
 	status := p.FormattedStatus()
 
+	// separator is dimmed against the figures it divides, so the line's
+	// structure comes from rhythm rather than from more ink. It is set in
+	// the data face like the figures it divides, and the row's own gap
+	// gives it its air — the monospaced face draws its middot high and
+	// tight, and a seam that reads "200 OK ·412 ms" is not one row.
+	separator := func() {
+		theme.DataText(c, "·").FontSize(theme.DataSize).TextColor(tk.TextTertiary)
+	}
+
 	return ui.Row(c).
 		FillWidth().
-		Height(32).
+		Height(26).
 		AlignItems(ui.Center).
-		Gap(12).
-		Padding(0, 10).
-		Border(1, tk.BorderSecondary).
+		Padding(0, 12).
+		BorderWidth(0, 0, 1, 0).
+		BorderColor(tk.Border).
 		Children(func() {
 			switch state {
 			case presenters.ResponseStateLoading:
-				// The size grows as chunks arrive, so it is the honest indicator
-				// that something is still streaming.
-				ui.Text(c, "Sending…").FontSize(12).TextColor(tk.TextSecondary)
-				if size := p.FormattedSize(); size != "" {
-					ui.Text(c, size).FontSize(12).TextColor(tk.TextTertiary)
+				// A loading pulse stays in the secondary ink: the pane is
+				// working, not warning.
+				theme.DataText(c, "Loading…").FontSize(theme.DataSize).TextColor(tk.TextSecondary)
+
+				// A streamed partial size reports progress while the request is
+				// still in flight, so a large transfer does not look hung.
+				if s := p.FormattedSize(); s != "" {
+					separator()
+					theme.DataText(c, s).FontSize(theme.DataSize).TextColor(tk.TextTertiary)
 				}
 
 			case presenters.ResponseStateError:
-				ui.Text(c, "Error").FontSize(12).TextColor(tk.Error).FontWeight(600)
+				theme.DataText(c, status).FontSize(theme.DataSize).FontWeight(600).TextColor(tk.Error)
 				if message := p.ErrorMessage(); message != "" {
-					ui.Text(c, message).FontSize(12).TextColor(tk.Error)
+					separator()
+					theme.DataText(c, message).FontSize(theme.DataSize).TextColor(tk.Error)
 				}
 
 			case presenters.ResponseStateCompleted:
 				if status != "" {
-					ui.Text(c, status).
-						FontSize(12).
+					theme.DataText(c, status).
+						FontSize(theme.DataSize).
 						FontWeight(600).
 						TextColor(statusColor(tk, p.StatusCodeCategory()))
 				}
 				if d := p.FormattedDuration(); d != "" {
-					ui.Text(c, d).FontSize(12).TextColor(tk.TextSecondary)
+					separator()
+					theme.DataText(c, d).FontSize(theme.DataSize).TextColor(tk.TextSecondary)
 				}
 				if s := p.FormattedSize(); s != "" {
-					ui.Text(c, s).FontSize(12).TextColor(tk.TextSecondary)
+					separator()
+					theme.DataText(c, s).FontSize(theme.DataSize).TextColor(tk.TextSecondary)
 				}
 				// An error alongside a completed exchange (4xx/5xx, or a failed
 				// assertion) belongs on the same line as the status.
 				if message := p.ErrorMessage(); message != "" {
-					ui.Text(c, message).FontSize(12).TextColor(tk.Error)
+					separator()
+					theme.DataText(c, message).FontSize(theme.DataSize).TextColor(tk.Error)
 				}
 
 			default:
-				ui.Text(c, "").FontSize(12)
+				ui.Text(c, "").FontSize(theme.DataSize)
 			}
 		})
 }
 
-// SubTabs renders the Body/Headers/Timeline/Tests strip.
+// SubTabs renders the Body/Headers/Timeline/Tests strip as a hairline seam.
+//
+// It is the world's strip, shared with the sidebar's switcher and the request
+// column's sections, so the three speak with one voice and the selected tab
+// looks the same everywhere in the window. No tab is a chip: the active one
+// is marked by a 2 DIP accent underline that sits on the seam, and the labels
+// stay secondary until active. The figure beside a label is set in the data
+// face, so the numbers in a strip line up on their digits.
 func SubTabs(c *ui.Context, p *presenters.ResponsePresenter, onSelect func(presenters.ResponseSubTab)) ui.Element {
-	tk := lobetheme.TokensOf(c)
-
 	active := p.ActiveSubTab()
 
-	return ui.Row(c).
-		FillWidth().
-		Height(32).
-		AlignItems(ui.Center).
-		Gap(4).
-		Padding(0, 8).
-		Children(func() {
-			for _, tab := range presenters.AllResponseSubTabs {
-				tab := tab
-				isActive := tab == active
-
-				label := tabLabel(tab)
-				if count := tabCount(p, tab); count > 0 {
-					label = fmt.Sprintf("%s (%d)", label, count)
-				}
-
-				color := tk.TextSecondary
-				bg := tk.BgContainer
-				if isActive {
-					color = tk.Text
-					bg = tk.BgElevated
-				}
-
-				ui.Row(c).
-					AlignItems(ui.Center).
-					Padding(4, 10).
-					Background(bg).
-					Border(1, borderFor(tk, isActive)).
-					Children(func() {
-						ui.Text(c, label).FontSize(12).TextColor(color)
-					}).
-					OnClick(func() {
-						if onSelect != nil {
-							onSelect(tab)
-						}
-					})
-			}
+	items := make([]theme.TabItem, 0, len(presenters.AllResponseSubTabs))
+	activeIndex := 0
+	for i, tab := range presenters.AllResponseSubTabs {
+		items = append(items, theme.TabItem{
+			Label: tabLabel(tab),
+			Count: tabCount(p, tab),
 		})
+		if tab == active {
+			activeIndex = i
+		}
+	}
+
+	return theme.TabStrip(c, theme.TabStripProps{
+		Items:  items,
+		Active: activeIndex,
+		OnSelect: func(i int) {
+			if onSelect != nil {
+				onSelect(presenters.AllResponseSubTabs[i])
+			}
+		},
+	})
 }
 
 // Pane renders the selected sub-tab's content.
@@ -195,18 +210,27 @@ func Pane(c *ui.Context, p *presenters.ResponsePresenter) ui.Element {
 
 // BodyPane renders the response body.
 //
+// The body is code, so it is set in the data face: a JSON payload read in
+// monospace keeps its indentation and its column alignment legible in a way
+// proportional text cannot.
+//
 // A spilled body is reported rather than read: the screen has no spooler, and
 // showing a large body would defeat the reason it was spilled.
+// If the response is a Server-Sent Events stream, it is rendered via SSEStreamPane.
 func BodyPane(c *ui.Context, p *presenters.ResponsePresenter) ui.Element {
 	tk := lobetheme.TokensOf(c)
+
+	if IsEventStream(p) {
+		return SSEStreamPane(c, p)
+	}
 
 	return ui.Column(c).FillWidth().Children(func() {
 		text := p.BodyText()
 		if strings.TrimSpace(text) == "" {
-			ui.Text(c, emptyBodyMessage(p)).FontSize(12).TextColor(tk.TextTertiary)
+			ui.Text(c, emptyBodyMessage(p)).FontSize(theme.DataSize).TextColor(tk.TextSecondary)
 			return
 		}
-		ui.Text(c, text).FontSize(12).TextColor(tk.Text)
+		theme.DataText(c, text).FontSize(theme.DataSize).TextColor(tk.Text)
 	})
 }
 
@@ -235,7 +259,7 @@ func HeadersPane(c *ui.Context, p *presenters.ResponsePresenter) ui.Element {
 	result := p.Result()
 	if result == nil || len(result.Headers) == 0 {
 		return ui.Column(c).FillWidth().Children(func() {
-			ui.Text(c, "No response headers.").FontSize(12).TextColor(tk.TextTertiary)
+			ui.Text(c, "No response headers.").FontSize(theme.DataSize).TextColor(tk.TextSecondary)
 		})
 	}
 
@@ -249,8 +273,8 @@ func HeadersPane(c *ui.Context, p *presenters.ResponsePresenter) ui.Element {
 			name := h.NameOrEmpty()
 			value := h.ValueOrEmpty()
 			ui.Row(c).FillWidth().Gap(8).Children(func() {
-				ui.Text(c, name).FontSize(12).TextColor(tk.TextSecondary).Width(220)
-				ui.Text(c, value).FontSize(12).TextColor(tk.Text)
+				theme.DataText(c, name).FontSize(theme.DataSize).TextColor(tk.TextSecondary).Width(220)
+				theme.DataText(c, value).FontSize(theme.DataSize).TextColor(tk.Text)
 			})
 		}
 	})
@@ -263,7 +287,7 @@ func TimelinePane(c *ui.Context, p *presenters.ResponsePresenter) ui.Element {
 	result := p.Result()
 	if result == nil || len(result.Timeline) == 0 {
 		return ui.Column(c).FillWidth().Children(func() {
-			ui.Text(c, "No timeline recorded.").FontSize(12).TextColor(tk.TextTertiary)
+			ui.Text(c, "No timeline recorded.").FontSize(theme.DataSize).TextColor(tk.TextSecondary)
 		})
 	}
 
@@ -271,12 +295,12 @@ func TimelinePane(c *ui.Context, p *presenters.ResponsePresenter) ui.Element {
 		for _, entry := range result.Timeline {
 			entry := entry
 			ui.Row(c).FillWidth().Gap(8).Children(func() {
-				ui.Text(c, string(entry.Phase)).
-					FontSize(12).TextColor(tk.TextSecondary).Width(140)
-				ui.Text(c, formatDuration(entry.Duration)).
-					FontSize(12).TextColor(tk.Text).Width(90)
+				theme.DataText(c, string(entry.Phase)).
+					FontSize(theme.DataSize).TextColor(tk.TextSecondary).Width(140)
+				theme.DataText(c, formatDuration(entry.Duration)).
+					FontSize(theme.DataSize).TextColor(tk.Text).Width(90)
 				if entry.Detail != "" {
-					ui.Text(c, entry.Detail).FontSize(12).TextColor(tk.TextTertiary)
+					theme.DataText(c, entry.Detail).FontSize(theme.DataSize).TextColor(tk.TextTertiary)
 				}
 			})
 		}
@@ -285,8 +309,8 @@ func TimelinePane(c *ui.Context, p *presenters.ResponsePresenter) ui.Element {
 		// showing: it means time passed outside every recorded phase.
 		if total := result.Timeline.Total(); total > 0 {
 			ui.Row(c).FillWidth().Gap(8).Padding(6, 0, 0, 0).Children(func() {
-				ui.Text(c, "total").FontSize(12).TextColor(tk.TextSecondary).Width(140)
-				ui.Text(c, formatDuration(total)).FontSize(12).TextColor(tk.Text)
+				theme.DataText(c, "total").FontSize(theme.DataSize).TextColor(tk.TextSecondary).Width(140)
+				theme.DataText(c, formatDuration(total)).FontSize(theme.DataSize).TextColor(tk.Text)
 			})
 		}
 	})
@@ -301,7 +325,7 @@ func TestsPane(c *ui.Context, p *presenters.ResponsePresenter) ui.Element {
 
 	return ui.Column(c).FillWidth().Children(func() {
 		_ = p
-		ui.Text(c, "No tests recorded for this request.").FontSize(12).TextColor(tk.TextTertiary)
+		ui.Text(c, "No tests recorded for this request.").FontSize(theme.DataSize).TextColor(tk.TextSecondary)
 	})
 }
 
@@ -347,14 +371,6 @@ func statusColor(tk *lobetheme.Tokens, category string) ui.Color {
 	default:
 		return tk.Text
 	}
-}
-
-// borderFor returns the border colour for a tab.
-func borderFor(tk *lobetheme.Tokens, active bool) ui.Color {
-	if active {
-		return tk.Primary
-	}
-	return tk.BorderSecondary
 }
 
 // formatDuration renders a phase duration compactly.

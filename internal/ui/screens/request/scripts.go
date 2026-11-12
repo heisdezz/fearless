@@ -3,10 +3,10 @@ package request
 import (
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/editor"
-	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/core/model"
 	"fearless/internal/ui/presenters"
+	uitheme "fearless/internal/ui/theme"
 	"fearless/internal/ui/widgets"
 )
 
@@ -17,8 +17,6 @@ func renderScriptTab(
 	req *model.Request,
 	scriptEditorState **editor.State,
 ) ui.Element {
-	tk := lobetheme.TokensOf(c)
-
 	if req.Script == nil {
 		req.Script = &model.Scripts{}
 	}
@@ -29,10 +27,7 @@ func renderScriptTab(
 	}
 
 	return ui.Column(c).FillWidth().Gap(8).Children(func() {
-		ui.Text(c, "Pre-Request Script (runs before request is sent)").
-			FontSize(12).
-			Bold().
-			TextColor(tk.Text)
+		uitheme.PanelHeader(c, "Pre-Request Script (runs before request is sent)")
 
 		widgets.CodeEditor(c, scriptEditorState, initialScript, widgets.CodeEditorProps{
 			Language:    "javascript",
@@ -46,13 +41,8 @@ func renderScriptTab(
 
 // renderAssertTab renders the declarative Assertions key/value grid.
 func renderAssertTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Request) ui.Element {
-	tk := lobetheme.TokensOf(c)
-
 	return ui.Column(c).FillWidth().Gap(8).Children(func() {
-		ui.Text(c, "Response Assertions").
-			FontSize(12).
-			Bold().
-			TextColor(tk.Text)
+		uitheme.PanelHeader(c, "Response Assertions")
 
 		widgets.KeyValueGrid(c, &req.Assertions, widgets.KeyValueGridProps{
 			ShowDescription: false,
@@ -69,18 +59,13 @@ func renderTestsTab(
 	req *model.Request,
 	testsEditorState **editor.State,
 ) ui.Element {
-	tk := lobetheme.TokensOf(c)
-
 	initialTests := ""
 	if req.Tests != nil {
 		initialTests = *req.Tests
 	}
 
 	return ui.Column(c).FillWidth().Gap(8).Children(func() {
-		ui.Text(c, "Tests (runs after response is received)").
-			FontSize(12).
-			Bold().
-			TextColor(tk.Text)
+		uitheme.PanelHeader(c, "Tests (runs after response is received)")
 
 		widgets.CodeEditor(c, testsEditorState, initialTests, widgets.CodeEditorProps{
 			Language:    "javascript",
@@ -99,18 +84,13 @@ func renderDocsTab(
 	req *model.Request,
 	docsEditorState **editor.State,
 ) ui.Element {
-	tk := lobetheme.TokensOf(c)
-
 	initialDocs := ""
 	if req.Docs != nil {
 		initialDocs = *req.Docs
 	}
 
 	return ui.Column(c).FillWidth().Gap(8).Children(func() {
-		ui.Text(c, "Documentation (Markdown)").
-			FontSize(12).
-			Bold().
-			TextColor(tk.Text)
+		uitheme.PanelHeader(c, "Documentation (Markdown)")
 
 		widgets.CodeEditor(c, docsEditorState, initialDocs, widgets.CodeEditorProps{
 			Language:    "markdown",

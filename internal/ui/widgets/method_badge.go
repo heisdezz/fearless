@@ -58,3 +58,40 @@ func MethodBadge(c *ui.Context, method string, props ...MethodBadgeProps) ui.Ele
 				TextColor(methodColor)
 		})
 }
+
+// RequestMethod renders the compact verb label for sidebar rows (Decision R-1).
+// It renders an unbordered, right-aligned label in a fixed 34 px slot with font size 11 px.
+// Verbs longer than 5 characters are truncated to 3 letters (e.g. DELETE -> DEL, OPTIONS -> OPT).
+// Protocol types (grpc, ws, gql) are rendered in lowercase.
+func RequestMethod(c *ui.Context, method string) ui.Element {
+	raw := strings.TrimSpace(method)
+	lower := strings.ToLower(raw)
+	display := strings.ToUpper(raw)
+
+	switch lower {
+	case "grpc", "ws", "graphql", "gql":
+		display = lower
+		if lower == "graphql" {
+			display = "gql"
+		}
+	default:
+		if len(display) > 5 {
+			display = display[:3]
+		}
+		if display == "" {
+			display = "GET"
+		}
+	}
+
+	methodColor := uitheme.MethodColorFor(c, raw)
+
+	return ui.Box(c).
+		Width(34).
+		AlignItems(ui.End).
+		Children(func() {
+			ui.Text(c, display).
+				FontSize(11).
+				Bold().
+				TextColor(methodColor)
+		})
+}

@@ -122,3 +122,11 @@ Three things cost time here and are worth stating:
   - Header sorting, timeline phases, spilled body notifications, status colour categorization, and duration formatting pass.
   - Tests: 14 tests, 89.8% statement coverage, -race clean, go vet and gofmt clean.
 - Confirmed: Done.
+
+### 2026-11-12T02:20Z — mimo-flash-3
+
+- Did: the response pane's status seam and its strip (D-023), then the finish review's findings on both.
+  - `internal/ui/screens/response/response.go`: the status seam is one data row — `200 OK · 412 ms · 2.4 kB` — with the code carrying the semantic colour, the figures in the data face and dim separators between them. The sub-tabs draw through the shared `theme.TabStrip`, so the response pane's selection looks like the sidebar's and the request column's. The body, the header names and values, and the timeline are set in the data face; empty-state copy moved from the tertiary ink to the secondary ink, because a line the reader has to read is not a hint.
+  - Tests added: the seam is one row with dim separators and 28 DIP of height; the active tab carries the accent underline and no inactive tab does; and no package source hard-codes a colour (`TestNoHardCodedColors`).
+- Tests: `go test ./internal/ui/screens/response/` green; the tab counts and the click targets moved to the shared strip's names ("Headers", "Body").
+- Notes: this package is also being written by the concurrent agent (SSE stream pane): their `SubTabs` replaced the shared strip and was re-routed through it — B-026. The seam's height and the bottom hairline are the concurrent agent's (26 DIP, seam under the row); the figures and the separators are this pass's.

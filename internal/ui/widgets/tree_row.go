@@ -2,6 +2,7 @@ package widgets
 
 import (
 	"github.com/egoist/mygo/ui"
+	"github.com/lobehub/lobe-mygo/pkg/lucide"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/ui/presenters"
@@ -14,6 +15,8 @@ type TreeRowProps struct {
 }
 
 // CollectionTreeRow renders a single row in the collection tree sidebar.
+// It uses exact dimensions (26 px / 1.6 rem height) and RequestMethod (Decision R-1).
+// Selected state uses the Graphite Console electric blue accent (D-017, B-024).
 func CollectionTreeRow(c *ui.Context, node *presenters.TreeNode, props TreeRowProps) ui.Element {
 	if node == nil {
 		return ui.Box(c)
@@ -22,67 +25,81 @@ func CollectionTreeRow(c *ui.Context, node *presenters.TreeNode, props TreeRowPr
 	tk := lobetheme.TokensOf(c)
 	indent := float32(node.Level * 16)
 
-	bg := tk.BgLayout
-	if node.IsSelected {
-		bg = tk.BgElevated
-	}
-
-	return ui.Row(c).
+	row := ui.Row(c).
 		FillWidth().
-		Height(28).
+		Height(26).
 		AlignItems(ui.Center).
 		Padding(2, 6).
-		Background(bg).
 		Radius(4).
+		Cursor(ui.CursorPointer).
 		OnClick(func() {
 			if props.OnSelect != nil {
 				props.OnSelect(node.UID)
 			}
-		}).
-		Children(func() {
-			// Indentation spacer
-			if indent > 0 {
-				ui.Box(c).Width(indent)
-			}
-
-			// Expand/collapse chevron for folders
-			if node.IsFolder {
-				icon := "▸"
-				if node.IsExpanded {
-					icon = "▾"
-				}
-				ui.Text(c, icon).
-					FontSize(12).
-					TextColor(tk.TextSecondary).
-					OnClick(func() {
-						if props.OnToggle != nil {
-							props.OnToggle(node.UID)
-						}
-					})
-				ui.Box(c).Width(6)
-			} else {
-				// Request node: method badge
-				MethodBadge(c, node.Method, MethodBadgeProps{Size: 9, PaddingX: 4, PaddingY: 1})
-				ui.Box(c).Width(6)
-			}
-
-			// Node Name
-			txt := ui.Text(c, node.Name).
-				FontSize(12).
-				TextColor(tk.Text)
-			if node.IsFolder {
-				txt.Bold()
-			}
-
-			// Dirty indicator
-			if node.IsDirty {
-				ui.Box(c).Width(6)
-				ui.Box(c).
-					Size(5, 5).
-					Radius(2.5).
-					Background(tk.Warning)
-			}
-
-			ui.Box(c).Grow(1) // Spacer
 		})
+
+	if node.IsSelected {
+		// The selection is marked by the accent tint and the accent ink.
+		// The bar is one pixel: a thicker coloured edge on a list row is
+		// the floor's ban, and the tint already says which row is open.
+		row.Background(tk.PrimaryBg).
+			BorderWidth(0, 0, 0, 1).
+			BorderColor(tk.Primary)
+	} else {
+		row.Background(tk.BgLayout)
+	}
+
+	return row.Children(func() {
+		// Indentation spacer
+		if indent > 0 {
+			ui.Box(c).Width(indent)
+		}
+
+		// Expand/collapse chevron for folders
+		if node.IsFolder {
+			icon := lucide.ChevronRight()
+			chevronLabel := "Expand " + node.Name
+			if node.IsExpanded {
+				icon = lucide.ChevronDown()
+				chevronLabel = "Collapse " + node.Name
+			}
+			ui.Icon(c, icon).
+				Size(12, 12).
+				TextColor(tk.TextSecondary).
+				Label(chevronLabel).
+				OnClick(func() {
+					if props.OnToggle != nil {
+						props.OnToggle(node.UID)
+					}
+				})
+			ui.Box(c).Width(6)
+		} else {
+			// Request node: compact RequestMethod label (Decision R-1)
+			RequestMethod(c, node.Method)
+			ui.Box(c).Width(8)
+		}
+
+		// Node Name
+		txt := ui.Text(c, node.Name).
+			FontSize(12)
+		if node.IsSelected {
+			txt.TextColor(tk.PrimaryText)
+		} else {
+			txt.TextColor(tk.Text)
+		}
+		if node.IsFolder {
+			txt.Bold()
+		}
+
+		// Dirty indicator
+		if node.IsDirty {
+			ui.Box(c).Width(6)
+			ui.Box(c).
+				Size(5, 5).
+				Radius(2.5).
+				Background(tk.Warning)
+		}
+
+		ui.Box(c).Grow(1) // Spacer
+	})
 }

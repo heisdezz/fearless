@@ -4,6 +4,7 @@ import (
 	"github.com/egoist/mygo/ui"
 	"github.com/lobehub/lobe-mygo/pkg/action"
 	"github.com/lobehub/lobe-mygo/pkg/choice"
+	"github.com/lobehub/lobe-mygo/pkg/lucide"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/core/model"
@@ -93,7 +94,10 @@ func KeyValueGrid(c *ui.Context, rows *[]model.KeyValue, props KeyValueGridProps
 
 					// 5. Delete action
 					if !props.ReadOnly {
-						Button(c, "✕", ButtonProps{
+						IconButton(c, IconButtonProps{
+							Icon:    lucide.X(),
+							Label:   "Remove row",
+							Tooltip: "Remove row",
 							Size:    lobetheme.Small,
 							Variant: action.Text,
 						}).OnClick(func() {
@@ -112,9 +116,11 @@ func KeyValueGrid(c *ui.Context, rows *[]model.KeyValue, props KeyValueGridProps
 		// Add Row button
 		if !props.ReadOnly {
 			ui.Row(c).Padding(4, 0).Children(func() {
+				// A quiet control, like the rest of the window's actions:
+				// the grid's own add-row is not a primary action.
 				Button(c, "+ Add Row", ButtonProps{
 					Size:    lobetheme.Small,
-					Variant: action.Dashed,
+					Variant: action.Text,
 				}).OnClick(func() {
 					if rows != nil {
 						emptyKey := ""

@@ -110,9 +110,9 @@ func TestKeyValueGrid(t *testing.T) {
 		t.Error("expected OnChanged to be called when row is added")
 	}
 
-	// Test Delete row button click ("✕")
+	// Test Delete row button click (the drawn close icon, named "Remove row")
 	changed = false
-	err = tt.Click("✕")
+	err = tt.Click("Remove row")
 	if err != nil {
 		t.Fatalf("failed to click delete button: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestRequestTabBar(t *testing.T) {
 
 	tabs := []*presenters.TabItem{
 		{UID: "tab-1", Title: "Get Users", Method: "GET", IsDirty: false},
-		{UID: "tab-2", Title: "Create User", Method: "POST", IsDirty: true},
+		{UID: "tab-2", Title: "Create User", Method: "POST", IsDirty: true, IsTransient: true},
 	}
 
 	view := func(c *ui.Context) {
@@ -157,8 +157,8 @@ func TestRequestTabBar(t *testing.T) {
 	if !tt.HasText("Get Users") || !tt.HasText("Create User") {
 		t.Error("expected tab titles to be visible")
 	}
-	if !tt.HasText("+") {
-		t.Error("expected new tab '+' button to be visible")
+	if !tt.HasText("New tab") {
+		t.Error("expected the new tab control to be visible")
 	}
 
 	// Click tab-2 to select
@@ -171,7 +171,7 @@ func TestRequestTabBar(t *testing.T) {
 	}
 
 	// Click close button on tab
-	err = tt.Click("✕")
+	err = tt.Click("Close tab")
 	if err != nil {
 		t.Fatalf("failed to click tab close: %v", err)
 	}
@@ -179,10 +179,10 @@ func TestRequestTabBar(t *testing.T) {
 		t.Errorf("expected closedUID to be 'tab-1', got %q", closedUID)
 	}
 
-	// Click new tab "+" button
-	err = tt.Click("+")
+	// Click the new tab control (the drawn plus, named "New tab")
+	err = tt.Click("New tab")
 	if err != nil {
-		t.Fatalf("failed to click '+': %v", err)
+		t.Fatalf("failed to click the new tab control: %v", err)
 	}
 	if !newTabClicked {
 		t.Error("expected newTabClicked to be true")
@@ -239,12 +239,12 @@ func TestCollectionTreeRow(t *testing.T) {
 	if !tt.HasText("Auth Endpoints") || !tt.HasText("Login") {
 		t.Error("expected node names to be rendered")
 	}
-	if !tt.HasText("▸") {
-		t.Error("expected collapsed chevron '▸' for folder")
+	if !tt.HasText("Expand Auth Endpoints") {
+		t.Error("expected the folder's disclosure control to be named")
 	}
 
 	// Click folder chevron to toggle
-	err := tt.Click("▸")
+	err := tt.Click("Expand Auth Endpoints")
 	if err != nil {
 		t.Fatalf("failed to click folder chevron: %v", err)
 	}
@@ -448,4 +448,32 @@ func TestCodeEditor(t *testing.T) {
 
 	// Trigger completion
 	state.OnCompletion(editor.CompletionRequest{})
+}
+
+func TestRequestMethod(t *testing.T) {
+	cases := []struct {
+		input    string
+		expected string
+	}{
+		{"GET", "GET"},
+		{"POST", "POST"},
+		{"DELETE", "DEL"},
+		{"OPTIONS", "OPT"},
+		{"PATCH", "PATCH"},
+		{"HEAD", "HEAD"},
+		{"grpc", "grpc"},
+		{"ws", "ws"},
+		{"graphql", "gql"},
+		{"", "GET"},
+	}
+
+	for _, tc := range cases {
+		tt := ui.NewTester(func(c *ui.Context) {
+			RequestMethod(c, tc.input)
+		}, 100, 50)
+		tt.Frame()
+		if !tt.HasText(tc.expected) {
+			t.Errorf("RequestMethod(%q): expected %q to be displayed", tc.input, tc.expected)
+		}
+	}
 }

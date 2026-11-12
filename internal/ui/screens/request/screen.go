@@ -7,10 +7,10 @@ import (
 	"github.com/egoist/mygo/ui/editor"
 	"github.com/lobehub/lobe-mygo/pkg/action"
 	"github.com/lobehub/lobe-mygo/pkg/field"
-	"github.com/lobehub/lobe-mygo/pkg/nav"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/ui/presenters"
+	uitheme "fearless/internal/ui/theme"
 	"fearless/internal/ui/widgets"
 )
 
@@ -69,7 +69,7 @@ func RequestScreen(c *ui.Context, p *presenters.RequestPresenter, state ...*Requ
 				TextColor(tk.TextSecondary)
 			ui.Text(c, "Select a request from the sidebar to start editing.").
 				FontSize(12).
-				TextColor(tk.TextTertiary)
+				TextColor(tk.TextSecondary)
 		})
 	}
 
@@ -89,14 +89,16 @@ func RequestScreen(c *ui.Context, p *presenters.RequestPresenter, state ...*Requ
 				})
 			})
 
-			// Target URL Input
+			// Target URL Input (styled with DataGroup for monospace tabular font)
 			ui.Box(c).Grow(1).Children(func() {
-				widgets.VariableInput(c, &req.URL, widgets.VariableInputProps{
-					Placeholder: "https://api.example.com/v1/endpoint",
-					Size:        lobetheme.Small,
-					OnChanged: func(v string) {
-						req.URL = v
-					},
+				uitheme.DataGroup(c, func() {
+					widgets.VariableInput(c, &req.URL, widgets.VariableInputProps{
+						Placeholder: "https://api.example.com/v1/endpoint",
+						Size:        lobetheme.Small,
+						OnChanged: func(v string) {
+							req.URL = v
+						},
+					})
 				})
 			})
 
@@ -130,22 +132,32 @@ func RequestScreen(c *ui.Context, p *presenters.RequestPresenter, state ...*Requ
 			})
 		})
 
-		// 2. Sub-Tabs Bar
+		// 2. Sub-Tabs Bar: the world's strip, shared with the sidebar's
+		// switcher and the response pane's sub-tabs.
+		//
+		// It was Lobe's nav.Tabs until the finish review: that component
+		// paints its own blue underline, so the window carried two blues
+		// for one selection.
 		selectedTab := p.ActiveSubTab()
 		selectedIdx := 0
-		var navItems []nav.TabItem
+		items := make([]uitheme.TabItem, 0, len(subTabItems))
 		for i, item := range subTabItems {
-			navItems = append(navItems, nav.TabItem{Label: item.label})
+			items = append(items, uitheme.TabItem{Label: item.label})
 			if item.tab == selectedTab {
 				selectedIdx = i
 			}
 		}
 
-		nav.Tabs(c, &selectedIdx, nav.TabsProps{
-			Items:   navItems,
-			Variant: nav.TabsSquare,
-			Size:    lobetheme.Small,
-		}, nil)
+		uitheme.TabStrip(c, uitheme.TabStripProps{
+			Items:  items,
+			Active: selectedIdx,
+			OnSelect: func(i int) {
+				if i < 0 || i >= len(subTabItems) {
+					return
+				}
+				p.SelectSubTab(subTabItems[i].tab)
+			},
+		})
 
 		if selectedIdx >= 0 && selectedIdx < len(subTabItems) {
 			newTab := subTabItems[selectedIdx].tab

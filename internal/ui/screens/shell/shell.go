@@ -29,6 +29,12 @@ type Snapshot struct {
 	RequestCount    int
 	SelectedCount   int
 	EnvironmentName string
+	// Environments are the names the title strip's selector offers, in
+	// order; EnvironmentName is the one selected. They live on the strip
+	// because that is where the choice is made now.
+	Environments []string
+	// InFlight swaps the title strip's Run for Stop.
+	InFlight bool
 	// Status are the right-hand chips of the status row.
 	Status []StatusEntry
 	// ActiveConsoleTab selects the dock's body. The bodies themselves are
@@ -48,12 +54,15 @@ type StatusEntry struct {
 // Actions are the chrome's commands. Each is called by the app, which owns
 // the resulting state change: the view reports intent and never applies it.
 type Actions struct {
-	OnMenu         func()
-	OnWorkspace    func()
-	OnSettings     func()
-	OnEnvironment  func()
-	OnConsoleTab   func(int)
-	OnConsoleClose func()
+	OnMenu              func()
+	OnWorkspace         func()
+	OnSettings          func()
+	OnSelectEnvironment func(name string)
+	OnManageEnvironment func()
+	OnRun               func()
+	OnStop              func()
+	OnConsoleTab        func(int)
+	OnConsoleClose      func()
 	// OnStatus runs a status chip's action, addressed by
 	// Snapshot.Status[].Index.
 	OnStatus func(index int)
@@ -74,11 +83,26 @@ type Screen struct {
 	// because they belong to other screens rather than to the chrome.
 	ConsoleTabs []layout.ConsoleTab
 	// The regions the other screens own; nil renders an empty box.
-	Sidebar          func(*ui.Context, lobe.SideNavState)
-	CollectionHeader func(*ui.Context)
-	RequestPane      func(*ui.Context)
-	ResponsePane     func(*ui.Context)
-	RightRail        func(*ui.Context)
+	Sidebar func(*ui.Context, lobe.SideNavState)
+	// CollectionHeaderRegion is the optional strip between the title bar and
+	// the request pane. The main window mounts none: the title strip carries
+	// the collection name, the environment selector and the run control, so a
+	// second strip would answer the same question twice.
+	CollectionHeaderRegion func(*ui.Context)
+	RequestPane            func(*ui.Context)
+	ResponsePane           func(*ui.Context)
+	RightRail              func(*ui.Context)
+}
+
+// CollectionHeader renders the collection-header region when one is mounted.
+//
+// It is a method rather than the field itself so that a caller can ask for
+// the region without knowing whether one exists: an unmounted region renders
+// nothing instead of panicking.
+func (s *Screen) CollectionHeader(c *ui.Context) {
+	if s.CollectionHeaderRegion != nil {
+		s.CollectionHeaderRegion(c)
+	}
 }
 
 // View builds the frame. It reads the screen's fields into locals and hands
@@ -103,7 +127,7 @@ func (s *Screen) View(c *ui.Context) {
 			renderTitleBar(c, snap, actions)
 		},
 		Sidebar:          s.Sidebar,
-		CollectionHeader: s.CollectionHeader,
+		CollectionHeader: s.CollectionHeaderRegion,
 		RequestPane:      s.RequestPane,
 		ResponsePane:     s.ResponsePane,
 		RightRail:        s.RightRail,
@@ -119,13 +143,17 @@ func (s *Screen) View(c *ui.Context) {
 
 func renderTitleBar(c *ui.Context, snap Snapshot, a Actions) {
 	bar := layout.TitleBarView{
-		AppName:        snap.AppName,
-		CollectionName: snap.CollectionName,
-		WorkspaceName:  snap.WorkspaceName,
-		ShowMenu:       snap.ShowMenu,
-		OnMenu:         a.OnMenu,
-		OnWorkspace:    a.OnWorkspace,
-		OnSettings:     a.OnSettings,
+		AppName:             snap.AppName,
+		CollectionName:      snap.CollectionName,
+		ShowMenu:            snap.ShowMenu,
+		OnMenu:              a.OnMenu,
+		Environments:        snap.Environments,
+		ActiveEnvironment:   snap.EnvironmentName,
+		OnSelectEnvironment: a.OnSelectEnvironment,
+		OnManageEnvironment: a.OnManageEnvironment,
+		InFlight:            snap.InFlight,
+		OnRun:               a.OnRun,
+		OnStop:              a.OnStop,
 	}
 	bar.View(c)
 }
@@ -141,11 +169,12 @@ func renderStatusBar(c *ui.Context, snap Snapshot, a Actions) {
 		items = append(items, item)
 	}
 	bar := layout.StatusBarView{
-		RequestCount:    snap.RequestCount,
-		SelectedCount:   snap.SelectedCount,
-		EnvironmentName: snap.EnvironmentName,
-		OnEnvironment:   a.OnEnvironment,
-		RightStatus:     items,
+		RequestCount:  snap.RequestCount,
+		SelectedCount: snap.SelectedCount,
+		WorkspaceName: snap.WorkspaceName,
+		OnWorkspace:   a.OnWorkspace,
+		OnSettings:    a.OnSettings,
+		RightStatus:   items,
 	}
 	bar.View(c)
 }

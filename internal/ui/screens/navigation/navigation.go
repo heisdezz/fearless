@@ -12,9 +12,11 @@ import (
 	"github.com/lobehub/lobe-mygo/pkg/action"
 	"github.com/lobehub/lobe-mygo/pkg/field"
 	lobe "github.com/lobehub/lobe-mygo/pkg/layout"
+	"github.com/lobehub/lobe-mygo/pkg/lucide"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/ui/presenters"
+	"fearless/internal/ui/theme"
 	"fearless/internal/ui/widgets"
 )
 
@@ -142,21 +144,21 @@ func (s *Screen) renderRail(c *ui.Context, snap Snapshot, actions Actions, nav l
 		Padding(12, 4).
 		Children(func() {
 			// Rail Section Buttons
-			s.renderRailSectionButton(c, "Collections", "📁", snap.ActiveSection == presenters.SidebarSectionCollections, func() {
+			s.renderRailSectionButton(c, "Collections", lucide.FolderOpen(), snap.ActiveSection == presenters.SidebarSectionCollections, func() {
 				if actions.OnSelectSection != nil {
 					actions.OnSelectSection(presenters.SidebarSectionCollections)
 				}
 			})
 			ui.Box(c).Height(8)
 
-			s.renderRailSectionButton(c, "History", "⏱", snap.ActiveSection == presenters.SidebarSectionHistory, func() {
+			s.renderRailSectionButton(c, "History", lucide.History(), snap.ActiveSection == presenters.SidebarSectionHistory, func() {
 				if actions.OnSelectSection != nil {
 					actions.OnSelectSection(presenters.SidebarSectionHistory)
 				}
 			})
 			ui.Box(c).Height(8)
 
-			s.renderRailSectionButton(c, "Runner", "▶", snap.ActiveSection == presenters.SidebarSectionRunner, func() {
+			s.renderRailSectionButton(c, "Runner", lucide.Play(), snap.ActiveSection == presenters.SidebarSectionRunner, func() {
 				if actions.OnSelectSection != nil {
 					actions.OnSelectSection(presenters.SidebarSectionRunner)
 				}
@@ -165,30 +167,33 @@ func (s *Screen) renderRail(c *ui.Context, snap Snapshot, actions Actions, nav l
 			ui.Box(c).Grow(1) // Spacer pushing expand button to bottom
 
 			// Expand toggle button
-			ui.Row(c).
-				Size(36, 36).
-				Center().
-				Radius(4).
-				Background(tk.BgContainerSecondary).
-				Tooltip("Expand Sidebar").
-				OnClick(func() {
-					if actions.OnToggleCollapse != nil {
-						actions.OnToggleCollapse()
-					}
-				}).
-				Children(func() {
-					ui.Text(c, "»").FontSize(14).TextColor(tk.TextSecondary)
-				})
+			widgets.IconButton(c, widgets.IconButtonProps{
+				Icon:    lucide.PanelLeftOpen(),
+				Label:   "Expand sidebar",
+				Tooltip: "Expand sidebar",
+				Variant: action.Text,
+				Size:    lobetheme.Small,
+			}).OnClick(func() {
+				if actions.OnToggleCollapse != nil {
+					actions.OnToggleCollapse()
+				}
+			})
 		})
 }
 
-func (s *Screen) renderRailSectionButton(c *ui.Context, label, icon string, active bool, onClick func()) {
+// renderRailSectionButton draws one rail tile.
+//
+// The rail is icon-only: at 64 DIP wide a small-caps word does not fit, so
+// the tile carries a drawn icon and its tooltip, and the selected section is
+// marked by the accent ink on that icon — the one accent in the window, spent
+// on the selected state.
+func (s *Screen) renderRailSectionButton(c *ui.Context, label string, icon *ui.SVG, active bool, onClick func()) {
 	tk := lobetheme.TokensOf(c)
 	bg := tk.BgContainer
 	fg := tk.TextSecondary
 	if active {
-		bg = tk.BgElevated
-		fg = tk.Text
+		bg = tk.BgContainerSecondary
+		fg = tk.Primary
 	}
 
 	ui.Column(c).
@@ -197,10 +202,10 @@ func (s *Screen) renderRailSectionButton(c *ui.Context, label, icon string, acti
 		Radius(6).
 		Background(bg).
 		Tooltip(label).
+		Label(label).
 		OnClick(onClick).
 		Children(func() {
-			ui.Text(c, icon).FontSize(16).TextColor(fg)
-			ui.Text(c, label).FontSize(9).TextColor(fg)
+			ui.Icon(c, icon).Size(18, 18).TextColor(fg)
 		})
 }
 
@@ -212,35 +217,35 @@ func (s *Screen) renderExpanded(c *ui.Context, snap Snapshot, actions Actions) u
 		FillWidth().
 		Background(tk.BgContainer).
 		Children(func() {
-			// 1. Top Section Switcher
-			ui.Row(c).
-				FillWidth().
-				Height(36).
-				Background(tk.BgLayout).
-				Padding(4, 8).
-				Gap(6).
-				AlignItems(ui.Center).
-				Children(func() {
-					s.renderSectionTab(c, "Collections", presenters.SidebarSectionCollections, snap.ActiveSection, actions)
-					s.renderSectionTab(c, "History", presenters.SidebarSectionHistory, snap.ActiveSection, actions)
-					s.renderSectionTab(c, "Runner", presenters.SidebarSectionRunner, snap.ActiveSection, actions)
-
-					ui.Box(c).Grow(1)
-
-					// Collapse toggle button
-					ui.Row(c).
-						Padding(4, 6).
-						Radius(4).
-						Tooltip("Collapse Sidebar").
-						OnClick(func() {
-							if actions.OnToggleCollapse != nil {
-								actions.OnToggleCollapse()
-							}
-						}).
-						Children(func() {
-							ui.Text(c, "«").FontSize(12).TextColor(tk.TextSecondary)
-						})
-				})
+			// 1. Top Section Switcher: the world's strip, shared with the
+			// request column and the response pane so the three speak with
+			// one voice. The collapse control rides at its right edge.
+			theme.TabStrip(c, theme.TabStripProps{
+				Items: []theme.TabItem{
+					{Label: "Collections"},
+					{Label: "History"},
+					{Label: "Runner"},
+				},
+				Active: sectionIndex(snap.ActiveSection),
+				OnSelect: func(index int) {
+					if actions.OnSelectSection != nil {
+						actions.OnSelectSection(sections[index])
+					}
+				},
+				Trailing: func() {
+					widgets.IconButton(c, widgets.IconButtonProps{
+						Icon:    lucide.PanelLeftClose(),
+						Label:   "Collapse sidebar",
+						Tooltip: "Collapse sidebar",
+						Variant: action.Text,
+						Size:    lobetheme.Small,
+					}).OnClick(func() {
+						if actions.OnToggleCollapse != nil {
+							actions.OnToggleCollapse()
+						}
+					})
+				},
+			})
 
 			// 2. Active Section Body
 			switch snap.ActiveSection {
@@ -254,32 +259,21 @@ func (s *Screen) renderExpanded(c *ui.Context, snap Snapshot, actions Actions) u
 		})
 }
 
-func (s *Screen) renderSectionTab(c *ui.Context, label string, section, activeSection presenters.SidebarSection, actions Actions) {
-	tk := lobetheme.TokensOf(c)
-	isActive := section == activeSection
+// sections are the sidebar's sections, in the order the switcher shows them.
+var sections = []presenters.SidebarSection{
+	presenters.SidebarSectionCollections,
+	presenters.SidebarSectionHistory,
+	presenters.SidebarSectionRunner,
+}
 
-	bg := tk.BgLayout
-	fg := tk.TextSecondary
-	if isActive {
-		bg = tk.BgElevated
-		fg = tk.Text
+// sectionIndex maps the active section onto its place in the strip.
+func sectionIndex(section presenters.SidebarSection) int {
+	for i, s := range sections {
+		if s == section {
+			return i
+		}
 	}
-
-	ui.Row(c).
-		Padding(4, 8).
-		Radius(4).
-		Background(bg).
-		OnClick(func() {
-			if actions.OnSelectSection != nil {
-				actions.OnSelectSection(section)
-			}
-		}).
-		Children(func() {
-			t := ui.Text(c, label).FontSize(12).TextColor(fg)
-			if isActive {
-				t.Bold()
-			}
-		})
+	return 0
 }
 
 func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions Actions) {
@@ -287,26 +281,29 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 
 	// Filter & Action Toolbar
 	ui.Column(c).FillWidth().Padding(8, 8, 4, 8).Gap(6).Children(func() {
-		// Filter SearchBar
+		// Filter field: the app's own field surface, not Lobe's SearchBar,
+		// which paints MyGo's near-white input surface in the dark
+		// appearance (the white-input defect). The filter still applies as
+		// the query changes: the field writes into the local copy, and the
+		// copy that differs from the snapshot is the filter to apply.
 		q := snap.FilterQuery
-		field.SearchBar(c, &q, field.SearchBarProps{
-			Placeholder: "Filter requests...",
+		widgets.FieldInput(c, &q, widgets.FieldInputProps{
+			Placeholder: "Filter requests…",
 			Size:        lobetheme.Small,
-			OnSearch: func(query string) {
-				if actions.OnFilterChanged != nil {
-					actions.OnFilterChanged(query)
-				}
-			},
 		})
 		if q != snap.FilterQuery && actions.OnFilterChanged != nil {
 			actions.OnFilterChanged(q)
 		}
 
-		// Action buttons row: + Request, + Folder, Open
+		// Action buttons row: + Request, + Folder, Open.
+		//
+		// They are quiet on purpose. The one accent in the window belongs to
+		// the primary action — Send — and the selected state; a toolbar of
+		// three identical filled buttons spends the hierarchy on nothing.
 		ui.Row(c).FillWidth().Gap(4).AlignItems(ui.Center).Children(func() {
 			widgets.Button(c, "+ Request", widgets.ButtonProps{
 				Size:    lobetheme.Small,
-				Variant: action.Default,
+				Variant: action.Text,
 			}).OnClick(func() {
 				if actions.OnCreateRequest != nil {
 					actions.OnCreateRequest(snap.SelectedUID)
@@ -315,7 +312,7 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 
 			widgets.Button(c, "+ Folder", widgets.ButtonProps{
 				Size:    lobetheme.Small,
-				Variant: action.Default,
+				Variant: action.Text,
 			}).OnClick(func() {
 				if actions.OnCreateFolder != nil {
 					actions.OnCreateFolder(snap.SelectedUID)
@@ -326,7 +323,7 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 
 			widgets.Button(c, "Open", widgets.ButtonProps{
 				Size:    lobetheme.Small,
-				Variant: action.Default,
+				Variant: action.Text,
 			}).OnClick(func() {
 				if actions.OnOpenCollection != nil {
 					actions.OnOpenCollection()
@@ -344,13 +341,10 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 			Padding(16).
 			Gap(6).
 			Children(func() {
-				ui.Text(c, "No requests found").
-					FontSize(13).
-					Bold().
-					TextColor(tk.TextSecondary)
+				theme.PanelHeader(c, "No requests found")
 				ui.Text(c, "Open a collection or create a request").
 					FontSize(11).
-					TextColor(tk.TextTertiary)
+					TextColor(tk.TextSecondary)
 			})
 		return
 	}
@@ -391,13 +385,10 @@ func (s *Screen) renderHistorySection(c *ui.Context, snap Snapshot, actions Acti
 		Padding(16).
 		Gap(6).
 		Children(func() {
-			ui.Text(c, "Request History").
-				FontSize(13).
-				Bold().
-				TextColor(tk.TextSecondary)
+			theme.PanelHeader(c, "Request History")
 			ui.Text(c, "Past request executions will appear here").
 				FontSize(11).
-				TextColor(tk.TextTertiary)
+				TextColor(tk.TextSecondary)
 		})
 }
 
@@ -409,10 +400,7 @@ func (s *Screen) renderRunnerSection(c *ui.Context, snap Snapshot, actions Actio
 		Padding(16).
 		Gap(12).
 		Children(func() {
-			ui.Text(c, "Collection Runner").
-				FontSize(14).
-				Bold().
-				TextColor(tk.Text)
+			theme.PanelHeader(c, "Collection Runner")
 
 			colName := snap.CollectionName
 			if colName == "" {
@@ -422,18 +410,33 @@ func (s *Screen) renderRunnerSection(c *ui.Context, snap Snapshot, actions Actio
 				FontSize(12).
 				TextColor(tk.TextSecondary)
 
-			widgets.Button(c, "Run Collection", widgets.ButtonProps{
-				Size:    lobetheme.Small,
-				Variant: action.Primary,
-			}).OnClick(func() {
-				if actions.OnRunCollection != nil {
-					actions.OnRunCollection(snap.CollectionUID)
-				}
-			})
+			// The run button appears only when a runner is wired: a button
+			// with no backend behind it is a dead end, and the section
+			// says what is missing instead.
+			if actions.OnRunCollection != nil {
+				widgets.Button(c, "Run Collection", widgets.ButtonProps{
+					Size:    lobetheme.Small,
+					Variant: action.Primary,
+				}).OnClick(func() {
+					if actions.OnRunCollection != nil {
+						actions.OnRunCollection(snap.CollectionUID)
+					}
+				})
+			} else {
+				ui.Text(c, "No runner is connected yet.").
+					FontSize(11).
+					TextColor(tk.TextSecondary)
+			}
 		})
 }
 
 // CollectionHeader renders the environment selector and collection actions strip.
+//
+// The main window does not mount it: the title strip carries the collection
+// name, the environment selector and the run control now (the direction
+// contract's first viewport), so a second environment selector under the title
+// strip would answer the same question twice. It stays available for a window
+// that embeds the sidebar on its own.
 func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 	tk := lobetheme.TokensOf(c)
 	snap := s.Snapshot
@@ -448,21 +451,22 @@ func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 		FillWidth().
 		Height(40).
 		Background(tk.BgLayout).
-		Border(1, tk.BorderSecondary).
-		Padding(4, 12).
+		BorderWidth(0, 0, 1, 0).
+		BorderColor(tk.Border).
+		Padding(0, 12).
 		AlignItems(ui.Center).
 		Children(func() {
 			// Collection Name
 			ui.Text(c, colName).
-				FontSize(13).
-				Bold().
+				FontSize(theme.TitleSize).
+				FontWeight(500).
 				TextColor(tk.Text)
 
 			ui.Box(c).Grow(1) // Spacer between collection name and env selector
 
 			// Environment Selector
 			ui.Row(c).AlignItems(ui.Center).Gap(6).Children(func() {
-				ui.Text(c, "Env:").FontSize(11).TextColor(tk.TextSecondary)
+				theme.PanelHeader(c, "Environment")
 
 				// Environment select dropdown
 				var envOptions []field.SelectOption
@@ -489,9 +493,12 @@ func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 				}
 
 				// Environment settings / manage button
-				widgets.Button(c, "⚙ Env", widgets.ButtonProps{
+				widgets.IconButton(c, widgets.IconButtonProps{
+					Icon:    lucide.Settings(),
+					Label:   "Environment settings",
+					Tooltip: "Environment settings",
+					Variant: action.Text,
 					Size:    lobetheme.Small,
-					Variant: action.Default,
 				}).OnClick(func() {
 					if actions.OnManageEnvironments != nil {
 						actions.OnManageEnvironments()
@@ -501,7 +508,7 @@ func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 				// Run button
 				widgets.Button(c, "Run", widgets.ButtonProps{
 					Size:    lobetheme.Small,
-					Variant: action.Primary,
+					Variant: action.Text,
 				}).OnClick(func() {
 					if actions.OnRunCollection != nil {
 						actions.OnRunCollection(snap.CollectionUID)
@@ -511,13 +518,13 @@ func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 		})
 }
 
-// View renders the complete composite navigation screen (CollectionHeader + Sidebar).
+// View renders the navigation screen: the sidebar with its section switcher.
+//
+// The collection-header strip is not part of it — the title strip owns the
+// collection name, the environment and the run control in the main window.
 func (s *Screen) View(c *ui.Context) {
-	ui.Column(c).Fill().Children(func() {
-		s.CollectionHeader(c)
-		ui.Row(c).FillHeight().Grow(1).Children(func() {
-			s.Sidebar(c, lobe.SideNavState{})
-		})
+	ui.Row(c).FillHeight().Grow(1).Children(func() {
+		s.Sidebar(c, lobe.SideNavState{})
 	})
 }
 

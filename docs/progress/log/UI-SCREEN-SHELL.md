@@ -27,3 +27,11 @@ Owner history: mimo-flash-2 (claimed 2026-11-11T02:43Z)
   - Smoke test: all regions and dock tabs render headlessly.
   - Tests: 100.0% statement coverage, -race -count=5 clean.
 - Confirmed: Done.
+
+### 2026-11-12T02:20Z — mimo-flash-3
+
+- Did: the chrome plumbing for the first viewport (D-023).
+  - `internal/ui/screens/shell/shell.go`: the shell's snapshot carries the app name, the collection name, the environments and the in-flight state, so the title strip can render them without reaching for a presenter; the status strip carries the counts, the chips and the workspace/settings controls. The regions the other screens own stay injected callbacks — views, not data — and the collection-header region is now `CollectionHeaderRegion`, with a nil-safe `CollectionHeader` method over it (D-024).
+  - The shell's actions cover the title strip's controls: menu, environment selection, environment management, run, stop, workspace, settings, console tab and close.
+- Tests: `go test ./internal/ui/screens/shell/` green — `TestActionsAreTheOnlyWrites` (clicks on the drawn menu, the environment control, the run control, and a direct environment selection; the stop control while a request is in flight), the smoke test, the geometry test and the light/dark goldens.
+- Notes: the shell draws no icon of its own: the menu, the gear and the close control come from `widgets.IconButton`, so the app has one icon system (D-025).

@@ -1,187 +1,131 @@
 # Application Layout
 
-Status: VERIFIED unless marked.
+Status: VERIFIED against `bruno/packages/bruno-app/src/` at commit `60d7517` and cross-referenced with `ui-map/screens/app-shell.md`.
 
 ---
 
 ## 1. Window structure (top → bottom)
 
-```mermaid
-flowchart TB
-    Title["AppTitleBar<br/>(custom title bar, macOS traffic-light aware)"]
-    Body["Main section  flex-1 min-h-0"]
-    Status["StatusBar"]
-    Console["Devtools console (optional, ~300px, toggled)"]
-
-    Title --> Body --> Status
-    Body -.-> Console
+```text
+┌──────────────────────────────────────────────────────────────────────────┐
+│ AppTitleBar (36 px, drag region)                                         │
+│  [workspace ▾]                    brun  or  o   (center)   [icons][win]  │
+├──────────────┬───────────────────────────────────────────────────────────┤
+│              │ RequestTabs (height ~34 px)                               │
+│  Sidebar     ├───────────────────────────────────────────────────────────┤
+│  (220–600px) │ RequestPane                    │ ResponsePane             │
+│  (§sidebar)  │  (§request-editor)             │  (§response-viewer)      │
+│              │         ── drag bar 12 px ──                              │
+├──────────────┴───────────────────────────────────────────────────────────┤
+│ StatusBar (24 px / 1.5 rem)                                              │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-Source: `packages/bruno-app/src/pages/Bruno/index.js`
-Relevant symbols: `Main`, `#main-container`, `isConsoleOpen`
+The app shell is structured as a vertical root:
 
-The window height reservation is explicit:
+1. `AppTitleBar`: 36 px fixed height (`AppTitleBar/StyledWrapper.js:4`).
+2. Main body section: `flex-1 min-h-0` containing the 3-column workspace.
+3. `StatusBar`: 24 px (`1.5rem`) bottom status strip (`StatusBar/StyledWrapper.js:7`).
 
-```js
-height: isConsoleOpen ? `calc(100vh - 60px - 300px)` : `calc(100vh - 60px)`;
-```
-
-so opening the console shrinks the app rather than overlaying it.
+Devtools/console dock (when toggled open) reserves 300 px from the window height rather than overlaying the body:
+`height: isConsoleOpen ? calc(100vh - 60px - 300px) : calc(100vh - 60px)`.
 
 ---
 
-## 2. Three-column body
+## 2. AppTitleBar Specification
+
+**Height:** `36px` (`components/AppTitleBar/StyledWrapper.js:4`).  
+**Ground:** `sidebar.bg` (light `#f8f8f8`, dark `#222224`).  
+**Drag region:** `-webkit-app-region: drag`; interactive child controls opt out via `no-drag` class (`StyledWrapper.js:6, 24-30`).
+
+| Region              | Element                    | Visual Spec                                                                                                                                                               | Source / Action                                                                                                         |
+| ------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------- | ------------------- |
+| **Left**            | Workspace dropdown trigger | Padding `5px 10px`, radius `6px`, gap `6px`, max-width `180px` with ellipsis. Text `13px/500` `sidebar.color`. Hover: `sidebar.collection.item.hoverBg`.                  | List workspaces, pin toggle, rename, create, import (`WorkspaceSidebar/*`). Untitled displays **"Untitled Workspace"**. |
+| **Window Inset**    | macOS traffic lights       | Left padding `70px`; drops to `6px` in fullscreen mode.                                                                                                                   | `StyledWrapper.js:17, 21`.                                                                                              |
+| **Center**          | Bruno wordmark             | Absolute-centered, `13px/600`, tracking `.5px`, color `text`, non-interactive.                                                                                            | `StyledWrapper.js:89-102`.                                                                                              |
+| **Right Actions**   | Toolbar icons              | 16 px Tabler icons, `strokeWidth 1.5`, gap `2px`. Buttons: Home, pin/unpin, new workspace, import, settings, sidebar toggle, console toggle, response orientation toggle. | `index.js:36-44`.                                                                                                       |
+| **Window Controls** | Win/Linux min/max/close    | `IconMinus`, `IconSquare`/`IconCopy`, `IconX`. Rendered only when `isWindows                                                                                              |                                                                                                                         | isLinux`. | `index.js:1-2, 36`. |
+
+---
+
+## 3. StatusBar Specification
+
+**Height:** `1.5rem` = 24 px (`components/StatusBar/StyledWrapper.js:7`).  
+**Ground:** `sidebar.bg`, **Top border:** `1px solid statusBar.border` (`#e9e9e9` L), **Text:** `statusBar.color` (`rgb(100,100,100)`), **Font:** `font.size.sm` (12 px), `user-select: none`.
+
+Action buttons (ordered left to right):
+
+| Control       | Icon              | Label / Tooltip (verbatim) | Behavior                                         |
+| ------------- | ----------------- | -------------------------- | ------------------------------------------------ |
+| Preferences   | `IconSettings`    | `Preferences`              | Opens preferences tab / modal (`index.js:29-36`) |
+| Theme         | `IconPalette`     | `ThemeDropdown`            | Theme picker popover                             |
+| Notifications | Bell              | `Notifications`            | Notifications popover list                       |
+| GitHub        | `IconBrandGithub` | `GitHub Repository`        | External browser link to repo                    |
+| Global Search | `IconSearch`      | `Search`                   | Triggers global search modal (⌘/Ctrl + K)        |
+| Cookies       | `IconCookie`      | `Cookies`                  | Opens Cookies management modal                   |
+| Dev Tools     | `IconTool`        | `Dev Tools`                | Toggles console dock; displays error count badge |
+| Version       | —                 | `v{version}`               | Read-only version string                         |
+
+**Error Badge:** When console errors exist, Dev Tools renders an inline badge `.error-count-inline` (`10px/500`, text `colors.text.danger`, background `colors.bg.danger` at 20 % alpha, padding `1px 4px`, radius `4px`).  
+**Dividers:** `1px × 16px` hairline divider in `sidebar.dragbar`, opacity `.4`.
+
+---
+
+## 4. Three-Column Body Layout
 
 ```mermaid
 flowchart LR
-    Sidebar["Sidebar<br/>resizable · collapsible<br/>~240-420 px"]
-    Tabs["RequestTabs<br/>vertical or horizontal tab strip"]
-    Panel["RequestTabPanel"]
-    Panel --> Req["RequestPane<br/>(top)"]
-    Panel --> Resp["ResponsePane<br/>(bottom or right)"]
+    Sidebar["Sidebar<br/>220–600 px (default 248 px)<br/>Collapsible (⌘\)"]
+    Tabs["RequestTabs<br/>horizontal tab strip (34 px)"]
+    Panel["RequestTabPanel (split host)"]
+    Req["RequestPane<br/>(URL, params, body, auth)"]
+    Resp["ResponsePane<br/>(status, body, headers, tests)"]
+
+    Sidebar --- Panel
+    Panel --> Tabs
+    Tabs --> Req
+    Tabs --> Resp
 ```
 
-| Region                 | Component                    | Resizable                                        | Persisted                                      |
-| ---------------------- | ---------------------------- | ------------------------------------------------ | ---------------------------------------------- |
-| Sidebar                | `components/Sidebar`         | `useResizablePanel`, `useDragResize`             | Width in preferences                           |
-| Tabs                   | `components/RequestTabs`     | Drag reorder (`DraggableTab`, `useMouseRowDrag`) | Order in tabs slice                            |
-| Request/Response split | `components/RequestTabPanel` | Yes                                              | Orientation per tab (`changeLayout` hotkey ⌘J) |
+### Layout regions and splitters
 
-Source: `components/RequestTabPanel`, `hooks/useResizablePanel`, `hooks/useDragResize`, `providers/Hotkeys/keyMappings.js`
-
----
-
-## 3. Layout modes
-
-| Mode                  | Description                                                        |
-| --------------------- | ------------------------------------------------------------------ |
-| **Stacked** (default) | Request pane above, response pane below                            |
-| **Side-by-side**      | Response pane to the right; toggled by `changeLayout` (⌘/Ctrl + J) |
-| Vertical tabs         | Tab strip on the left instead of above (`Sidebar`/`Tabs` variant)  |
-| Sidebar collapsed     | ⌘/Ctrl + `\`                                                       |
-| AI chat sidebar       | Optional right rail, can pop out (`AiChatSidebar/Popout`)          |
-| Console dock          | Bottom dock with Devtools + terminal                               |
-
-Layout state lives in Redux (`tabs[].requestPaneOrientation`) and preferences, so it survives restarts.
+| Region          | Component                | Constraints & Dimensions                                     | Notes                                             |
+| --------------- | ------------------------ | ------------------------------------------------------------ | ------------------------------------------------- |
+| **Sidebar**     | `components/Sidebar`     | Min `220px`, max `600px`, default `248px`. 6 px drag handle. | Collapsible via ⌘/Ctrl + `\` or title bar toggle. |
+| **RequestTabs** | `components/RequestTabs` | Height `~34px`. Drag reorder, dirty dots, close buttons.     | Collapses overflow into responsive `…` dropdown.  |
+| **Panes Split** | `layout.RootView`        | 12 px drag bar divider.                                      | Resizable split; persists split ratio in state.   |
 
 ---
 
-## 4. Title bar
+## 5. Layout Modes
 
-`AppTitleBar` is a custom frame strip: app menu (Windows/Linux), active collection name, workspace selector trigger, update indicator, window controls. On macOS it respects the traffic-light inset.
+| Mode                  | Description                                    | Trigger / Persistence                                                            |
+| --------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------- |
+| **Stacked** (default) | Request pane on top, response pane below       | Default orientation                                                              |
+| **Side-by-side**      | Request pane on left, response pane on right   | Toggled via global hotkey **⌘/Ctrl + J** (R-7, `providers/Hotkeys/index.js:386`) |
+| **Sidebar collapsed** | Sidebar shrinks to 0 px; body takes full width | Toggled via **⌘/Ctrl + `\`** or title bar toggle                                 |
+| **Console dock**      | Bottom dock (300 px) for logs and devtools     | Toggled via status bar button or **⌘/Ctrl + T**                                  |
 
----
-
-## 5. Empty and special screens
-
-| Screen                 | Trigger                         | Component                                        |
-| ---------------------- | ------------------------------- | ------------------------------------------------ |
-| Welcome / onboarding   | No collections open, first run  | `WelcomeModal`, `EmptyAppState`, `WorkspaceHome` |
-| Manage workspace       | Workspace manager open          | `ManageWorkspace`                                |
-| Transient request save | Unsaved scratch request closed  | `SaveTransientRequest`                           |
-| Collection open splash | Opening a large collection      | loading state on `#main-container`               |
-| Rosetta warning        | Apple Silicon running x64 build | banner in `pages/Bruno`                          |
+Orientation is persisted per-tab in Redux (`tabs[].requestPaneOrientation`), allowing independent layout configurations across open requests.
 
 ---
 
-## 6. Responsive behavior
+## 6. Empty and Special States
 
-The app assumes a desktop window ≥ ~900 px. Behavior under stress:
-
-- `ResponsiveTabs` collapses overflow into a dropdown.
-- Response pane action icons collapse into a `…` menu below `RIGHT_CONTENT_EXPANDED_WIDTH = 135` px (`ResponsePane/index.js`).
-- `useTabPaneBoundaries` and `HeightBoundContainer` keep CodeMirror sized correctly when panes resize.
-
----
-
-## 7. Go port guidance (PROPOSED)
-
-- Treat the three regions as fixed collapsible splitters (sidebar / request / response). Persist split ratios.
-- Support both orientations from day one — users switch frequently.
-- Reserve a dock area for logs; do not overlay the editor.
-- Preserve the 60 px title-bar + status-bar chrome budget so the content area feels the same.
+| Screen                     | Trigger                            | Component Spec                                                     |
+| -------------------------- | ---------------------------------- | ------------------------------------------------------------------ |
+| **Workspace Overview**     | No collections open in workspace   | `WorkspaceOverview` (`ui-map/screens/welcome.md`), empty CTA cards |
+| **Welcome / Onboarding**   | First app launch                   | `WelcomeModal` / `WorkspaceHome`                                   |
+| **Manage Workspaces**      | Workspace switcher menu            | `ManageWorkspace` modal (`ui-map/screens/workspace-switcher.md`)   |
+| **Transient Request Save** | Closing an unsaved scratch tab     | `SaveTransientRequest` confirmation modal                          |
+| **Collection Loading**     | Large collection parsing / loading | Indeterminate spinner overlay on main container                    |
 
 ---
 
-## 8. Go-native layout mapping (PROPOSED — Go-only constraint)
+## 7. Go Implementation Mapping (MyGo + Lobe)
 
-Sections 1–7 describe Bruno's DOM/flex layout. With a Go-only stack (no HTML/CSS, no Electron, no Wails) the same visual structure is produced by native layout widgets. The chosen toolkit is **MyGo** (decision recorded in `architecture/system-overview.md` §8.5), with **Lobe MyGo** supplying the component layer (`design-system.md` §7.2.1). The third column names the concrete construct — Lobe first, MyGo `ui` where Lobe has no equivalent — and the note column records the non-obvious caveats.
-
-| Bruno CSS mechanism                              | Go-native equivalent                       | Concrete construct / note                                                                                                                                                                                       |
-| ------------------------------------------------ | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `flex-col h-screen`                              | Root vertical stack sized to the window    | `ui.Column` as the single root of `ui.View`; everything else nests inside it                                                                                                                                    |
-| `flex-1 min-h-0`                                 | Flexible child with a minimum-clamp rule   | `ui.Box` with `Weight`, plus an explicit minimum height on the parent; MyGo will not invent the clamp, the presenter must supply it                                                                             |
-| `calc(100vh - 60px - 300px)` console reservation | Explicit splitter with a fixed console     | Vertical `ui.Split` whose bottom panel is fixed-height and whose top panel takes the remainder — the same arithmetic, expressed structurally                                                                    |
-| Resizable panes (`useResizablePanel`)            | Splitter with drag handles and constraints | Request/response: `ui.SplitVertical` / `ui.Split` / `ui.SplitPercent`. Editor sidebar: `layout.DraggablePanel` (`Placement: Left`, `MinSize`/`MaxSize`/`CollapseThreshold`). Store ratios in presentation state |
-| Sidebar (`components/Sidebar`)                   | App side navigation with drag + collapse   | `layout.DraggableSideNav(c, width *float32, expanded *bool, DraggableSideNavProps, body func(SideNavState))` — drag to resize, tab to collapse, `MinWidth` 64 DIPs default                                      |
-| Sidebar tree rows                                | Rows that slide into a rail on collapse    | `display.List` with `Collapse` driven by `SideNavState.Collapse` and `RailWidth` = `SideNavState.RailWidth`                                                                                                     |
-| Collection header strip                          | In-pane header row                         | `ui.Row` + `field.Select` (environment) + `action.ActionIconGroup` (collection actions). `layout.Header` is a site-style 64 DIP bar and is **not** suitable for this thin strip                                 |
-| Draggable tabs                                   | Reorderable tab strip with drop indicators | `nav.Tabs` gives the look (`TabsSquare`) but **no close/reorder/overflow** — the request tab bar is a custom widget (see below)                                                                                 |
-| Custom title bar (`AppTitleBar`)                 | Custom title row signed to the window      | `Context.TitleBar` content plus `Element.DragWindow` on the non-interactive region; keep the macOS traffic-light inset in the presenter's layout calculation                                                    |
-| `ResponsiveTabs` overflow `…`                    | Overflow menu from measured label widths   | Presenter measures widths, then renders either inline tabs or `overlay.DropdownMenu` behind an `action.ActionIcon`; there is no automatic overflow collapsing                                                   |
-| `Portal` modals/overlays                         | Overlay layer above all panes, focus trap  | `feedback.Modal` (returns OK, caller closes), `feedback.Drawer` (edge panel), `overlay.Popover`, `overlay.Tooltip`, `overlay.ContextMenu`; toasts via `feedback.ToastHost` once per view                        |
-| Status bar / toasts                              | Bottom chrome + toast host                 | `ui.Row` status strip; `feedback.ToastHost` mounted once in the root view; `feedback.ShowToast` for transient messages                                                                                          |
-
-"Custom tab bar" is the one place where Lobe cannot supply the layout element. It is composed from Lobe parts rather than painted from nothing: `action.ActionIcon` (close button), `overlay.DropdownMenu` (overflow and tab context menu), `display.Text` (labels), `display.Badge` (unsaved dot), and MyGo `ui.Scroll` for horizontal overflow with presenter-side reordering.
-
-Source (Lobe signatures): `github.com/lobehub/lobe-mygo` → `pkg/layout` (`DraggableSideNav`, `DraggablePanel`, `Header`), `pkg/nav` (`Tabs`, `TabItem`), `pkg/display` (`List`, `ListProps.Collapse`, `ListProps.RailWidth`), `pkg/feedback` (`Modal`, `Drawer`, `ToastHost`), `pkg/overlay` (`DropdownMenu`, `Popover`, `ContextMenu`)
-Relevant symbols: `DraggableSideNav`, `DraggableSideNavProps`, `SideNavState`, `DraggablePanel`, `DraggablePanelProps`, `ListProps`, `TabsProps`, `Modal`, `Drawer`, `ToastHost`
-
-### 8.1 Region budget (preserve)
-
-```text
-┌───────────────────────────────────────── window ─────────────────────────────────────────┐
-│ Title bar / menu                                                       (≈28–32 px)       │
-├───────────────┬──────────────────────────────────────────────────────────────────────────┤
-│ Sidebar       │ Collection header (environment selector, runner)                         │
-│ 220–600 px    ├──────────────────────────────────────────────────────────────────────────┤
-│ (collapsible) │ Request pane  ── stacked ──┐  or  ── side-by-side ──┐                     │
-│               │ Response pane ────────────┘                         │                     │
-├───────────────┴──────────────────────────────────────────────────────────────────────────┤
-│ Status bar                                                                  (≈24 px)     │
-├──────────────────────────────────────────────────────────────────────────────────────────┤
-│ Console dock (optional, ~300 px, shrinks content)                                        │
-└──────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 8.2 Concrete tree for the default (stacked) layout
-
-```mermaid
-flowchart TB
-    Root[ui.Column root] --> Title[Context.TitleBar row]
-    Root --> Body[ui.Row body]
-    Root --> Bottom[ui.Column bottom chrome]
-    Root --> Toasts[feedback.ToastHost]
-    Body --> Side[layout.DraggableSideNav]
-    Body --> Main[ui.Box flex main]
-    Side --> List[display.List with Collapse]
-    Main --> Head[header row - field.Select env + action.ActionIconGroup]
-    Main --> Split[ui.SplitVertical request over response]
-    Split --> Req[request pane - nav.Tabs + field.* + ui/editor]
-    Split --> Resp[response pane - nav.Tabs + code.Highlighter]
-    Bottom --> Status[status row - display.Tag + display.Text]
-    Bottom --> Dock[ui.SplitVertical console dock]
-```
-
-The side-by-side mode is the same tree with `ui.SplitVertical` replaced by `ui.Split` (request left, response right). Only that one constructor changes, mirroring how `changeLayout` only flips an orientation flag in Bruno.
-
-Layer note: the tree mixes two packages deliberately. **Structure** (splits, flex, scroll) comes from MyGo `ui`; **content** (navigation, list rows, tabs, fields) comes from Lobe. Lobe components are ordinary `ui.Element`s, so they nest anywhere a MyGo element does. `theme.Apply(c)` is called once at the top of the root view, before any Lobe component renders.
-
-### 8.2.1 What the layout layer must not own
-
-MyGo gives the presenter a repaint-oriented `View` function. That makes it tempting to hold domain state in closures. Do not: the `View` function must be a pure function of an immutable snapshot handed to it by the `app` layer. Window creation (`mygo.NewWindow`), invalidation (`Context.Invalidate`), and any `Context` access stay inside `main`-thread code; the HTTP engine never sees a `Context`.
-
-Source (Bruno side of the mapping): `packages/bruno-app/src/pages/Bruno/index.js`, `components/RequestTabPanel`, `components/RequestTabs`, `components/AppTitleBar`
-Relevant symbols: `Main`, `RequestTabPanel`, `ResponsiveTabs`, `AppTitleBar`
-Source (MyGo constructs): package `ui` of `github.com/egoist/mygo` — `Column`, `Row`, `Box`, `Split`, `SplitVertical`, `SplitPercent`, `Context.TitleBar`, `Element.DragWindow`
-Source (Lobe constructs): `pkg/layout` — `DraggableSideNav`, `DraggablePanel`; `pkg/display` — `List`, `Text`, `Tag`; `pkg/nav` — `Tabs`; `pkg/feedback` — `ToastHost`; `pkg/action` — `ActionIconGroup`; `pkg/theme` — `Apply`, `TokensOf`
-
-### 8.3 Layout state ownership
-
-Split ratios, sidebar width, orientation, and console visibility are **presentation state**, not domain state: they belong to the presenter and are persisted to a settings file. The core must never read them. This keeps the layout layer replaceable and testable headlessly.
-
-### 8.4 Minimum and degraded modes
-
-- Below ~900 px width: collapse the sidebar to icons, force stacked orientation, hide secondary status items.
-- Below ~600 px: single pane with a Request/Response switcher (documented fallback; Bruno does not support this, so it is an addition, not parity work).
-- Multi-monitor: persist window bounds and split ratios per display configuration (see `store/window-state.js` behaviour in Bruno).
+- **Root frame:** Built with MyGo `ui.Column` containing `AppTitleBar`, split body (`ui.Split`), and `StatusBar`.
+- **Drag window:** Title bar handles OS window dragging via `c.DragWindow()`.
+- **Traffic light margin:** Responsive left margin: 70 DIPs on macOS windowed mode, 6 DIPs on fullscreen or non-macOS.
+- **Splitters:** Built using MyGo `SplitHorizontal` and `SplitVertical` with 12 px hit targets.
+- **Orientation toggle:** Bound globally to `Cmd/Ctrl + J` (R-7) in the root keybinding router.

@@ -191,6 +191,17 @@ func TestApp_ActionsAndNavigation(t *testing.T) {
 	if a.LayoutState.ConsoleOpen == origConsole {
 		t.Error("expected ConsoleOpen to toggle")
 	}
+
+	// Toggle layout (stacked <-> side-by-side)
+	origOrientation := a.LayoutState.RequestResponseOrientation
+	a.ToggleLayout()
+	if a.LayoutState.RequestResponseOrientation == origOrientation {
+		t.Error("expected RequestResponseOrientation to toggle")
+	}
+	a.ToggleLayout()
+	if a.LayoutState.RequestResponseOrientation != origOrientation {
+		t.Error("expected RequestResponseOrientation to toggle back")
+	}
 }
 
 func TestApp_RequestLifecycleActions(t *testing.T) {
@@ -296,7 +307,10 @@ func TestApp_ScreenCallbacks(t *testing.T) {
 	a.ShellScreen.Actions.OnMenu()
 	a.ShellScreen.Actions.OnWorkspace()
 	a.ShellScreen.Actions.OnSettings()
-	a.ShellScreen.Actions.OnEnvironment()
+	a.ShellScreen.Actions.OnSelectEnvironment("dev")
+	a.ShellScreen.Actions.OnManageEnvironment()
+	a.ShellScreen.Actions.OnRun()
+	a.ShellScreen.Actions.OnStop()
 	a.ShellScreen.Actions.OnConsoleTab(1)
 	if a.activeConsoleTab != 1 {
 		t.Errorf("expected console tab 1, got %d", a.activeConsoleTab)

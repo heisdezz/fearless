@@ -1,122 +1,58 @@
 # Settings
 
-Status: VERIFIED unless marked.
-
-Three levels of settings exist. Confusing them is a common source of "why did my request behave differently".
-
-| Level | Where | Scope |
-|---|---|---|
-| **App preferences** | Preferences modal (`⌘/Ctrl + ,`) | Whole app, persisted in `electron-store` |
-| **Collection / folder settings** | Collection header → Settings; folder settings | Subtree |
-| **Request settings** | Request pane → Settings tab | Single request |
+Status: VERIFIED against `bruno/packages/bruno-app/src/components/Preferences/` and `CollectionSettings/` at commit `60d7517`, cross-referenced with `ui-map/screens/preferences.md`, `collection-settings.md`, and `folder-settings.md`.
 
 ---
 
-## 1. Preferences tabs (VERIFIED)
+## 1. Setting Hierarchy
 
-From `components/Preferences/index.js`:
+Settings operate at three explicit levels:
 
-| Tab | Content |
-|---|---|
-| **General** | SSL/TLS certificate verification; custom CA certificate (choose + remove + keep defaults); store cookies automatically; send cookies automatically; use system browser for OAuth2 authorization; enable auto save; auto-save delay (ms); request timeout (ms); default location |
-| **Themes** | Light/dark + ~20 named themes |
-| **Display** | Font size, zoom, theme-adjacent display options |
-| **Proxy** | Mode (`off` / `on` / `system` / `pac`), protocol, hostname, port, auth (disabled/username/password), bypass proxy, PAC source |
-| **Client Certificates** | List of client certs: domain, type (`cert` \| `pfx`), cert/key/pfx file paths, passphrase, disabled |
-| **Keybindings** | View/override bindings (`getKeyBindingsForActionAllOS`), enable toggle |
-| **AI** | Provider keys, autocomplete, security pane (out of scope for the port) |
-| **Cache** | Clear cache |
-| **Support** | Version info, links |
-| **Beta** | Feature flags (`BETA_FEATURES`, e.g. mock server) |
+| Level                   | Access Point                                     | Storage Target                       | Scope                  |
+| ----------------------- | ------------------------------------------------ | ------------------------------------ | ---------------------- |
+| **App Preferences**     | Preferences modal (**⌘/Ctrl + ,**) or status bar | Local app store (`preferences.json`) | Global to application  |
+| **Collection Settings** | Collection context menu → Settings               | `bruno.json` in collection root      | Entire collection tree |
+| **Folder Settings**     | Folder context menu → Settings                   | `folder.bru` in directory            | Subtree of requests    |
+| **Request Settings**    | Request editor → Settings tab                    | `request.bru` metadata               | Individual request     |
 
 ---
 
-## 2. Preference keys that affect the engine (VERIFIED)
+## 2. App Preferences Specification (`ui-map/screens/preferences.md`)
 
-| Key | Effect | Source |
-|---|---|---|
-| `request.timeout` | Global default / `inherit` target | `resolveInheritedSettings` |
-| `request.storeCookies` | Persist `Set-Cookie` | `preferencesUtil.shouldStoreCookies()` |
-| `request.sendCookies` | Send jar cookies | `preferencesUtil.shouldSendCookies()` |
-| `request.sslVerification` (verify TLS) | `rejectUnauthorized` | `store/preferences.js` `shouldVerifyTls` (line 407) |
-| custom CA settings | `ca` array on agents | `cert-utils.js` |
-| proxy mode/config | Agent selection | `getCertsAndProxyConfig` |
-| `useSystemBrowser` for OAuth2 | Auth UI path | `authorize-user-in-system-browser.js` |
-| auto save | Debounced writes | `autosaveMiddleware` |
-| `keybindingsEnabled` | Shortcut activation | `HotkeysProvider` |
+Modal dialog width: `720px`, body height: `520px`. Left sidebar with tabs, right content panel:
 
----
+### 2.1 Tab Inventory and Controls
 
-## 3. Collection / folder settings
-
-| Setting | Source |
-|---|---|
-| Name, description | `meta` block in `collection.bru` / `folder.bru` |
-| Shared headers/query/auth/vars/scripts | `headers`, `query`, `auth`, `vars:*`, `script:*` blocks |
-| Proxy config | `bruno.json → proxy` |
-| Script module whitelist + context roots + flow | `bruno.json → scripts` |
-| Client certificates | `bruno.json → clientCertificates` |
-| Presets | `bruno.json → presets` |
-| Folder auth mode `inherit` | `folder.bru` `auth { mode: inherit }` |
-
-UI: `CollectionSettings`, `FolderSettings`, `InheritableSettingsInput`.
+| Tab                     | Key Controls                                                                                                                                                                                                                                                                                                                                                                                                                                               | Engine Impact                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **General**             | - SSL/TLS certificate verification toggle<br/>- Custom CA certificate picker (adds to root pool)<br/>- Store cookies automatically (`shouldStoreCookies`)<br/>- Send cookies automatically (`shouldSendCookies`)<br/>- Authorize OAuth2 in system browser toggle<br/>- Enable auto-save toggle and delay (`autoSaveDelay`, default 1000 ms)<br/>- Request timeout (`request.timeout`, default 0 = unlimited)<br/>- Default collection location path picker | Direct transport, cookie jar, and disk IO impact |
+| **Themes**              | - Mode selector: System / Light / Dark<br/>- Theme presets grid (Light, Dark, Catppuccin, Nord, Dracula, Gruvbox, VS Code)                                                                                                                                                                                                                                                                                                                                 | Swaps active token adapter                       |
+| **Display**             | - Font size slider / dropdown (11–18 px)<br/>- Interface zoom scale (80 % – 150 %)<br/>- Code editor font family string                                                                                                                                                                                                                                                                                                                                    | Re-scales DIPs in UI frame                       |
+| **Proxy**               | - Mode: `off` (direct), `on` (manual), `system` (OS settings), `pac` (script)<br/>- Protocol (`http`/`https`), Hostname, Port<br/>- Auth: Username & masked password<br/>- Bypass list (comma-separated domains)<br/>- PAC script URL / file path                                                                                                                                                                                                          | Configures HTTP engine transport agents          |
+| **Client Certificates** | - List of domains and certificate pairs (`cert` + `key` or `.pfx`)<br/>- Passphrase inputs (masked with `*` per R-5)                                                                                                                                                                                                                                                                                                                                       | TLS mutual authentication (mTLS)                 |
+| **Keybindings**         | - Searchable table of all actions and current shortcuts<br/>- Custom shortcut capture input<br/>- Reset to defaults button                                                                                                                                                                                                                                                                                                                                 | Global and view shortcut routing                 |
+| **Support & About**     | - Fearless version string, commit hash, build date<br/>- Links to repository, issue tracker, and documentation                                                                                                                                                                                                                                                                                                                                             | Information only                                 |
 
 ---
 
-## 4. Request settings
+## 3. Collection and Folder Settings
 
-See `ui/request-editor.md §12`. Values of `inherit` are resolved at execution time (`resolveInheritedSettings`), and **only `timeout`** actually has a global fallback. Other settings default to built-in values:
+### 3.1 Collection Settings (`ui-map/screens/collection-settings.md`)
 
-| Setting | Default when missing |
-|---|---|
-| `followRedirects` | `true` |
-| `forwardAuthorizationHeader` | `true` |
-| `maxRedirects` | `DEFAULT_MAX_REDIRECTS` (5) |
-| `encodeUrl` | `false` |
-| `timeout` | global preference |
+- **Shared Headers:** Key-value table inherited by all requests in the collection.
+- **Shared Auth:** Default authentication provider for requests set to `mode: inherit`.
+- **Shared Variables & Scripts:** Pre-request and post-response logic applied globally across the collection.
+- **Proxy Override:** Per-collection proxy configuration overriding global preferences.
+- **Client Certificates:** Collection-specific mTLS configurations stored in `bruno.json`.
 
-Source: `prepare-request.js`/`configureRequest` and `utils/collection.js` `resolveInheritedSettings`.
+### 3.2 Folder Settings (`ui-map/screens/folder-settings.md`)
 
----
-
-## 5. Proxy settings detail
-
-New format (VERIFIED, `proxy-util.ts`):
-
-```ts
-{ inherit: boolean, disabled?: boolean,
-  config: { protocol, hostname, port, auth: { disabled?, username, password }, bypassProxy } }
-```
-
-Old format (`{ enabled: true|false|'global', … }`) is auto-migrated by `transformProxyConfig`. Modes:
-
-| Mode | Meaning |
-|---|---|
-| `off` | Direct connection |
-| `on` | Use explicit proxy config |
-| `system` | Use OS/system proxy (from `system-proxy` store) |
-| `pac` | Resolve via PAC script at `pac.source` |
+- Folder-level headers, auth, variables, and scripts stored in `folder.bru`.
+- Supports nested inheritance chains where a child folder overrides a parent folder's configuration.
 
 ---
 
-## 6. Settings precedence diagram
+## 4. Control Dimensions & Shimming (D-019)
 
-```mermaid
-flowchart TD
-    A["Request settings"] --> B{"value missing or 'inherit'?"}
-    B -->|no| C["use request value"]
-    B -->|yes| D["folder settings? (where applicable)"]
-    D --> E["collection settings"]
-    E --> F["app preference (timeout only)"]
-    F --> G["built-in default"]
-```
-
-In practice only `timeout` walks the full chain; other settings do not inherit from folders.
-
----
-
-## 7. Go port guidance (PROPOSED)
-
-1. Represent preferences as a versioned struct with explicit defaults and a migration function (Bruno already migrates proxy config).
-2. Keep the three levels distinct in the UI; users are often confused about why `maxRedirects: 0` on a request beats the global.
-3. Store preferences as plain JSON in the config dir; encrypt only secrets (API keys, client cert passphrases).
+- Form inputs use `SettingsInput` geometry: height `32px` (`2rem`), width `96px` (`w-24`) for numeric inputs or full width for strings.
+- Checkboxes and toggles render through `internal/ui/widgets/controls.go` to maintain dark-theme background integrity.

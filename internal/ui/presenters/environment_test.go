@@ -3,6 +3,7 @@ package presenters
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"fearless/internal/core/model"
@@ -266,8 +267,9 @@ func TestEnvironmentPresenter_SecretMasking(t *testing.T) {
 	if !p.IsSecretMasked(secretVar) {
 		t.Error("secret variable should be masked by default")
 	}
-	if p.FormattedVariableValue(secretVar) != "••••••••" {
-		t.Errorf("masked value mismatch: %s", p.FormattedVariableValue(secretVar))
+	wantMasked := strings.Repeat("*", len("secret-12345"))
+	if p.FormattedVariableValue(secretVar) != wantMasked {
+		t.Errorf("masked value mismatch: got %q, want %q", p.FormattedVariableValue(secretVar), wantMasked)
 	}
 
 	// Toggle unmask
