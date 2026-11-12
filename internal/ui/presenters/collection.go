@@ -3,8 +3,10 @@ package presenters
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"fearless/internal/core/events"
 	"fearless/internal/core/model"
@@ -104,6 +106,10 @@ func (p *CollectionPresenter) Collections() []*model.Collection {
 func (p *CollectionPresenter) FindCollection(uid string) *model.Collection {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+	return p.findCollectionLocked(uid)
+}
+
+func (p *CollectionPresenter) findCollectionLocked(uid string) *model.Collection {
 	for _, c := range p.collections {
 		if c.UID == uid {
 			return c
@@ -170,86 +176,78 @@ func (p *CollectionPresenter) ToggleExpanded(uid string) {
 	p.notifyChanged()
 }
 
-// Filter returns the active search query.
+// SetFilter updates the filter search query.
+func (p *CollectionPresenter) SetFilter(query string) {
+	p.mu.Lock()
+	p.filterQuery = query
+	p.mu.Unlock()
+	p.notifyChanged()
+}
+
+// Filter returns the current filter search query.
 func (p *CollectionPresenter) Filter() string {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.filterQuery
 }
 
-// SetFilter updates the search filter.
-func (p *CollectionPresenter) SetFilter(query string) {
-	p.mu.Lock()
-	p.filterQuery = strings.TrimSpace(query)
-	p.mu.Unlock()
-	p.notifyChanged()
-}
-
-// CanMove checks if moving itemUID to targetFolderUID within collectionUID is valid.
-func (p *CollectionPresenter) CanMove(collectionUID, itemUID, targetFolderUID string) bool {
+// CanMove checks if a source item can be moved to a target folder.
+// An item cannot be moved into its own descendant.
+func (p *CollectionPresenter) CanMove(colUID, sourceItemUID, targetFolderUID string) bool {
+	if sourceItemUID == targetFolderUID {
+		return false
+	}
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	var targetCol *model.Collection
-	for _, c := range p.collections {
-		if c.UID == collectionUID {
-			targetCol = c
-			break
+	col := p.findCollectionLocked(colUID)
+	if col == nil {
+		return false
+	}
+
+	src := col.FindItem(sourceItemUID)
+	if src == nil {
+		return false
+	}
+
+	if targetFolderUID != "" {
+		target := col.FindItem(targetFolderUID)
+		if target == nil || !target.IsFolder() {
+			return false
 		}
 	}
-	if targetCol == nil {
-		return false
+
+	if !src.IsFolder() {
+		return true
 	}
 
-	item := targetCol.FindItem(itemUID)
-	if item == nil {
-		return false
-	}
-
-	// If moving to root folder (empty UID), valid as long as it's not already at root without seq change
 	if targetFolderUID == "" {
 		return true
 	}
 
-	// Target folder must exist and be a folder
-	targetFolder := targetCol.FindItem(targetFolderUID)
-	if targetFolder == nil || !targetFolder.IsFolder() {
+	// Check if target is a descendant of source
+	var isDescendant func(parent *model.Item, targetUID string) bool
+	isDescendant = func(parent *model.Item, targetUID string) bool {
+		for _, child := range parent.Children {
+			if child.UID == targetUID {
+				return true
+			}
+			if child.IsFolder() && isDescendant(child, targetUID) {
+				return true
+			}
+		}
 		return false
 	}
 
-	// Cannot move into itself
-	if targetFolderUID == itemUID {
-		return false
-	}
-
-	// If item is a folder, cannot move into any descendant
-	if item.IsFolder() && isDescendant(item, targetFolderUID) {
-		return false
-	}
-
-	return true
+	return !isDescendant(src, targetFolderUID)
 }
 
-func isDescendant(parent *model.Item, targetUID string) bool {
-	for _, child := range parent.Children {
-		if child.UID == targetUID {
-			return true
-		}
-		if child.IsFolder() && isDescendant(child, targetUID) {
-			return true
-		}
-	}
-	return false
-}
-
-// VisibleNodes returns the flat ordered list of visible tree nodes for rendering.
-func (p *CollectionPresenter) VisibleNodes() []*TreeNode {
+// BuildTree returns the hierarchical forest of TreeNode items for all loaded collections.
+func (p *CollectionPresenter) BuildTree() []*TreeNode {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	var result []*TreeNode
-	q := strings.ToLower(p.filterQuery)
-
+	var roots []*TreeNode
 	for _, col := range p.collections {
 		colNode := &TreeNode{
 			UID:           col.UID,
@@ -258,122 +256,327 @@ func (p *CollectionPresenter) VisibleNodes() []*TreeNode {
 			Path:          col.Path,
 			Level:         0,
 			IsFolder:      true,
-			IsExpanded:    p.expandedFolders[col.UID] || q != "",
-			IsSelected:    col.UID == p.selectedUID,
-			IsDirty:       col.Dirty,
+			IsExpanded:    p.expandedFolders[col.UID],
+			IsSelected:    p.selectedUID == col.UID,
 			CollectionUID: col.UID,
+			Children:      p.buildItemNodes(col.Items, col.UID, 1),
 		}
-
-		childFiltered := p.buildItemNodes(col.Items, col.UID, 1, q)
-
-		// When filtering, only include collection if it or its children match
-		if q != "" {
-			colMatches := strings.Contains(strings.ToLower(col.Name), q)
-			if colMatches || len(childFiltered) > 0 {
-				colNode.IsExpanded = true
-				result = append(result, colNode)
-				result = append(result, childFiltered...)
-			}
-		} else {
-			result = append(result, colNode)
-			if colNode.IsExpanded {
-				result = append(result, childFiltered...)
-			}
-		}
+		roots = append(roots, colNode)
 	}
 
-	return result
+	return roots
 }
 
-func (p *CollectionPresenter) buildItemNodes(items []*model.Item, colUID string, level int, filterQuery string) []*TreeNode {
+func (p *CollectionPresenter) buildItemNodes(items []*model.Item, colUID string, level int) []*TreeNode {
+	var nodes []*TreeNode
+	for _, it := range items {
+		node := &TreeNode{
+			UID:           it.UID,
+			Name:          it.Name,
+			Type:          it.Type,
+			Level:         level,
+			IsFolder:      it.IsFolder(),
+			IsExpanded:    p.expandedFolders[it.UID],
+			IsSelected:    p.selectedUID == it.UID,
+			IsDirty:       it.Dirty(),
+			CollectionUID: colUID,
+			Item:          it,
+		}
+
+		if it.Request != nil {
+			node.Method = it.Request.Method
+			node.Path = it.Request.URL
+		}
+
+		if it.IsFolder() {
+			node.Children = p.buildItemNodes(it.Children, colUID, level+1)
+		}
+
+		nodes = append(nodes, node)
+	}
+	return nodes
+}
+
+// VisibleNodes flattens the tree considering expansion state and the filter query.
+func (p *CollectionPresenter) VisibleNodes() []*TreeNode {
+	tree := p.BuildTree()
+	var flat []*TreeNode
+	for _, root := range tree {
+		flat = append(flat, p.flattenVisible(root)...)
+	}
+	return flat
+}
+
+func (p *CollectionPresenter) flattenVisible(node *TreeNode) []*TreeNode {
 	var nodes []*TreeNode
 
-	for _, item := range items {
-		if item == nil {
-			continue
-		}
+	filterQuery := strings.ToLower(strings.TrimSpace(p.Filter()))
+	isFiltering := filterQuery != ""
 
-		method := ""
+	if isFiltering {
+		// When filtering, return matching nodes and their ancestors.
+		return p.filterNode(node, filterQuery)
+	}
+
+	nodes = append(nodes, node)
+	if node.IsFolder && node.IsExpanded {
+		for _, child := range node.Children {
+			nodes = append(nodes, p.flattenVisible(child)...)
+		}
+	}
+	return nodes
+}
+
+func (p *CollectionPresenter) filterNode(node *TreeNode, filterQuery string) []*TreeNode {
+	var nodes []*TreeNode
+	nameMatch := strings.Contains(strings.ToLower(node.Name), filterQuery)
+
+	if node.IsFolder {
+		var matchedChildren []*TreeNode
+		for _, child := range node.Children {
+			matchedChildren = append(matchedChildren, p.filterNode(child, filterQuery)...)
+		}
+		if nameMatch || len(matchedChildren) > 0 {
+			copyNode := *node
+			copyNode.IsExpanded = true
+			copyNode.Children = matchedChildren
+			nodes = append(nodes, &copyNode)
+			nodes = append(nodes, matchedChildren...)
+		}
+	} else {
+		methodMatch := strings.Contains(strings.ToLower(node.Method), filterQuery)
 		url := ""
-		if req := item.Effective(); req != nil {
-			method = req.Method
-			url = req.URL
+		if node.Item != nil && node.Item.Request != nil {
+			url = node.Item.Request.URL
 		}
-
-		node := &TreeNode{
-			UID:           item.UID,
-			Name:          item.Name,
-			Type:          item.Type,
-			Method:        method,
-			Path:          item.Path,
-			Level:         level,
-			IsFolder:      item.IsFolder(),
-			IsExpanded:    p.expandedFolders[item.UID],
-			IsSelected:    item.UID == p.selectedUID,
-			IsDirty:       item.Dirty(),
-			CollectionUID: colUID,
-			Item:          item,
-		}
-
-		if item.IsFolder() {
-			childNodes := p.buildItemNodes(item.Children, colUID, level+1, filterQuery)
-			node.Children = childNodes
-
-			if filterQuery != "" {
-				nameMatches := strings.Contains(strings.ToLower(item.Name), filterQuery)
-				if nameMatches || len(childNodes) > 0 {
-					node.IsExpanded = true
-					nodes = append(nodes, node)
-					nodes = append(nodes, childNodes...)
-				}
-			} else {
-				nodes = append(nodes, node)
-				if node.IsExpanded {
-					nodes = append(nodes, childNodes...)
-				}
-			}
-		} else {
-			// Request node
-			if filterQuery != "" {
-				nameMatch := strings.Contains(strings.ToLower(item.Name), filterQuery)
-				methodMatch := strings.Contains(strings.ToLower(method), filterQuery)
-				urlMatch := strings.Contains(strings.ToLower(url), filterQuery)
-				if nameMatch || methodMatch || urlMatch {
-					nodes = append(nodes, node)
-				}
-			} else {
-				nodes = append(nodes, node)
-			}
+		urlMatch := strings.Contains(strings.ToLower(url), filterQuery)
+		if nameMatch || methodMatch || urlMatch {
+			nodes = append(nodes, node)
 		}
 	}
 
 	return nodes
 }
 
+// CreateCollection creates a new collection and adds it to the presenter.
+func (p *CollectionPresenter) CreateCollection(ctx context.Context, name, path string, format model.CollectionFormat) (*model.Collection, error) {
+	p.mu.Lock()
+	if name == "" {
+		name = "Untitled Collection"
+	}
+	if format == "" {
+		format = model.FormatBru
+	}
+	uid := fmt.Sprintf("col-%d", time.Now().UnixNano())
+	col := &model.Collection{
+		UID:  uid,
+		Name: name,
+		Path: path,
+		Config: model.CollectionConfig{
+			Version: "1",
+			Name:    name,
+			Type:    "collection",
+			Format:  format,
+		},
+	}
+	p.collections = append(p.collections, col)
+	p.expandedFolders[uid] = true
+	p.selectedUID = uid
+	p.mu.Unlock()
+	p.notifyChanged()
+	return col, nil
+}
+
+func (p *CollectionPresenter) resolveColUIDLocked(colUID, parentFolderUID string) (string, string) {
+	if colUID == "" && parentFolderUID != "" {
+		for _, c := range p.collections {
+			if c.UID == parentFolderUID {
+				return c.UID, ""
+			}
+			if it := c.FindItem(parentFolderUID); it != nil {
+				return c.UID, parentFolderUID
+			}
+		}
+	}
+	if colUID == "" && len(p.collections) > 0 {
+		if p.selectedUID != "" {
+			for _, c := range p.collections {
+				if c.UID == p.selectedUID {
+					return c.UID, parentFolderUID
+				}
+				if it := c.FindItem(p.selectedUID); it != nil {
+					if it.IsFolder() && parentFolderUID == "" {
+						return c.UID, it.UID
+					}
+					return c.UID, parentFolderUID
+				}
+			}
+		}
+		return p.collections[0].UID, parentFolderUID
+	}
+	if colUID == "" {
+		// Create default collection if none exists
+		uid := fmt.Sprintf("col-%d", time.Now().UnixNano())
+		c := &model.Collection{
+			UID:  uid,
+			Name: "Default Collection",
+			Config: model.CollectionConfig{
+				Version: "1",
+				Name:    "Default Collection",
+				Type:    "collection",
+				Format:  model.FormatBru,
+			},
+		}
+		p.collections = append(p.collections, c)
+		p.expandedFolders[uid] = true
+		return uid, parentFolderUID
+	}
+	return colUID, parentFolderUID
+}
+
 // CreateRequest dispatches creation of a new request item.
 func (p *CollectionPresenter) CreateRequest(ctx context.Context, colUID, parentFolderUID, name, method, url string) (*model.Item, error) {
-	if p.creator == nil {
-		return nil, nil
+	p.mu.Lock()
+	colUID, parentFolderUID = p.resolveColUIDLocked(colUID, parentFolderUID)
+	creator := p.creator
+	p.mu.Unlock()
+
+	if name == "" {
+		name = "Untitled Request"
 	}
-	item, err := p.creator.CreateItem(ctx, colUID, parentFolderUID, name, model.ItemHTTPRequest, method, url)
-	if err == nil && parentFolderUID != "" {
-		p.SetExpanded(parentFolderUID, true)
+	if method == "" {
+		method = "GET"
 	}
+
+	if creator != nil {
+		item, err := creator.CreateItem(ctx, colUID, parentFolderUID, name, model.ItemHTTPRequest, method, url)
+		if err != nil {
+			return nil, err
+		}
+		p.mu.Lock()
+		col := p.findCollectionLocked(colUID)
+		if col != nil && item != nil && col.FindItem(item.UID) == nil {
+			if parentFolderUID != "" {
+				if parent := col.FindItem(parentFolderUID); parent != nil && parent.IsFolder() {
+					parent.Children = append(parent.Children, item)
+				} else {
+					col.Items = append(col.Items, item)
+				}
+			} else {
+				col.Items = append(col.Items, item)
+			}
+		}
+		if item != nil {
+			p.selectedUID = item.UID
+		}
+		if parentFolderUID != "" {
+			p.expandedFolders[parentFolderUID] = true
+		}
+		p.mu.Unlock()
+		p.notifyChanged()
+		return item, nil
+	}
+
+	// In-memory creation fallback
+	p.mu.Lock()
+	col := p.findCollectionLocked(colUID)
+	if col == nil {
+		p.mu.Unlock()
+		return nil, errors.New("collection not found")
+	}
+	item := &model.Item{
+		UID:  fmt.Sprintf("req-%d", time.Now().UnixNano()),
+		Type: model.ItemHTTPRequest,
+		Name: name,
+		Request: &model.Request{
+			Method: method,
+			URL:    url,
+		},
+	}
+	if parentFolderUID != "" {
+		if parent := col.FindItem(parentFolderUID); parent != nil && parent.IsFolder() {
+			parent.Children = append(parent.Children, item)
+			p.expandedFolders[parentFolderUID] = true
+		} else {
+			col.Items = append(col.Items, item)
+		}
+	} else {
+		col.Items = append(col.Items, item)
+	}
+	p.selectedUID = item.UID
+	p.mu.Unlock()
 	p.notifyChanged()
-	return item, err
+	return item, nil
 }
 
 // CreateFolder dispatches creation of a new folder item.
 func (p *CollectionPresenter) CreateFolder(ctx context.Context, colUID, parentFolderUID, name string) (*model.Item, error) {
-	if p.creator == nil {
-		return nil, nil
+	p.mu.Lock()
+	colUID, parentFolderUID = p.resolveColUIDLocked(colUID, parentFolderUID)
+	creator := p.creator
+	p.mu.Unlock()
+
+	if name == "" {
+		name = "New Folder"
 	}
-	item, err := p.creator.CreateItem(ctx, colUID, parentFolderUID, name, model.ItemFolder, "", "")
-	if err == nil && parentFolderUID != "" {
-		p.SetExpanded(parentFolderUID, true)
+
+	if creator != nil {
+		item, err := creator.CreateItem(ctx, colUID, parentFolderUID, name, model.ItemFolder, "", "")
+		if err != nil {
+			return nil, err
+		}
+		p.mu.Lock()
+		col := p.findCollectionLocked(colUID)
+		if col != nil && item != nil && col.FindItem(item.UID) == nil {
+			if parentFolderUID != "" {
+				if parent := col.FindItem(parentFolderUID); parent != nil && parent.IsFolder() {
+					parent.Children = append(parent.Children, item)
+				} else {
+					col.Items = append(col.Items, item)
+				}
+			} else {
+				col.Items = append(col.Items, item)
+			}
+		}
+		if item != nil {
+			p.selectedUID = item.UID
+			p.expandedFolders[item.UID] = true
+		}
+		if parentFolderUID != "" {
+			p.expandedFolders[parentFolderUID] = true
+		}
+		p.mu.Unlock()
+		p.notifyChanged()
+		return item, nil
 	}
+
+	// In-memory creation fallback
+	p.mu.Lock()
+	col := p.findCollectionLocked(colUID)
+	if col == nil {
+		p.mu.Unlock()
+		return nil, errors.New("collection not found")
+	}
+	folder := &model.Item{
+		UID:  fmt.Sprintf("folder-%d", time.Now().UnixNano()),
+		Type: model.ItemFolder,
+		Name: name,
+	}
+	if parentFolderUID != "" {
+		if parent := col.FindItem(parentFolderUID); parent != nil && parent.IsFolder() {
+			parent.Children = append(parent.Children, folder)
+			p.expandedFolders[parentFolderUID] = true
+		} else {
+			col.Items = append(col.Items, folder)
+		}
+	} else {
+		col.Items = append(col.Items, folder)
+	}
+	p.selectedUID = folder.UID
+	p.expandedFolders[folder.UID] = true
+	p.mu.Unlock()
 	p.notifyChanged()
-	return item, err
+	return folder, nil
 }
 
 // DeleteItem dispatches item deletion.

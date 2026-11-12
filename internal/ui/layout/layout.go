@@ -25,6 +25,7 @@ import (
 	"github.com/lobehub/lobe-mygo/pkg/field"
 	lobe "github.com/lobehub/lobe-mygo/pkg/layout"
 	"github.com/lobehub/lobe-mygo/pkg/lucide"
+	"github.com/lobehub/lobe-mygo/pkg/overlay"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	uitheme "fearless/internal/ui/theme"
@@ -403,6 +404,9 @@ type TitleBarView struct {
 	AppName        string
 	CollectionName string
 	ShowMenu       bool
+	MenuOpen       *bool
+	MenuItems      []overlay.MenuItem
+	OnMenuItem     func(key string)
 	OnMenu         func()
 
 	// Environments are the names the selector offers, in order. The
@@ -430,9 +434,9 @@ type TitleBarView struct {
 	// OnMinimize, OnToggleMaximize and OnClose are the window's controls.
 	// They are drawn only when given: a strip that cannot close its window
 	// would be a trap.
-	OnMinimize      func()
+	OnMinimize       func()
 	OnToggleMaximize func()
-	OnClose         func()
+	OnClose          func()
 }
 
 // View renders the title-strip row; it fills whatever height RootView gives.
@@ -441,14 +445,31 @@ func (t *TitleBarView) View(c *ui.Context) {
 
 	ui.Row(c).Fill().AlignItems(ui.Center).Gap(8).Children(func() {
 		// App menu (Windows/Linux)
-		if t.ShowMenu && t.OnMenu != nil {
-			widgets.IconButton(c, widgets.IconButtonProps{
-				Icon:    lucide.Menu(),
-				Label:   "Menu",
-				Tooltip: "Open the menu",
-				Variant: action.Text,
-				Size:    lobetheme.Small,
-			}).OnClick(t.OnMenu)
+		if t.ShowMenu {
+			if t.MenuOpen != nil && len(t.MenuItems) > 0 {
+				key := overlay.DropdownMenu(c, t.MenuOpen, overlay.DropdownMenuProps{
+					Items: t.MenuItems,
+				}, func(trig ui.Element) {
+					widgets.StyleIconButton(c, trig, widgets.IconButtonProps{
+						Icon:    lucide.Menu(),
+						Label:   "Menu",
+						Tooltip: "Open the menu",
+						Variant: action.Text,
+						Size:    lobetheme.Small,
+					})
+				})
+				if key != "" && t.OnMenuItem != nil {
+					t.OnMenuItem(key)
+				}
+			} else if t.OnMenu != nil {
+				widgets.IconButton(c, widgets.IconButtonProps{
+					Icon:    lucide.Menu(),
+					Label:   "Menu",
+					Tooltip: "Open the menu",
+					Variant: action.Text,
+					Size:    lobetheme.Small,
+				}).OnClick(t.OnMenu)
+			}
 		}
 
 		// Collection name: the strip leads with what is open. The app name

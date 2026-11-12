@@ -27,6 +27,38 @@ type State struct {
 	NewName   string
 	NewValue  string
 	NewSecret bool
+
+	// Focus is the variable the editor was opened for — a `{{variable}}`
+	// double-clicked in the request URL bar. The table highlights it on the next
+	// frame, creating it when the environment has no variable of that name yet,
+	// and then clears it so the highlight belongs to that navigation only.
+	Focus string
+
+	// Back, when set, closes the editor. It is offered only when the editor was
+	// opened for a variable, so a user can return to the request they came from
+	// once the variable is edited or created.
+	Back func()
+}
+
+// focusNewVariable gives the focus request its variable: an existing variable of
+// that name is already in the table, and any other name is added — with no
+// value, so the user fills it in — for the highlight to land on.
+func focusNewVariable(st *State, p *presenters.EnvironmentPresenter) {
+	name := strings.TrimSpace(st.Focus)
+	st.Focus = ""
+	if name == "" {
+		return
+	}
+	env := p.EffectiveEnvironment()
+	if env == nil {
+		return
+	}
+	for _, v := range env.Variables {
+		if v.NameOrEmpty() == name {
+			return
+		}
+	}
+	p.SetVariable(name, "", false, true)
 }
 
 // Screen renders the environment editor.
@@ -41,7 +73,7 @@ func Screen(c *ui.Context, p *presenters.EnvironmentPresenter, st *State) ui.Ele
 	}
 
 	return ui.Column(c).Fill().Gap(12).Padding(16).Children(func() {
-		header(c, tk, p)
+		header(c, tk, p, st)
 		ui.Row(c).Fill().Grow(1).Gap(12).Children(func() {
 			list(c, tk, p)
 			ui.Box(c).Grow(1).Children(func() {
@@ -52,8 +84,12 @@ func Screen(c *ui.Context, p *presenters.EnvironmentPresenter, st *State) ui.Ele
 }
 
 // header is the title row and its save/revert controls.
-func header(c *ui.Context, tk *lobetheme.Tokens, p *presenters.EnvironmentPresenter) {
+func header(c *ui.Context, tk *lobetheme.Tokens, p *presenters.EnvironmentPresenter, st *State) {
 	ui.Row(c).FillWidth().AlignItems(ui.Center).Gap(8).Children(func() {
+		if st.Back != nil {
+			widgets.Button(c, "Back", widgets.ButtonProps{Variant: action.Text, Size: lobetheme.Small}).
+				OnClick(st.Back)
+		}
 		ui.Text(c, "Environments").FontSize(15).FontWeight(600).TextColor(tk.Text)
 		ui.Box(c).Grow(1)
 		if p.IsDirty() {
@@ -107,12 +143,14 @@ func list(c *ui.Context, tk *lobetheme.Tokens, p *presenters.EnvironmentPresente
 		_ = p.DeleteEnvironment(context.Background(), toDelete)
 	}
 	if createNew {
-		_, _ = p.CreateEnvironment(context.Background(), nextEnvironmentName(envs))
+		_, _ = p.CreateEnvironment(context.Background(), NextEnvironmentName(envs))
 	}
 }
 
 // table renders the variables of the environment being edited.
 func table(c *ui.Context, tk *lobetheme.Tokens, p *presenters.EnvironmentPresenter, st *State) {
+	focusNewVariable(st, p)
+
 	env := p.EffectiveEnvironment()
 	if env == nil {
 		empty(c, tk, "No environment selected", "Choose an environment to edit its variables, or create one.").
@@ -138,7 +176,8 @@ func table(c *ui.Context, tk *lobetheme.Tokens, p *presenters.EnvironmentPresent
 		})
 
 		for i := range env.Variables {
-			row(c, p, env.Variables[i], &toDelete)
+			v := env.Variables[i]
+			row(c, tk, p, v, v.NameOrEmpty() == st.Focus, &toDelete)
 		}
 		addRow(c, p, st)
 	})
@@ -148,12 +187,17 @@ func table(c *ui.Context, tk *lobetheme.Tokens, p *presenters.EnvironmentPresent
 	}
 }
 
-// row is one variable. Edits write into the draft, so Save commits them.
-func row(c *ui.Context, p *presenters.EnvironmentPresenter, v model.Variable, toDelete *string) {
+// row is one variable. Edits write into the draft, so Save commits them. The
+// row is marked when it is the variable the editor was opened for.
+func row(c *ui.Context, tk *lobetheme.Tokens, p *presenters.EnvironmentPresenter, v model.Variable, marked bool, toDelete *string) {
 	name := v.NameOrEmpty()
 	shown := p.FormattedVariableValue(v)
 
-	ui.Row(c).FillWidth().Gap(8).AlignItems(ui.Center).Padding(2, 4).Children(func() {
+	r := ui.Row(c).FillWidth().Gap(8).AlignItems(ui.Center).Padding(2, 4)
+	if marked {
+		r.Background(tk.PrimaryFillQuaternary)
+	}
+	r.Children(func() {
 		n := name
 		nameInput := widgets.FieldInput(c, &n, widgets.FieldInputProps{Placeholder: "name"})
 		nameInput.Width(180)
@@ -228,8 +272,8 @@ func empty(c *ui.Context, tk *lobetheme.Tokens, title, desc string) ui.Element {
 	})
 }
 
-// nextEnvironmentName finds a free "Untitled N" name.
-func nextEnvironmentName(envs []*model.Environment) string {
+// NextEnvironmentName finds a free "Untitled N" name.
+func NextEnvironmentName(envs []*model.Environment) string {
 	taken := map[string]bool{}
 	for _, e := range envs {
 		if e != nil {

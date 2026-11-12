@@ -73,6 +73,7 @@ Split so that no two UI packages share a file. The rule of thumb: **one screen p
 | `UI-SCREEN-RESP`  | `internal/ui/screens/response/**`                                                                                       |
 | `UI-SCREEN-NAV`   | `internal/ui/screens/navigation/**` (D-023: replaces old unmapped `screens/sidebar` and `screens/collection`)           |
 | `UI-SCREEN-SET`   | `internal/ui/screens/settings/**`                                                                                       |
+| `UI-SCREEN-ENV`   | `internal/ui/screens/environment/**`                                                                                    |
 | `UI-DIALOGS`      | `internal/ui/dialogs/**`                                                                                                |
 | `PLATFORM`        | `internal/platform/**` (`dialog/`, `secrets/`, `browser/`, `watcher/`, `windowstate/`)                                  |
 | `UI-MAP`          | `ui-map/**`, `refs/**`, `scripts/check-ownership.sh`                                                                    |

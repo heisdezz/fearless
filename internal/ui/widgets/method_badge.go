@@ -87,9 +87,11 @@ func RequestMethod(c *ui.Context, method string) ui.Element {
 
 	return ui.Box(c).
 		Width(34).
+		Shrink(0).
 		AlignItems(ui.End).
 		Children(func() {
 			ui.Text(c, display).
+				SingleLine().
 				FontSize(11).
 				Bold().
 				TextColor(methodColor)

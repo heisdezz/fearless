@@ -195,3 +195,62 @@ func TestActionsFooter(t *testing.T) {
 		t.Error("Cancel in the footer did not close the dialog")
 	}
 }
+
+// TestViewImportModal_DragAndDrop covers rendering of the import modal with
+// subtabs, the drag-and-drop dropzone, and file selection.
+func TestViewImportModal_DragAndDrop(t *testing.T) {
+	q := NewQueue()
+	_, err := q.ImportModal(func(ctx context.Context, imp *Imported) error {
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("ImportModal: %v", err)
+	}
+
+	tt := render(t, q)
+	tt.Frame()
+
+	for _, want := range []string{"Import Collection", "File", "Git Repository", "GitHub", "URL", "Raw / cURL", "choose file(s)"} {
+		if !tt.HasText(want) {
+			t.Errorf("missing %q; texts = %v", want, tt.Texts())
+		}
+	}
+
+	// Setting a document file path reflects in the dropzone
+	q.SetValue("document", "/path/to/my_test_collection.json")
+	tt.Frame()
+
+	if !tt.HasText("my_test_collection.json") {
+		t.Errorf("expected selected file name 'my_test_collection.json' to be displayed; texts = %v", tt.Texts())
+	}
+	if !tt.HasText("Ready to import. Click or drop another file to replace.") {
+		t.Errorf("expected ready message; texts = %v", tt.Texts())
+	}
+
+	// Clearing selected file
+	if err := tt.Click("Clear selected file"); err != nil {
+		t.Fatalf("click clear button: %v", err)
+	}
+	tt.Frame()
+	if q.Value("document") != "" {
+		t.Errorf("expected document to be cleared, got %q", q.Value("document"))
+	}
+
+	// Switching to URL tab
+	if err := tt.Click("URL"); err != nil {
+		t.Fatalf("click URL tab: %v", err)
+	}
+	tt.Frame()
+	if !tt.HasText("Collection or OpenAPI URL") {
+		t.Errorf("expected URL tab content to be displayed; texts = %v", tt.Texts())
+	}
+
+	// Switching to Raw / cURL tab
+	if err := tt.Click("Raw / cURL"); err != nil {
+		t.Fatalf("click Raw tab: %v", err)
+	}
+	tt.Frame()
+	if !tt.HasText("Raw Specification or cURL") {
+		t.Errorf("expected Raw tab content to be displayed; texts = %v", tt.Texts())
+	}
+}

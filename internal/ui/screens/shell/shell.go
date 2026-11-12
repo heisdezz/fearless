@@ -14,6 +14,7 @@ package shell
 import (
 	"github.com/egoist/mygo/ui"
 	lobe "github.com/lobehub/lobe-mygo/pkg/layout"
+	"github.com/lobehub/lobe-mygo/pkg/overlay"
 
 	"fearless/internal/ui/layout"
 )
@@ -26,6 +27,8 @@ type Snapshot struct {
 	CollectionName  string
 	WorkspaceName   string
 	ShowMenu        bool
+	MenuOpen        *bool
+	MenuItems       []overlay.MenuItem
 	RequestCount    int
 	SelectedCount   int
 	EnvironmentName string
@@ -58,6 +61,7 @@ type StatusEntry struct {
 // the resulting state change: the view reports intent and never applies it.
 type Actions struct {
 	OnMenu              func()
+	OnMenuItem          func(key string)
 	OnWorkspace         func()
 	OnSettings          func()
 	OnSelectEnvironment func(name string)
@@ -154,6 +158,9 @@ func renderTitleBar(c *ui.Context, snap Snapshot, a Actions) {
 		AppName:             snap.AppName,
 		CollectionName:      snap.CollectionName,
 		ShowMenu:            snap.ShowMenu,
+		MenuOpen:            snap.MenuOpen,
+		MenuItems:           snap.MenuItems,
+		OnMenuItem:          a.OnMenuItem,
 		OnMenu:              a.OnMenu,
 		Environments:        snap.Environments,
 		ActiveEnvironment:   snap.EnvironmentName,

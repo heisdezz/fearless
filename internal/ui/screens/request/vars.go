@@ -13,6 +13,8 @@ import (
 
 // renderVarsTab renders the pre-request and post-response variable grids.
 func renderVarsTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Request) ui.Element {
+	tk := uitheme.TokensOf(c)
+
 	if req.Vars == nil {
 		req.Vars = &model.VarBlocks{}
 	}
@@ -47,9 +49,9 @@ func renderVarsTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Req
 		})
 	}
 
-	return ui.Column(c).FillWidth().Gap(16).Children(func() {
+	return ui.Column(c).FillWidth().Gap(24).Children(func() {
 		// Pre-Request Variables Section
-		ui.Column(c).FillWidth().Gap(6).Children(func() {
+		ui.Column(c).FillWidth().Gap(8).Children(func() {
 			uitheme.PanelHeader(c, "Pre-Request Variables")
 
 			widgets.KeyValueGrid(c, &preRows, widgets.KeyValueGridProps{
@@ -75,8 +77,11 @@ func renderVarsTab(c *ui.Context, p *presenters.RequestPresenter, req *model.Req
 			})
 		})
 
+		// Distinct horizontal divider between Pre-Request and Post-Response
+		ui.Box(c).Height(1).FillWidth().Background(tk.BorderSecondary).Margin(8, 0)
+
 		// Post-Response Variables Section
-		ui.Column(c).FillWidth().Gap(6).Children(func() {
+		ui.Column(c).FillWidth().Gap(8).Children(func() {
 			uitheme.PanelHeader(c, "Post-Response Variables")
 
 			widgets.KeyValueGrid(c, &postRows, widgets.KeyValueGridProps{

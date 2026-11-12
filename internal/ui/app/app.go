@@ -82,6 +82,9 @@ type App struct {
 
 	// environmentState holds the environment editor's transient row state.
 	environmentState *environment.State
+
+	// sessionPath overrides the default session.json location for tests.
+	sessionPath string
 }
 
 // Option configures an App instance.
@@ -424,7 +427,7 @@ func (a *App) initScreens() {
 					ui.Box(c).Grow(1).FillWidth().Children(func() {
 						opts := request.Options{
 							Resolves:       a.resolvesVariable,
-							OnOpenVariable: func(string) { a.ShowEnvironment() },
+							OnOpenVariable: a.EditVariable,
 							Field:          a.urlField,
 						}
 						request.RequestScreenWith(c, a.RequestPresenter, opts, a.RequestScreenState)
@@ -767,6 +770,7 @@ func (a *App) loadCollectionDir(dir string) {
 			}
 		}
 	})
+	a.persistSession()
 }
 
 // NewFolder opens a prompt for a new folder.
@@ -860,8 +864,63 @@ func (a *App) resolvesVariable(name string) bool {
 // ShowEnvironment displays the environment editor for the active collection.
 func (a *App) ShowEnvironment() {
 	a.SafeUpdate(func() {
+		if a.environmentState != nil {
+			a.environmentState.Focus, a.environmentState.Back = "", nil
+		}
 		a.ActiveView = ViewKindEnvironment
 	})
+}
+
+// EditVariable opens the environment editor on one variable, for a
+// `{{variable}}` double-clicked in the request URL bar.
+//
+// A name the environment does not have yet is created for the user to fill in,
+// so one gesture covers both editing a variable and making a missing one. The
+// editor offers Back, so the user returns to the request they came from.
+func (a *App) EditVariable(name string) {
+	a.SafeUpdate(func() {
+		p := a.EnvironmentPresenter
+		if p == nil || p.Collection() == nil {
+			return
+		}
+		// The variable is defined somewhere else — a collection or folder
+		// variable, say — so there is nothing for the environment table to
+		// create or highlight.
+		if a.resolvesVariable(name) && !environmentDefines(p.EffectiveEnvironment(), name) {
+			return
+		}
+		env := p.EffectiveEnvironment()
+		if env == nil {
+			// No environment is being edited: edit the one in use, or make one.
+			env = p.ActiveEnvironment()
+			if env == nil {
+				created, err := p.CreateEnvironment(context.Background(), environment.NextEnvironmentName(p.Environments()))
+				if err != nil || created == nil {
+					return
+				}
+				env = created
+			}
+			p.SetEditingEnvironment(env.Name)
+		}
+		if a.environmentState != nil {
+			a.environmentState.Focus = name
+			a.environmentState.Back = a.ShowMain
+		}
+		a.ActiveView = ViewKindEnvironment
+	})
+}
+
+// environmentDefines reports whether env itself has a variable called name.
+func environmentDefines(env *model.Environment, name string) bool {
+	if env == nil {
+		return false
+	}
+	for _, v := range env.Variables {
+		if v.NameOrEmpty() == name {
+			return true
+		}
+	}
+	return false
 }
 
 // ShowPreferences displays the application preferences screen.
@@ -902,16 +961,19 @@ func (a *App) ShowImport() {
 		return
 	}
 	_, _ = a.DialogQueue.ImportModal(func(ctx context.Context, imp *dialogs.Imported) error {
-		a.SafeUpdate(func() {
-			if a.CollectionPresenter != nil && imp != nil && imp.Collection != nil {
-				cols := a.CollectionPresenter.Collections()
-				a.CollectionPresenter.SetCollections(append(cols, imp.Collection))
-				a.CollectionPresenter.Select(imp.Collection.UID)
-				if a.EnvironmentPresenter != nil && len(imp.Collection.Environments) > 0 {
-					a.EnvironmentPresenter.SetCollection(imp.Collection)
-				}
-			}
-		})
+		if imp == nil || imp.Collection == nil {
+			return nil
+		}
+		// An import only exists in memory until it is written into the storage
+		// folder: the app opens collections by path, so without this the
+		// collection is gone on the next launch.
+		dir, err := a.storeImportedCollection(imp.Collection)
+		if err != nil {
+			return err
+		}
+		if dir != "" {
+			a.loadCollectionDir(dir)
+		}
 		return nil
 	})
 }

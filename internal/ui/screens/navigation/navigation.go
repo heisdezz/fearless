@@ -1,10 +1,3 @@
-// Package navigation renders the navigation sidebar and collection explorer screen
-// as described in docs/ui/application-layout.md and docs/ui/components.md.
-//
-// The screen is a pure function of Snapshot (packages.md, UI-SCREEN-NAV):
-// everything it draws is plain data, and all interactions trigger Actions
-// callbacks owned and applied by the application. Rendering never mutates
-// presenters or domain models.
 package navigation
 
 import (
@@ -20,8 +13,7 @@ import (
 	"fearless/internal/ui/widgets"
 )
 
-// Snapshot is the plain-data view-model representing navigation and collection explorer state.
-// No fields are pointers to live mutable presenter state.
+// Snapshot is an immutable snapshot of presenters data for rendering navigation views.
 type Snapshot struct {
 	ActiveSection     presenters.SidebarSection
 	IsCollapsed       bool
@@ -35,22 +27,29 @@ type Snapshot struct {
 	ActiveEnvironment string
 }
 
-// Actions specifies the user command handlers for navigation and collection actions.
-// View functions invoke these callbacks to report user intent without performing state mutations.
+// Actions captures all intent-based callbacks dispatched from navigation view interactions.
 type Actions struct {
-	OnSelectSection      func(section presenters.SidebarSection)
+	OnSelectSection      func(presenters.SidebarSection)
 	OnToggleCollapse     func()
-	OnFilterChanged      func(query string)
+	OnFilterChanged      func(string)
 	OnSelectNode         func(uid string)
 	OnToggleNode         func(uid string)
 	OnOpenCollection     func()
 	OnCreateCollection   func()
+	OnImportCollection   func()
 	OnCreateRequest      func(parentUID string)
 	OnCreateFolder       func(parentUID string)
 	OnDeleteItem         func(uid string)
 	OnSelectEnvironment  func(envName string)
 	OnManageEnvironments func()
 	OnRunCollection      func(colUID string)
+	OnCollectionSettings func(colUID string)
+	OnCloneCollection    func(colUID string)
+	OnRenameItem         func(uid string)
+	OnRevealItem         func(uid string)
+	OnOpenTerminal       func(uid string)
+	OnCreateMockServer   func()
+	OnCollapseAll        func(colUID string)
 }
 
 // TakeSnapshot creates an immutable plain data Snapshot from the given sidebar presenter.
@@ -103,15 +102,20 @@ func TakeSnapshot(sidebar *presenters.SidebarPresenter) Snapshot {
 
 // Screen encapsulates the state and action callbacks for the navigation views.
 type Screen struct {
-	Snapshot Snapshot
-	Actions  Actions
+	Snapshot        Snapshot
+	Actions         Actions
+	HeaderMenuOpen  bool
+	SearchVisible   bool
+	OpenMenuUID     string
+	MockServersOpen bool
 }
 
 // NewScreen creates an initialized Screen from a sidebar presenter and command actions.
 func NewScreen(sidebar *presenters.SidebarPresenter, actions Actions) *Screen {
 	return &Screen{
-		Snapshot: TakeSnapshot(sidebar),
-		Actions:  actions,
+		Snapshot:        TakeSnapshot(sidebar),
+		Actions:         actions,
+		MockServersOpen: false,
 	}
 }
 
@@ -151,23 +155,21 @@ func (s *Screen) renderRail(c *ui.Context, snap Snapshot, actions Actions, nav l
 				}
 			})
 			ui.Box(c).Height(8)
-
 			s.renderRailSectionButton(c, "History", lucide.History(), snap.ActiveSection == presenters.SidebarSectionHistory, func() {
 				if actions.OnSelectSection != nil {
 					actions.OnSelectSection(presenters.SidebarSectionHistory)
 				}
 			})
 			ui.Box(c).Height(8)
-
 			s.renderRailSectionButton(c, "Runner", lucide.Play(), snap.ActiveSection == presenters.SidebarSectionRunner, func() {
 				if actions.OnSelectSection != nil {
 					actions.OnSelectSection(presenters.SidebarSectionRunner)
 				}
 			})
 
-			ui.Box(c).Grow(1) // Spacer pushing expand button to bottom
+			ui.Box(c).Grow(1)
 
-			// Expand toggle button
+			// Expand button at bottom of rail
 			widgets.IconButton(c, widgets.IconButtonProps{
 				Icon:    lucide.PanelLeftOpen(),
 				Label:   "Expand sidebar",
@@ -182,45 +184,38 @@ func (s *Screen) renderRail(c *ui.Context, snap Snapshot, actions Actions, nav l
 		})
 }
 
-// renderRailSectionButton draws one rail tile.
-//
-// The rail is icon-only: at 64 DIP wide a small-caps word does not fit, so
-// the tile carries a drawn icon and its tooltip, and the selected section is
-// marked by the accent ink on that icon — the one accent in the window, spent
-// on the selected state.
-func (s *Screen) renderRailSectionButton(c *ui.Context, label string, icon *ui.SVG, active bool, onClick func()) {
-	tk := lobetheme.TokensOf(c)
-	bg := tk.BgContainer
-	fg := tk.TextSecondary
+func (s *Screen) renderRailSectionButton(c *ui.Context, tooltip string, icon *ui.SVG, active bool, onClick func()) {
+	var variant action.ButtonVariant
 	if active {
-		bg = tk.BgContainerSecondary
-		fg = tk.Primary
+		variant = action.Primary
+	} else {
+		variant = action.Text
 	}
 
-	ui.Column(c).
-		Size(44, 44).
-		Center().
-		Radius(6).
-		Background(bg).
-		Tooltip(label).
-		Label(label).
-		OnClick(onClick).
-		Children(func() {
-			ui.Icon(c, icon).Size(18, 18).TextColor(fg)
-		})
+	widgets.IconButton(c, widgets.IconButtonProps{
+		Icon:    icon,
+		Label:   tooltip,
+		Tooltip: tooltip,
+		Variant: variant,
+		Size:    lobetheme.Small,
+	}).OnClick(onClick)
 }
 
 func (s *Screen) renderExpanded(c *ui.Context, snap Snapshot, actions Actions) ui.Element {
 	tk := lobetheme.TokensOf(c)
+	width := snap.SidebarWidth
+	if width <= 0 {
+		width = presenters.DefaultSidebarWidth
+	}
 
 	return ui.Column(c).
 		FillHeight().
-		FillWidth().
+		Width(width).
 		Background(tk.BgContainer).
+		BorderWidth(0, 1, 0, 0).
+		BorderColor(tk.BorderSecondary).
 		Children(func() {
-			// 1. Top Section Switcher: the world's strip, shared with the
-			// request column and the response pane so the three speak with
-			// one voice. The collapse control rides at its right edge.
+			// 1. Shared Section Tab Strip
 			theme.TabStrip(c, theme.TabStripProps{
 				Items: []theme.TabItem{
 					{Label: "Collections"},
@@ -228,9 +223,9 @@ func (s *Screen) renderExpanded(c *ui.Context, snap Snapshot, actions Actions) u
 					{Label: "Runner"},
 				},
 				Active: sectionIndex(snap.ActiveSection),
-				OnSelect: func(index int) {
-					if actions.OnSelectSection != nil {
-						actions.OnSelectSection(sections[index])
+				OnSelect: func(i int) {
+					if actions.OnSelectSection != nil && i >= 0 && i < len(sections) {
+						actions.OnSelectSection(sections[i])
 					}
 				},
 				Trailing: func() {
@@ -257,6 +252,68 @@ func (s *Screen) renderExpanded(c *ui.Context, snap Snapshot, actions Actions) u
 			default:
 				s.renderCollectionsSection(c, snap, actions)
 			}
+
+			// 3. Mock Servers dock at bottom (replicated from collection_with_menu_opened.png)
+			// Collapsed by default — click to toggle accordion open/closed.
+			ui.Column(c).
+				FillWidth().
+				Background(tk.BgContainer).
+				BorderWidth(1, 0, 0, 0).
+				BorderColor(tk.BorderSecondary).
+				Children(func() {
+					ui.Row(c).
+						FillWidth().
+						Height(32).
+						Padding(0, 10).
+						AlignItems(ui.Center).
+						Children(func() {
+							// Left clickable toggle area (Icon + Title + Chevron)
+							ui.ButtonBase(c).
+								Row().
+								Grow(1).
+								AlignItems(ui.Center).
+								Cursor(ui.CursorPointer).
+								OnClick(func() {
+									s.MockServersOpen = !s.MockServersOpen
+								}).
+								Children(func() {
+									ui.Icon(c, lucide.Server()).Size(14, 14).TextColor(tk.TextSecondary).Shrink(0)
+									ui.Box(c).Width(6).Shrink(0)
+									ui.Text(c, "Mock Servers").FontSize(11).Bold().TextColor(tk.TextSecondary).SingleLine().Shrink(1)
+									ui.Box(c).Width(4)
+									if s.MockServersOpen {
+										ui.Icon(c, lucide.ChevronDown()).Size(12, 12).TextColor(tk.TextSecondary).Shrink(0)
+									} else {
+										ui.Icon(c, lucide.ChevronRight()).Size(12, 12).TextColor(tk.TextSecondary).Shrink(0)
+									}
+								})
+
+							// Action button: + (Create mock server)
+							widgets.IconButton(c, widgets.IconButtonProps{
+								Icon:    lucide.Plus(),
+								Tooltip: "Create mock server",
+								Size:    lobetheme.Small,
+								Variant: action.Text,
+							}).OnClick(func() {
+								if actions.OnCreateMockServer != nil {
+									actions.OnCreateMockServer()
+								}
+							})
+						})
+
+					// Section body (only when expanded)
+					if s.MockServersOpen {
+						ui.Column(c).
+							FillWidth().
+							Padding(8, 12, 12, 12).
+							Gap(6).
+							Children(func() {
+								ui.Text(c, "No mock servers configured").
+									FontSize(11).
+									TextColor(tk.TextTertiary)
+							})
+					}
+				})
 		})
 }
 
@@ -277,34 +334,228 @@ func sectionIndex(section presenters.SidebarSection) int {
 	return 0
 }
 
+func (s *Screen) renderMenuItem(c *ui.Context, icon *ui.SVG, label, badge string, onClick func()) {
+	tk := lobetheme.TokensOf(c)
+	ui.Row(c).
+		FillWidth().
+		Height(26).
+		Padding(0, 10).
+		AlignItems(ui.Center).
+		Cursor(ui.CursorPointer).
+		Radius(4).
+		OnClick(onClick).
+		Children(func() {
+			if icon != nil {
+				ui.Icon(c, icon).Size(13, 13).TextColor(tk.TextSecondary).Shrink(0)
+				ui.Box(c).Width(8).Shrink(0)
+			}
+			ui.Text(c, label).FontSize(12).TextColor(tk.Text).SingleLine().Shrink(1)
+			if badge != "" {
+				ui.Box(c).Grow(1)
+				ui.Box(c).
+					Padding(1, 4).
+					Radius(3).
+					Background(tk.BgContainerSecondary).
+					Children(func() {
+						ui.Text(c, badge).FontSize(9).TextColor(tk.TextTertiary)
+					})
+			}
+		})
+}
+
+func (s *Screen) renderCollectionContextMenu(c *ui.Context, nodeUID string, actions Actions) {
+	tk := lobetheme.TokensOf(c)
+	ui.Box(c).Padding(2, 6).Children(func() {
+		ui.Column(c).
+			FillWidth().
+			Background(tk.BgElevated).
+			Radius(6).
+			BorderWidth(1).
+			BorderColor(tk.BorderSecondary).
+			Padding(4, 0).
+			Children(func() {
+				s.renderMenuItem(c, lucide.FilePlus(), "New Request", "", func() {
+					s.OpenMenuUID = ""
+					if actions.OnCreateRequest != nil {
+						actions.OnCreateRequest(nodeUID)
+					}
+				})
+				s.renderMenuItem(c, lucide.FolderPlus(), "New Folder", "", func() {
+					s.OpenMenuUID = ""
+					if actions.OnCreateFolder != nil {
+						actions.OnCreateFolder(nodeUID)
+					}
+				})
+				s.renderMenuItem(c, lucide.Play(), "Run", "", func() {
+					s.OpenMenuUID = ""
+					if actions.OnRunCollection != nil {
+						actions.OnRunCollection(nodeUID)
+					}
+				})
+				s.renderMenuItem(c, lucide.Copy(), "Clone", "", func() {
+					s.OpenMenuUID = ""
+					if actions.OnCloneCollection != nil {
+						actions.OnCloneCollection(nodeUID)
+					}
+				})
+				s.renderMenuItem(c, lucide.Pencil(), "Rename", "", func() {
+					s.OpenMenuUID = ""
+					if actions.OnRenameItem != nil {
+						actions.OnRenameItem(nodeUID)
+					}
+				})
+				s.renderMenuItem(c, lucide.Share2(), "Share", "", func() {
+					s.OpenMenuUID = ""
+				})
+				s.renderMenuItem(c, lucide.BookOpen(), "Generate Docs", "", func() {
+					s.OpenMenuUID = ""
+				})
+				s.renderMenuItem(c, lucide.FoldVertical(), "Collapse", "", func() {
+					s.OpenMenuUID = ""
+					if actions.OnCollapseAll != nil {
+						actions.OnCollapseAll(nodeUID)
+					}
+				})
+				s.renderMenuItem(c, lucide.Folder(), "Reveal in File Manager", "", func() {
+					s.OpenMenuUID = ""
+					if actions.OnRevealItem != nil {
+						actions.OnRevealItem(nodeUID)
+					}
+				})
+				s.renderMenuItem(c, lucide.Server(), "Create Mock server", "Beta", func() {
+					s.OpenMenuUID = ""
+					if actions.OnCreateMockServer != nil {
+						actions.OnCreateMockServer()
+					}
+				})
+
+				// Divider line
+				ui.Box(c).FillWidth().Height(1).Background(tk.BorderSecondary).Margin(2, 0)
+
+				s.renderMenuItem(c, lucide.Settings(), "Settings", "", func() {
+					s.OpenMenuUID = ""
+					if actions.OnCollectionSettings != nil {
+						actions.OnCollectionSettings(nodeUID)
+					}
+				})
+				s.renderMenuItem(c, lucide.Terminal(), "Open in Terminal", "", func() {
+					s.OpenMenuUID = ""
+					if actions.OnOpenTerminal != nil {
+						actions.OnOpenTerminal(nodeUID)
+					}
+				})
+				s.renderMenuItem(c, lucide.X(), "Remove", "", func() {
+					s.OpenMenuUID = ""
+					if actions.OnDeleteItem != nil {
+						actions.OnDeleteItem(nodeUID)
+					}
+				})
+			})
+	})
+}
+
 func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions Actions) {
 	tk := lobetheme.TokensOf(c)
 
-	// Filter & Action Toolbar
-	ui.Column(c).FillWidth().Padding(8, 8, 4, 8).Gap(6).Children(func() {
-		// Filter field: the app's own field surface, not Lobe's SearchBar,
-		// which paints MyGo's near-white input surface in the dark
-		// appearance (the white-input defect). The filter still applies as
-		// the query changes: the field writes into the local copy, and the
-		// copy that differs from the snapshot is the filter to apply.
-		q := snap.FilterQuery
-		widgets.FieldInput(c, &q, widgets.FieldInputProps{
-			Placeholder: "Filter requests…",
-			Size:        lobetheme.Small,
+	// Header: "Collections" title + actions (Search, +, Three dots)
+	ui.Row(c).
+		FillWidth().
+		Height(34).
+		Padding(0, 10).
+		AlignItems(ui.Center).
+		Children(func() {
+			ui.Icon(c, lucide.Box()).Size(16, 16).TextColor(tk.Text).Shrink(0)
+			ui.Box(c).Width(8).Shrink(0)
+			ui.Text(c, "Collections").
+				FontSize(theme.TitleSize).
+				FontWeight(600).
+				TextColor(tk.Text).
+				SingleLine().
+				Shrink(1)
+
+			ui.Box(c).Grow(1) // Spacer pushing actions to the right
+
+			// Search / filter toggle
+			widgets.IconButton(c, widgets.IconButtonProps{
+				Icon:    lucide.Search(),
+				Tooltip: "Search requests",
+				Size:    lobetheme.Small,
+				Variant: action.Text,
+			}).OnClick(func() {
+				s.SearchVisible = !s.SearchVisible
+			})
+
+			// Add collection (+)
+			widgets.IconButton(c, widgets.IconButtonProps{
+				Icon:    lucide.Plus(),
+				Tooltip: "Create collection",
+				Size:    lobetheme.Small,
+				Variant: action.Text,
+			}).OnClick(func() {
+				if actions.OnCreateCollection != nil {
+					actions.OnCreateCollection()
+				}
+			})
+
+			// Three dots menu
+			widgets.IconButton(c, widgets.IconButtonProps{
+				Icon:    lucide.MoreVertical(),
+				Tooltip: "Collection menu",
+				Size:    lobetheme.Small,
+				Variant: action.Text,
+			}).OnClick(func() {
+				s.HeaderMenuOpen = !s.HeaderMenuOpen
+			})
 		})
-		if q != snap.FilterQuery && actions.OnFilterChanged != nil {
-			actions.OnFilterChanged(q)
+
+	// Header Dropdown Menu (replicated from refs/new_refs/sidebar.png)
+	if s.HeaderMenuOpen {
+		ui.Box(c).Padding(2, 6).Children(func() {
+			ui.Column(c).
+				FillWidth().
+				Background(tk.BgElevated).
+				Radius(6).
+				BorderWidth(1).
+				BorderColor(tk.BorderSecondary).
+				Padding(4, 0).
+				Children(func() {
+					s.renderMenuItem(c, lucide.Plus(), "Create collection", "", func() {
+						s.HeaderMenuOpen = false
+						if actions.OnCreateCollection != nil {
+							actions.OnCreateCollection()
+						}
+					})
+					s.renderMenuItem(c, lucide.Folder(), "Open collection", "", func() {
+						s.HeaderMenuOpen = false
+						if actions.OnOpenCollection != nil {
+							actions.OnOpenCollection()
+						}
+					})
+					s.renderMenuItem(c, lucide.Download(), "Import collection", "", func() {
+						s.HeaderMenuOpen = false
+						if actions.OnImportCollection != nil {
+							actions.OnImportCollection()
+						}
+					})
+				})
+		})
+	}
+
+	// Filter & Action Toolbar
+	ui.Column(c).FillWidth().Padding(2, 8, 4, 8).Gap(4).Children(func() {
+		// Filter field: rendered when search is toggled or there is a query
+		if s.SearchVisible || snap.FilterQuery != "" {
+			q := snap.FilterQuery
+			widgets.FieldInput(c, &q, widgets.FieldInputProps{
+				Placeholder: "Filter requests…",
+				Size:        lobetheme.Small,
+			})
+			if q != snap.FilterQuery && actions.OnFilterChanged != nil {
+				actions.OnFilterChanged(q)
+			}
 		}
 
 		// Action buttons row: + Request, + Folder, Open.
-		//
-		// They are quiet on purpose. The one accent in the window belongs to
-		// the primary action — Send — and the selected state; a toolbar of
-		// three identical filled buttons spends the hierarchy on nothing.
-		// The toolbar's actions are drawn, not spelled: three words do not
-		// fit across a 248 DIP sidebar, and a clipped label ("Oper") is
-		// worse than a word too many. Each control keeps its name in its
-		// tooltip, so the action is still named for anyone who asks.
 		ui.Row(c).FillWidth().Gap(4).AlignItems(ui.Center).Children(func() {
 			widgets.IconButton(c, widgets.IconButtonProps{
 				Icon:    lucide.FilePlus(),
@@ -331,15 +582,11 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 			})
 
 			widgets.IconButton(c, widgets.IconButtonProps{
-				Icon:    lucide.Library(),
-				Label:   "+ Col",
-				Tooltip: "New collection",
+				Icon:    lucide.SlidersHorizontal(),
+				Label:   "Sort",
+				Tooltip: "Sort items",
 				Size:    lobetheme.Small,
 				Variant: action.Text,
-			}).OnClick(func() {
-				if actions.OnCreateCollection != nil {
-					actions.OnCreateCollection()
-				}
 			})
 
 			ui.Box(c).Grow(1)
@@ -355,10 +602,10 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 		})
 	})
 
-	// Tree list area
+	// Empty state when there are no nodes in collection
 	if len(snap.VisibleNodes) == 0 {
 		ui.Column(c).
-			Fill().
+			FillWidth().
 			Grow(1).
 			Center().
 			Padding(16).
@@ -368,7 +615,7 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 				ui.Text(c, "Open an existing collection or create a new one").
 					FontSize(11).
 					TextColor(tk.TextSecondary)
-				ui.Row(c).Gap(6).Children(func() {
+				ui.Column(c).AlignItems(ui.Center).Gap(8).Children(func() {
 					widgets.Button(c, "Create Collection", widgets.ButtonProps{
 						Size:    lobetheme.Small,
 						Variant: action.Primary,
@@ -390,29 +637,41 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 		return
 	}
 
-	// Render the list of visible nodes
+	// Collection Tree List
 	ui.Scroll(c).
 		FillWidth().
 		Grow(1).
-		Padding(4, 6).
 		Children(func() {
-			for _, node := range snap.VisibleNodes {
-				if node == nil {
+			for _, n := range snap.VisibleNodes {
+				if n == nil {
 					continue
 				}
-				n := node
+
 				widgets.CollectionTreeRow(c, n, widgets.TreeRowProps{
-					OnToggle: func(uid string) {
-						if actions.OnToggleNode != nil {
-							actions.OnToggleNode(uid)
-						}
-					},
 					OnSelect: func(uid string) {
 						if actions.OnSelectNode != nil {
 							actions.OnSelectNode(uid)
 						}
 					},
+					OnToggle: func(uid string) {
+						if actions.OnToggleNode != nil {
+							actions.OnToggleNode(uid)
+						}
+					},
+					OnMenu: func(uid string) {
+						if s.OpenMenuUID == uid {
+							s.OpenMenuUID = ""
+						} else {
+							s.OpenMenuUID = uid
+							s.HeaderMenuOpen = false
+						}
+					},
 				})
+
+				// If menu opened for this node, render context menu (replicated from refs/new_refs/collection_with_menu_opened.png)
+				if s.OpenMenuUID == n.UID {
+					s.renderCollectionContextMenu(c, n.UID, actions)
+				}
 			}
 		})
 }
@@ -420,7 +679,7 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 func (s *Screen) renderHistorySection(c *ui.Context, snap Snapshot, actions Actions) {
 	tk := lobetheme.TokensOf(c)
 	ui.Column(c).
-		Fill().
+		FillWidth().
 		Grow(1).
 		Center().
 		Padding(16).
@@ -436,8 +695,9 @@ func (s *Screen) renderHistorySection(c *ui.Context, snap Snapshot, actions Acti
 func (s *Screen) renderRunnerSection(c *ui.Context, snap Snapshot, actions Actions) {
 	tk := lobetheme.TokensOf(c)
 	ui.Column(c).
-		Fill().
+		FillWidth().
 		Grow(1).
+		Center().
 		Padding(16).
 		Gap(12).
 		Children(func() {
@@ -445,15 +705,12 @@ func (s *Screen) renderRunnerSection(c *ui.Context, snap Snapshot, actions Actio
 
 			colName := snap.CollectionName
 			if colName == "" {
-				colName = "No Collection Selected"
+				colName = "No active collection"
 			}
-			ui.Text(c, "Target: "+colName).
+			ui.Text(c, colName).
 				FontSize(12).
 				TextColor(tk.TextSecondary)
 
-			// The run button appears only when a runner is wired: a button
-			// with no backend behind it is a dead end, and the section
-			// says what is missing instead.
 			if actions.OnRunCollection != nil {
 				widgets.Button(c, "Run Collection", widgets.ButtonProps{
 					Size:    lobetheme.Small,
@@ -472,12 +729,6 @@ func (s *Screen) renderRunnerSection(c *ui.Context, snap Snapshot, actions Actio
 }
 
 // CollectionHeader renders the environment selector and collection actions strip.
-//
-// The main window does not mount it: the title strip carries the collection
-// name, the environment selector and the run control now (the direction
-// contract's first viewport), so a second environment selector under the title
-// strip would answer the same question twice. It stays available for a window
-// that embeds the sidebar on its own.
 func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 	tk := lobetheme.TokensOf(c)
 	snap := s.Snapshot
@@ -485,7 +736,7 @@ func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 
 	colName := snap.CollectionName
 	if colName == "" {
-		colName = "Fearless Collection"
+		colName = "fearless"
 	}
 
 	return ui.Row(c).
@@ -511,14 +762,16 @@ func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 
 				// Environment select dropdown
 				var envOptions []field.SelectOption
-				envOptions = append(envOptions, field.SelectOption{
-					Value: "",
-					Label: "No Environment",
-				})
 				for _, env := range snap.Environments {
 					envOptions = append(envOptions, field.SelectOption{
-						Value: env,
 						Label: env,
+						Value: env,
+					})
+				}
+				if len(envOptions) == 0 {
+					envOptions = append(envOptions, field.SelectOption{
+						Label: "No Environment",
+						Value: "",
 					})
 				}
 
@@ -560,9 +813,6 @@ func (s *Screen) CollectionHeader(c *ui.Context) ui.Element {
 }
 
 // View renders the navigation screen: the sidebar with its section switcher.
-//
-// The collection-header strip is not part of it — the title strip owns the
-// collection name, the environment and the run control in the main window.
 func (s *Screen) View(c *ui.Context) {
 	ui.Row(c).FillHeight().Grow(1).Children(func() {
 		s.Sidebar(c, lobe.SideNavState{})

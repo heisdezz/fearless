@@ -3,6 +3,7 @@ package dialogs
 import (
 	"context"
 	"errors"
+	"fearless/internal/core/model"
 	"strings"
 	"testing"
 	"time"
@@ -363,5 +364,45 @@ func TestAskPromptContextCancellationClosesTheDialog(t *testing.T) {
 	}
 	if q.Active() {
 		t.Error("the dialog stayed open after its caller was cancelled")
+	}
+}
+
+func TestCreateCollectionModal(t *testing.T) {
+	q := NewQueue()
+	var gotName, gotLoc string
+	var gotFmt model.CollectionFormat
+	wait, err := q.CreateCollectionModal(func(ctx context.Context, name, loc string, format model.CollectionFormat) error {
+		gotName = name
+		gotLoc = loc
+		gotFmt = format
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("CreateCollectionModal error: %v", err)
+	}
+	if q.Kind() != KindCreateCollection {
+		t.Fatalf("kind = %v, want KindCreateCollection", q.Kind())
+	}
+	q.SetValue("name", "Test Col")
+	q.SetValue("location", "/tmp/test")
+	q.SetValue("format", "yml")
+	q.OK()
+
+	if _, err := wait.Result(); err != nil {
+		t.Fatalf("wait.Result error: %v", err)
+	}
+
+	if gotName != "Test Col" || gotLoc != "/tmp/test" || gotFmt != model.FormatYML {
+		t.Errorf("got (%s, %s, %s), want (Test Col, /tmp/test, %s)", gotName, gotLoc, gotFmt, model.FormatYML)
+	}
+}
+
+func TestParseImportURLFallback(t *testing.T) {
+	imp, err := ParseImport(ImportAuto, "https://api.example.com/health")
+	if err != nil {
+		t.Fatalf("ParseImport error: %v", err)
+	}
+	if imp.Request == nil || imp.Request.URL != "https://api.example.com/health" || imp.Request.Method != "GET" {
+		t.Errorf("unexpected imported request: %+v", imp.Request)
 	}
 }

@@ -88,6 +88,7 @@ func (a *App) CreateWindow(opts ...mygo.WindowOptions) *mygo.Window {
 func Open(opts ...Option) {
 	a := New(opts...)
 	a.loadPreferences()
+	a.restoreSession()
 	a.promptStorageLocationIfNeeded()
 	a.CreateWindow()
 }

@@ -50,8 +50,11 @@ func PreferencesScreen(c *ui.Context, p *presenters.PreferencesPresenter) ui.Ele
 				TextColor(tk.Text)
 		})
 
-		// Main body: Categories navigation on left, settings controls on right
-		ui.Row(c).Fill().Gap(20).Children(func() {
+		// Main body: Categories navigation on left, settings controls on right.
+		// Row() defaults its cross-axis alignment to Center, which floats the
+		// whole body block mid-window; Stretch pins both columns to the top
+		// and gives the content pane a definite height for its Grow spacer.
+		ui.Row(c).FillWidth().Grow(1).Gap(20).AlignItems(ui.Stretch).Children(func() {
 			// Left Category Nav — a plain left-aligned list, like Bruno's
 			// settings rail. nav.Tabs centers every label inside its pill,
 			// which misaligns the rail, and wrapping a sized container here
@@ -86,6 +89,7 @@ func PreferencesScreen(c *ui.Context, p *presenters.PreferencesPresenter) ui.Ele
 						ui.Text(c, t.label).SingleLine().FontSize(12).TextColor(color)
 					})
 				}
+				ui.Box(c).Grow(1)
 			})
 
 			// Right Content Pane. The trailing Grow spacer anchors the

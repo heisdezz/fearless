@@ -162,13 +162,9 @@ type IconButtonProps struct {
 	Tooltip string
 }
 
-// IconButton is a button that carries a drawn icon instead of a word.
-//
-// The app draws its icons from one library at one stroke weight. A Unicode
-// glyph standing in for an icon — a ☰ for a menu, a ⚙ for settings — is the
-// cheapest way to make a tool look assembled rather than designed, and it
-// renders at a different weight on every platform.
-func IconButton(c *ui.Context, p IconButtonProps) ui.Element {
+// StyleIconButton gives b, a button element (e.g. an overlay menu's trigger),
+// the exact look and behavior of an IconButton.
+func StyleIconButton(c *ui.Context, b ui.Element, p IconButtonProps) ui.Element {
 	tk := lobetheme.TokensOf(c)
 	height, paddingX, radius, iconSize := float32(32), float32(8), tk.BorderRadiusSM, float32(16)
 	switch p.Size {
@@ -179,8 +175,7 @@ func IconButton(c *ui.Context, p IconButtonProps) ui.Element {
 	}
 
 	bg, border, fg := buttonColors(tk, p.Variant)
-	b := ui.ButtonBase(c).
-		Height(height).
+	b.Height(height).
 		PaddingX(paddingX).
 		Radius(radius).
 		Cursor(ui.CursorPointer).
@@ -207,6 +202,16 @@ func IconButton(c *ui.Context, p IconButtonProps) ui.Element {
 		})
 	}
 	return b
+}
+
+// IconButton is a button that carries a drawn icon instead of a word.
+//
+// The app draws its icons from one library at one stroke weight. A Unicode
+// glyph standing in for an icon — a ☰ for a menu, a ⚙ for settings — is the
+// cheapest way to make a tool look assembled rather than designed, and it
+// renders at a different weight on every platform.
+func IconButton(c *ui.Context, p IconButtonProps) ui.Element {
+	return StyleIconButton(c, ui.ButtonBase(c), p)
 }
 
 // buttonColors is the world's button table: the primary action carries the one
