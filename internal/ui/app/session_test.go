@@ -122,3 +122,86 @@ func TestActiveCollectionPathEmptyWithoutSelection(t *testing.T) {
 		t.Fatalf("activeCollectionPath = %q, want empty", got)
 	}
 }
+
+// TestImportedCollectionSurvivesRestart is the reported bug end to end: import
+// a collection, quit, reopen, and the collection is still there. It drives the
+// real storage folder and the real collection loader rather than stubs, so it
+// fails if any of the three pieces (copy, session file, restore) regress.
+func TestImportedCollectionSurvivesRestart(t *testing.T) {
+	storage := t.TempDir()
+	cfg := t.TempDir()
+	sessPath := filepath.Join(cfg, "session.json")
+
+	// A parsed import, as cURL or Postman produces: a model with no folder.
+	src := &model.Collection{
+		UID:  "imported-uid",
+		Name: "Petstore",
+		Config: model.CollectionConfig{
+			Name:   "Petstore",
+			Format: model.FormatBru,
+		},
+		Items: []*model.Item{{
+			UID:     "req-1",
+			Name:    "Login",
+			Request: &model.Request{Method: "POST", URL: "{{baseUrl}}/api/login"},
+		}},
+	}
+
+	settings := model.DefaultSettings()
+	settings.General.StoragePath = storage
+
+	first := New()
+	first.sessionPath = sessPath
+	first.PreferencesPresenter = presenters.NewPreferencesPresenter(settings, nil, nil, nil)
+
+	dir, err := first.storeImportedCollection(src)
+	if err != nil {
+		t.Fatalf("storeImportedCollection: %v", err)
+	}
+	if want := filepath.Join(storage, "Petstore"); dir != want {
+		t.Fatalf("imported into %q, want %q", dir, want)
+	}
+	first.loadCollectionDir(dir)
+	if n := len(first.CollectionPresenter.Collections()); n != 1 {
+		t.Fatalf("after import %d collections are open, want 1", n)
+	}
+
+	// Restart: a fresh app reads the same preferences and session file.
+	second := New()
+	second.sessionPath = sessPath
+	second.PreferencesPresenter = presenters.NewPreferencesPresenter(settings, nil, nil, nil)
+	second.restoreSession()
+
+	cols := second.CollectionPresenter.Collections()
+	if len(cols) != 1 {
+		t.Fatalf("after restart %d collections are open, want 1", len(cols))
+	}
+	if cols[0].Name != "Petstore" {
+		t.Errorf("reopened %q, want Petstore", cols[0].Name)
+	}
+	if got := cols[0].Path; got != dir {
+		t.Errorf("reopened from %q, want the storage copy %q", got, dir)
+	}
+	if cols[0].FindItem("req-1") == nil && len(cols[0].Items) == 0 {
+		t.Error("the reopened collection has no requests")
+	}
+}
+
+// TestRestoreSessionSkipsMissingCollection: a collection on a drive that is no
+// longer plugged in must not stop the others from opening.
+func TestRestoreSessionSkipsMissingCollection(t *testing.T) {
+	sessPath := filepath.Join(t.TempDir(), "session.json")
+	if err := saveSession(sessPath, sessionState{Collections: []string{"/nope/gone"}}); err != nil {
+		t.Fatal(err)
+	}
+	a := New()
+	a.sessionPath = sessPath
+	a.restoreSession()
+	if n := len(a.CollectionPresenter.Collections()); n != 0 {
+		t.Fatalf("%d collections opened from a missing path, want 0", n)
+	}
+	// The stale path drops out of the session file.
+	if got := loadSession(sessPath); len(got.Collections) != 0 {
+		t.Errorf("stale path kept: %v", got.Collections)
+	}
+}
