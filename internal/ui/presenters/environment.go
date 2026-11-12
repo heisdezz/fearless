@@ -3,6 +3,7 @@ package presenters
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -459,6 +460,24 @@ func (p *EnvironmentPresenter) FormattedVariableValue(v model.Variable) string {
 		return MaskSecret(valStr)
 	}
 	return valStr
+}
+
+// NextEnvironmentName finds a free "Untitled N" name for a new environment.
+// It lives here rather than in the screen because creating an environment is a
+// presenter concern: the screen asks for a name, the saver writes the file.
+func NextEnvironmentName(envs []*model.Environment) string {
+	taken := map[string]bool{}
+	for _, e := range envs {
+		if e != nil {
+			taken[e.Name] = true
+		}
+	}
+	for i := 1; ; i++ {
+		n := "Untitled " + strconv.Itoa(i)
+		if !taken[n] {
+			return n
+		}
+	}
 }
 
 // MaskSecret masks a secret value with literal '*' per character, preserving newlines (Decision R-5).

@@ -16,6 +16,50 @@ func (a *App) storagePath() string {
 	return strings.TrimSpace(a.PreferencesPresenter.Settings().General.StoragePath)
 }
 
+// collectionForUID finds the open collection that contains uid. uid may be the
+// collection itself, a folder or a request: selecting any of them selects its
+// collection, which is what the environment screen and the environment
+// selector read.
+func (a *App) collectionForUID(uid string) *model.Collection {
+	if a.CollectionPresenter == nil || uid == "" {
+		return nil
+	}
+	cols := a.CollectionPresenter.Collections()
+	for _, c := range cols {
+		if c == nil {
+			continue
+		}
+		if c.UID == uid || c.FindItem(uid) != nil {
+			return c
+		}
+	}
+	// No match means the uid belongs to something else (a tab, a stale
+	// selection). Fall back to the collection that is open, because an
+	// environment screen with no collection cannot do anything at all.
+	if len(cols) > 0 {
+		return cols[0]
+	}
+	return nil
+}
+
+// bindEnvironment points the environment presenter at the collection that owns
+// uid. Environments, the active environment and the selector all read from the
+// bound collection, so without this the editor shows "No collection selected"
+// even though a collection is open.
+func (a *App) bindEnvironment(uid string) {
+	if a.EnvironmentPresenter == nil {
+		return
+	}
+	col := a.collectionForUID(uid)
+	if col == nil {
+		return
+	}
+	if a.EnvironmentPresenter.Collection() == col {
+		return
+	}
+	a.EnvironmentPresenter.SetCollection(col)
+}
+
 // storeImportedCollection writes an imported collection into the storage
 // folder and returns the directory it now lives in.
 //

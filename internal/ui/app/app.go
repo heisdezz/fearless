@@ -150,7 +150,17 @@ func (a *App) initPresenters() {
 		a.CollectionPresenter = presenters.NewCollectionPresenter(nil, nil, nil, nil)
 	}
 	if a.EnvironmentPresenter == nil {
-		a.EnvironmentPresenter = presenters.NewEnvironmentPresenter(nil, nil, nil, nil)
+		// The presenter edits a draft and hands it to a saver; the store is the
+		// file side. Without these ports, creating, saving and deleting an
+		// environment are all silent no-ops — the editor looks empty and
+		// "+ New environment" does nothing.
+		store := &environmentStore{collection: func() *model.Collection {
+			if a.EnvironmentPresenter == nil {
+				return nil
+			}
+			return a.EnvironmentPresenter.Collection()
+		}}
+		a.EnvironmentPresenter = presenters.NewEnvironmentPresenter(store, store, store, store)
 	}
 	if a.SidebarPresenter == nil {
 		a.SidebarPresenter = presenters.NewSidebarPresenter(a.CollectionPresenter, a.EnvironmentPresenter)
@@ -195,6 +205,9 @@ func (a *App) initScreens() {
 		OnSelectNode: func(uid string) {
 			if a.SidebarPresenter != nil && a.SidebarPresenter.Collections() != nil {
 				a.SidebarPresenter.Collections().Select(uid)
+				// The environment editor and selector show the collection the
+				// user is working in, so selection drives that binding.
+				a.bindEnvironment(uid)
 				item, _ := a.SidebarPresenter.Collections().FindItem(uid)
 				if item != nil {
 					if item.IsFolder() {
@@ -762,11 +775,13 @@ func (a *App) loadCollectionDir(dir string) {
 				for _, existing := range cols {
 					if existing.Path == col.Path || existing.UID == col.UID {
 						a.CollectionPresenter.Select(existing.UID)
+						a.bindEnvironment(existing.UID)
 						return
 					}
 				}
 				a.CollectionPresenter.SetCollections(append(cols, col))
 				a.CollectionPresenter.Select(col.UID)
+				a.bindEnvironment(col.UID)
 			}
 		}
 	})

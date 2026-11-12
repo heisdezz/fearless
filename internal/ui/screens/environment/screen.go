@@ -9,7 +9,6 @@ package environment
 
 import (
 	"context"
-	"strconv"
 	"strings"
 
 	"github.com/egoist/mygo/ui"
@@ -272,18 +271,8 @@ func empty(c *ui.Context, tk *lobetheme.Tokens, title, desc string) ui.Element {
 	})
 }
 
-// NextEnvironmentName finds a free "Untitled N" name.
+// NextEnvironmentName finds a free "Untitled N" name. It is the presenter's
+// rule, re-exported here for the screen's own call site.
 func NextEnvironmentName(envs []*model.Environment) string {
-	taken := map[string]bool{}
-	for _, e := range envs {
-		if e != nil {
-			taken[e.Name] = true
-		}
-	}
-	for i := 1; ; i++ {
-		n := "Untitled " + strconv.Itoa(i)
-		if !taken[n] {
-			return n
-		}
-	}
+	return presenters.NextEnvironmentName(envs)
 }
