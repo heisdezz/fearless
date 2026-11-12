@@ -28,6 +28,10 @@ type GeneralSettings struct {
 	RestoreLastSession bool `json:"restoreLastSession"`
 	// Language is the UI locale.
 	Language string `json:"language,omitempty"`
+	// StoragePath is the folder collections and workspaces are created in.
+	// Empty means the first run has not picked one yet; the app asks for it at
+	// startup and cannot be used until it is set.
+	StoragePath string `json:"storagePath,omitempty"`
 }
 
 // RequestDefaults are applied when a request does not override them.

@@ -1,6 +1,11 @@
 package app
 
 import (
+	"context"
+	"fearless/internal/platform"
+	"fmt"
+	"os"
+
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
 )
@@ -80,9 +85,51 @@ func (a *App) CreateWindow(opts ...mygo.WindowOptions) *mygo.Window {
 }
 
 // Open creates a default App instance and initializes the main application window.
-func Open() {
-	a := New()
+func Open(opts ...Option) {
+	a := New(opts...)
+	a.loadPreferences()
+	a.promptStorageLocationIfNeeded()
 	a.CreateWindow()
+}
+
+// loadPreferences reads the saved settings before the window exists, so the
+// first frame already reflects them: the storage-location prompt below depends
+// on knowing whether a folder was set last time, and the theme should not flash
+// a default before switching.
+//
+// A missing or unreadable settings file is not fatal: the defaults stand, and
+// first run then asks for a folder.
+func (a *App) loadPreferences() {
+	if a.PreferencesPresenter == nil {
+		return
+	}
+	_ = a.PreferencesPresenter.Load(context.Background())
+}
+
+// promptStorageLocationIfNeeded asks, once, where work is saved when no
+// storage folder is configured (first run, or a settings file that predates
+// the field). The dialog is required: it has no Cancel, so the app stays on it
+// until a folder is chosen.
+//
+// The picker is installed on the queue so the dialog's Browse button opens the
+// platform folder chooser.
+func (a *App) promptStorageLocationIfNeeded() {
+	if a.PreferencesPresenter == nil || !a.PreferencesPresenter.NeedsStoragePath() {
+		return
+	}
+
+	a.DialogQueue.SetPathPicker(func() (string, error) {
+		return a.Services.DialogsOr().OpenDirectory(context.Background(), platform.OpenOptions{
+			Title: "Choose where to save your work",
+		})
+	})
+
+	_, _ = a.DialogQueue.StorageLocationModal(func(ctx context.Context, location string) error {
+		if err := os.MkdirAll(location, 0o755); err != nil {
+			return fmt.Errorf("cannot use that folder: %w", err)
+		}
+		return a.PreferencesPresenter.SetStoragePath(ctx, location)
+	})
 }
 
 // Run schedules CreateWindow in App.WhenReady and hands control to mygo.App.Run().

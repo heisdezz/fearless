@@ -1,9 +1,13 @@
 package dialogs
 
 import (
+	"path/filepath"
+
 	"github.com/egoist/mygo/ui"
 	"github.com/lobehub/lobe-mygo/pkg/action"
 	"github.com/lobehub/lobe-mygo/pkg/feedback"
+	"github.com/lobehub/lobe-mygo/pkg/field"
+	"github.com/lobehub/lobe-mygo/pkg/lucide"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/ui/widgets"
@@ -28,6 +32,11 @@ func View(c *ui.Context, q *Queue) {
 		CancelText: "Cancel",
 		Width:      widthFor(q.Kind()),
 	}
+	if q.Required() {
+		// No Cancel and no Esc: draw our own Continue button in the body so the
+		// only way out is to answer.
+		props.NoFooter = true
+	}
 
 	ok := feedback.Modal(c, &open, props, func() {
 		body(c, q)
@@ -47,9 +56,193 @@ func widthFor(k Kind) float32 {
 	case KindConfirm:
 		return 420
 	case KindImport:
-		return 620
+		return 640
+	case KindCreateCollection:
+		return 560
+	case KindStorageLocation:
+		return 520
 	}
 	return 520
+}
+
+type importTabItem struct {
+	id    string
+	label string
+	icon  func() *ui.SVG
+}
+
+// renderImportBody renders Bruno-style import tabs and a drag-and-drop file dropzone.
+func renderImportBody(c *ui.Context, q *Queue) {
+	tk := lobetheme.TokensOf(c)
+	bodyCol := ui.Column(c).Gap(16).AlignSelf(ui.Stretch)
+
+	tabState := ui.Local(bodyCol, "importTab", func() string {
+		return "file"
+	})
+
+	tabs := []importTabItem{
+		{id: "file", label: "File", icon: lucide.FileInput},
+		{id: "git", label: "Git Repository", icon: lucide.GitFork},
+		{id: "github", label: "GitHub", icon: lucide.Globe},
+		{id: "url", label: "URL", icon: lucide.Link2},
+		{id: "raw", label: "Raw / cURL", icon: lucide.CodeXml},
+	}
+
+	// Subtabs strip matching Bruno design
+	ui.Row(c).FillWidth().Gap(4).BorderWidth(0, 0, 1, 0).BorderColor(tk.Border).Children(func() {
+		for _, t := range tabs {
+			t := t
+			isActive := *tabState == t.id
+
+			btn := ui.ButtonBase(c).
+				Row().AlignItems(ui.Center).Gap(6).
+				Padding(8, 14).
+				Cursor(ui.CursorPointer).
+				BorderWidth(0, 0, 2, 0)
+
+			if isActive {
+				btn.BorderColor(tk.Primary)
+			} else {
+				btn.BorderColor(ui.Transparent)
+			}
+
+			btn.Children(func() {
+				iconColor := tk.TextSecondary
+				textColor := tk.TextSecondary
+				if isActive {
+					iconColor = tk.Text
+					textColor = tk.Text
+				}
+				ui.Icon(c, t.icon()).FontSize(16).TextColor(iconColor)
+				ui.Text(c, t.label).FontSize(13).FontWeight(ternary(isActive, 600, 400)).TextColor(textColor)
+			})
+
+			btn.OnClick(func() {
+				*tabState = t.id
+			})
+		}
+	})
+
+	doc := q.Value("document")
+
+	switch *tabState {
+	case "file":
+		// File dropzone area supporting desktop drag-and-drop and file picking
+		up := field.Upload(c, field.UploadProps{
+			Dragger:  true,
+			Multiple: false,
+			Disabled: q.Phase() == PhaseRunning,
+			OnFiles: func(files []field.File) {
+				if len(files) > 0 {
+					f := files[0]
+					if f.Path != "" {
+						q.SetValue("document", f.Path)
+					} else if len(f.Data) > 0 {
+						q.SetValue("document", string(f.Data))
+					}
+				}
+			},
+		}, func() {
+			if doc != "" {
+				ui.Icon(c, lucide.FileCheck()).FontSize(36).TextColor(tk.Success)
+				ui.Row(c).Gap(6).AlignItems(ui.Center).Children(func() {
+					ui.Text(c, filepath.Base(doc)).FontSize(15).FontWeight(600).TextColor(tk.Text)
+				})
+				if doc != filepath.Base(doc) {
+					ui.Text(c, doc).FontSize(12).TextColor(tk.TextTertiary)
+				}
+				ui.Text(c, "Ready to import. Click or drop another file to replace.").
+					FontSize(12).TextColor(tk.Primary)
+			} else {
+				ui.Icon(c, lucide.FileInput()).FontSize(36).TextColor(tk.TextTertiary)
+				ui.Row(c).Gap(4).AlignItems(ui.Center).Children(func() {
+					ui.Text(c, "Drop file(s) to import or ").FontSize(14).FontWeight(500).TextColor(tk.Text)
+					ui.Text(c, "choose file(s)").FontSize(14).FontWeight(500).TextColor(tk.Primary).Underline()
+				})
+				ui.Text(c, "Supports Bruno, OpenCollection, Postman, Insomnia, OpenAPI 3.x / Swagger 2.0, WSDL, and ZIP formats").
+					FontSize(12).TextColor(tk.TextTertiary).TextAlign(ui.Center)
+			}
+		})
+		up.FillWidth().MinHeight(180)
+
+		if doc != "" {
+			ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
+				widgets.Button(c, "Clear selected file", widgets.ButtonProps{}).OnClick(func() {
+					q.SetValue("document", "")
+				})
+			})
+		}
+
+	case "git":
+		ui.Column(c).Gap(8).AlignSelf(ui.Stretch).Children(func() {
+			ui.Text(c, "Git Repository URL").FontSize(tk.FontSize).FontWeight(500).TextColor(tk.TextSecondary)
+			val := doc
+			input := widgets.FieldInput(c, &val, widgets.FieldInputProps{
+				Placeholder: "https://github.com/organization/collection-repo.git",
+			})
+			input.AlignSelf(ui.Stretch)
+			if val != doc {
+				q.SetValue("document", val)
+			}
+			ui.Text(c, "Enter a Git repository clone URL. Fearless will parse and import collection requests.").
+				FontSize(12).TextColor(tk.TextTertiary)
+		})
+
+	case "github":
+		ui.Column(c).Gap(8).AlignSelf(ui.Stretch).Children(func() {
+			ui.Text(c, "GitHub Repository or Gist URL").FontSize(tk.FontSize).FontWeight(500).TextColor(tk.TextSecondary)
+			val := doc
+			input := widgets.FieldInput(c, &val, widgets.FieldInputProps{
+				Placeholder: "https://github.com/owner/repo or https://gist.github.com/...",
+			})
+			input.AlignSelf(ui.Stretch)
+			if val != doc {
+				q.SetValue("document", val)
+			}
+			ui.Text(c, "Enter a GitHub repository or raw Gist URL to import collection definitions directly.").
+				FontSize(12).TextColor(tk.TextTertiary)
+		})
+
+	case "url":
+		ui.Column(c).Gap(8).AlignSelf(ui.Stretch).Children(func() {
+			ui.Text(c, "Collection or OpenAPI URL").FontSize(tk.FontSize).FontWeight(500).TextColor(tk.TextSecondary)
+			val := doc
+			input := widgets.FieldInput(c, &val, widgets.FieldInputProps{
+				Placeholder: "https://example.com/api/openapi.json or Postman shared collection URL",
+			})
+			input.AlignSelf(ui.Stretch)
+			if val != doc {
+				q.SetValue("document", val)
+			}
+			ui.Text(c, "Enter a publicly accessible URL to a Postman collection or OpenAPI 3.x / Swagger 2.0 JSON or YAML.").
+				FontSize(12).TextColor(tk.TextTertiary)
+		})
+
+	case "raw":
+		ui.Column(c).Gap(8).AlignSelf(ui.Stretch).Children(func() {
+			ui.Text(c, "Raw Specification or cURL").FontSize(tk.FontSize).FontWeight(500).TextColor(tk.TextSecondary)
+			val := doc
+			input := widgets.FieldInput(c, &val, widgets.FieldInputProps{
+				Placeholder: "Paste cURL command, Postman JSON, Insomnia export, OpenAPI YAML, or .bru file content here...",
+				Multiline:   true,
+				MinRows:     8,
+				MaxRows:     14,
+			})
+			input.AlignSelf(ui.Stretch)
+			if val != doc {
+				q.SetValue("document", val)
+			}
+			ui.Text(c, "Paste raw JSON, YAML, or curl commands directly into this area.").
+				FontSize(12).TextColor(tk.TextTertiary)
+		})
+	}
+}
+
+func ternary[T any](cond bool, a, b T) T {
+	if cond {
+		return a
+	}
+	return b
 }
 
 // body draws the dialog's content: the message, then one control per field.
@@ -65,6 +258,19 @@ func body(c *ui.Context, q *Queue) {
 			}).AlignSelf(ui.Stretch)
 		}
 
+		if q.Kind() == KindImport {
+			renderImportBody(c, q)
+			if n := len(q.Warnings()); n > 0 {
+				feedback.Alert(c, "Some details were adapted", feedback.AlertProps{
+					Type:        feedback.Warning,
+					Description: joinWarnings(q.Warnings()),
+					Variant:     feedback.Soft,
+					Selectable:  true,
+				}).AlignSelf(ui.Stretch)
+			}
+			return
+		}
+
 		for _, f := range q.Fields() {
 			if f.Key == "collection" {
 				// Drawn below as a picker rather than a text field.
@@ -75,14 +281,22 @@ func body(c *ui.Context, q *Queue) {
 					ui.Text(c, f.Label).FontSize(tk.FontSize).FontWeight(500).TextColor(tk.TextSecondary)
 				}
 				value := q.Value(f.Key)
-				input := widgets.FieldInput(c, &value, widgets.FieldInputProps{
-					Placeholder: f.Placeholder,
-					Multiline:   f.Multiline,
-					MinRows:     6,
-					MaxRows:     14,
-					Invalid:     q.Phase() == PhaseFailed && f.Required && value == "",
+				inputRow := ui.Row(c).FillWidth().Gap(8).AlignItems(ui.Center)
+				inputRow.Children(func() {
+					ui.Box(c).Grow(1).Children(func() {
+						input := widgets.FieldInput(c, &value, widgets.FieldInputProps{
+							Placeholder: f.Placeholder,
+							Multiline:   f.Multiline,
+							MinRows:     6,
+							MaxRows:     14,
+							Invalid:     q.Phase() == PhaseFailed && f.Required && value == "",
+						})
+						input.AlignSelf(ui.Stretch)
+					})
+					if h := browseHeight(f); h > 0 && q.CanBrowse() {
+						widgets.Button(c, "Browse", widgets.ButtonProps{}).Height(h).OnClick(q.Browse)
+					}
 				})
-				input.AlignSelf(ui.Stretch)
 				if value != q.Value(f.Key) {
 					q.SetValue(f.Key, value)
 				}
@@ -104,14 +318,32 @@ func body(c *ui.Context, q *Queue) {
 		}
 
 		if n := len(q.Warnings()); n > 0 {
-			feedback.Alert(c, "Some details were adapted", feedback.AlertProps{
+			feedback.Alert(c, "Some details adapted", feedback.AlertProps{
 				Type:        feedback.Warning,
 				Description: joinWarnings(q.Warnings()),
 				Variant:     feedback.Soft,
 				Selectable:  true,
 			}).AlignSelf(ui.Stretch)
 		}
+
+		if q.Required() {
+			// The footer is hidden for a required dialog, so its only button lives
+			// here: full width, right-aligned, disabled until the path is set.
+			ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
+				widgets.Button(c, q.OKText(), widgets.ButtonProps{Variant: action.Primary}).
+					OnClick(q.OK)
+			})
+		}
 	})
+}
+
+// browseHeight is the control height to match a field, or 0 for no Browse
+// button: only single-line path fields get one.
+func browseHeight(f Field) float32 {
+	if f.Key != "location" || f.Multiline {
+		return 0
+	}
+	return 32
 }
 
 // messageKind maps a failed dialog to the alert colour it deserves.

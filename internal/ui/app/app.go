@@ -12,14 +12,18 @@ import (
 	"github.com/lobehub/lobe-mygo/pkg/feedback"
 	"github.com/lobehub/lobe-mygo/pkg/field"
 	lobe "github.com/lobehub/lobe-mygo/pkg/layout"
+	"github.com/lobehub/lobe-mygo/pkg/lucide"
+	"github.com/lobehub/lobe-mygo/pkg/overlay"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
+	"fearless/internal/app/commands"
 	"fearless/internal/core/collection"
 	"fearless/internal/core/model"
 	"fearless/internal/platform"
 	"fearless/internal/ui/dialogs"
 	"fearless/internal/ui/layout"
 	"fearless/internal/ui/presenters"
+	"fearless/internal/ui/screens/environment"
 	"fearless/internal/ui/screens/navigation"
 	"fearless/internal/ui/screens/request"
 	"fearless/internal/ui/screens/response"
@@ -36,6 +40,8 @@ const (
 	ViewKindMain ViewKind = iota
 	ViewKindPreferences
 	ViewKindCollectionSettings
+	// ViewKindEnvironment edits the active collection's variables.
+	ViewKindEnvironment
 )
 
 // App manages the fearless GUI lifecycle, window, root view composition,
@@ -49,6 +55,7 @@ type App struct {
 	LayoutState      layout.LayoutState
 	ActiveView       ViewKind
 	activeConsoleTab int
+	titleMenuOpen    bool
 
 	// Presenters
 	SidebarPresenter     *presenters.SidebarPresenter
@@ -65,10 +72,29 @@ type App struct {
 	NavScreen               *navigation.Screen
 	RequestScreenState      *request.RequestScreenState
 	CollectionSettingsState *settings.CollectionSettingsState
+
+	// preferences persists settings; nil runs on defaults (see
+	// WithPreferencesService).
+	preferences *commands.PreferencesService
+
+	// urlField keeps the URL bar's highlighting/edit state across frames.
+	urlField *widgets.TemplateField
+
+	// environmentState holds the environment editor's transient row state.
+	environmentState *environment.State
 }
 
 // Option configures an App instance.
 type Option func(*App)
+
+// WithPreferencesService lets the app persist settings — notably the first-run
+// storage location. Without it the app runs on defaults and cannot remember a
+// folder, so the storage prompt cannot complete.
+func WithPreferencesService(svc *commands.PreferencesService) Option {
+	return func(a *App) {
+		a.preferences = svc
+	}
+}
 
 // WithServices sets the platform services provider.
 func WithServices(s platform.Services) Option {
@@ -98,6 +124,7 @@ func New(opts ...Option) *App {
 		DialogQueue:             dialogs.NewQueue(),
 		RequestScreenState:      &request.RequestScreenState{},
 		CollectionSettingsState: &settings.CollectionSettingsState{},
+		environmentState:        &environment.State{},
 	}
 
 	for _, opt := range opts {
@@ -135,7 +162,8 @@ func (a *App) initPresenters() {
 		a.TabsPresenter = presenters.NewTabsPresenter()
 	}
 	if a.PreferencesPresenter == nil {
-		a.PreferencesPresenter = presenters.NewPreferencesPresenter(model.Settings{}, nil, nil, nil)
+		store := preferencesStore{svc: a.preferences}
+		a.PreferencesPresenter = presenters.NewPreferencesPresenter(model.DefaultSettings(), store, store, nil)
 	}
 	if a.SettingsPresenter == nil {
 		col := &model.Collection{
@@ -164,6 +192,26 @@ func (a *App) initScreens() {
 		OnSelectNode: func(uid string) {
 			if a.SidebarPresenter != nil && a.SidebarPresenter.Collections() != nil {
 				a.SidebarPresenter.Collections().Select(uid)
+				item, _ := a.SidebarPresenter.Collections().FindItem(uid)
+				if item != nil {
+					if item.IsFolder() {
+						a.SidebarPresenter.Collections().ToggleExpanded(uid)
+					} else {
+						if a.RequestPresenter != nil {
+							a.RequestPresenter.SetItem(item)
+						}
+						if a.TabsPresenter != nil {
+							a.TabsPresenter.OpenTab(item)
+						}
+					}
+				} else {
+					for _, col := range a.SidebarPresenter.Collections().Collections() {
+						if col.UID == uid {
+							a.SidebarPresenter.Collections().ToggleExpanded(uid)
+							break
+						}
+					}
+				}
 			}
 		},
 		OnToggleNode: func(uid string) {
@@ -177,11 +225,19 @@ func (a *App) initScreens() {
 		OnCreateCollection: func() {
 			a.CreateCollection()
 		},
+		OnImportCollection: func() {
+			a.ShowImport()
+		},
 		OnCreateRequest: func(parentUID string) {
 			a.NewRequest(parentUID)
 		},
 		OnCreateFolder: func(parentUID string) {
 			a.NewFolder(parentUID)
+		},
+		OnDeleteItem: func(uid string) {
+			if a.CollectionPresenter != nil {
+				_ = a.CollectionPresenter.DeleteItem(context.Background(), "", uid)
+			}
 		},
 		OnSelectEnvironment: func(envName string) {
 			if a.EnvironmentPresenter != nil {
@@ -189,21 +245,67 @@ func (a *App) initScreens() {
 			}
 		},
 		OnManageEnvironments: func() {
-			a.ShowPreferences()
+			a.ShowEnvironment()
+		},
+		OnRunCollection: func(colUID string) {
+			if a.SidebarPresenter != nil {
+				a.SidebarPresenter.SelectSection(presenters.SidebarSectionRunner)
+			}
+		},
+		OnCollectionSettings: func(colUID string) {
+			a.ShowCollectionSettings()
+		},
+		OnCloneCollection: func(colUID string) {
+			a.CreateCollection()
+		},
+		OnRenameItem: func(uid string) {
+			if a.DialogQueue != nil {
+				_, _ = a.DialogQueue.Prompt("Rename", []string{"New Name"}, func(_ context.Context, vals map[string]string) error {
+					newName := vals["New Name"]
+					if newName != "" && a.CollectionPresenter != nil {
+						item, _ := a.CollectionPresenter.FindItem(uid)
+						if item != nil {
+							item.Name = newName
+						}
+					}
+					return nil
+				})
+			}
+		},
+		OnRevealItem: func(uid string) {
+			if a.CollectionPresenter != nil {
+				cols := a.CollectionPresenter.Collections()
+				if len(cols) > 0 && a.Services.Browser != nil {
+					_ = a.Services.Browser.Open(context.Background(), cols[0].Path)
+				}
+			}
+		},
+		OnOpenTerminal: func(uid string) {},
+		OnCreateMockServer: func() {
+			if a.DialogQueue != nil {
+				_, _ = a.DialogQueue.Prompt("Create Mock Server (Beta)", []string{"Port"}, func(_ context.Context, vals map[string]string) error {
+					return nil
+				})
+			}
+		},
+		OnCollapseAll: func(colUID string) {
+			if a.SidebarPresenter != nil && a.SidebarPresenter.Collections() != nil {
+				nodes := a.SidebarPresenter.Collections().VisibleNodes()
+				for _, n := range nodes {
+					if n != nil && n.IsFolder && n.IsExpanded {
+						a.SidebarPresenter.Collections().SetExpanded(n.UID, false)
+					}
+				}
+			}
 		},
 	}
 
 	a.NavScreen = navigation.NewScreen(a.SidebarPresenter, navActions)
 
 	shellActions := shell.Actions{
+		OnMenuItem: a.handleMenuKey,
 		OnMenu: func() {
-			a.mu.Lock()
-			win := a.Window
-			a.mu.Unlock()
-			if win != nil {
-				menu := BuildMenu(a.MenuActions(), a.Router)
-				menu.Popup(win)
-			}
+			a.titleMenuOpen = !a.titleMenuOpen
 		},
 		OnWorkspace: func() {},
 		OnSettings: func() {
@@ -215,7 +317,7 @@ func (a *App) initScreens() {
 			}
 		},
 		OnManageEnvironment: func() {
-			a.ShowPreferences()
+			a.ShowEnvironment()
 		},
 		OnRun: func() {
 			// No runner backend is wired into the GUI yet, so Run leads to
@@ -273,9 +375,62 @@ func (a *App) initScreens() {
 		// and a second strip under it would answer the same question
 		// twice.
 		RequestPane: func(c *ui.Context) {
-			if a.RequestPresenter != nil {
-				request.RequestScreen(c, a.RequestPresenter, a.RequestScreenState)
-			}
+			ui.Column(c).Fill().Children(func() {
+				if a.TabsPresenter != nil && len(a.TabsPresenter.Tabs()) > 0 {
+					activeUID := ""
+					if act := a.TabsPresenter.ActiveTab(); act != nil {
+						activeUID = act.UID
+					}
+					widgets.RequestTabBar(c, a.TabsPresenter.Tabs(), activeUID, widgets.TabBarProps{
+						OnSelect: func(uid string) {
+							if a.TabsPresenter != nil {
+								a.TabsPresenter.SelectTab(uid)
+							}
+							if a.SidebarPresenter != nil && a.SidebarPresenter.Collections() != nil {
+								a.SidebarPresenter.Collections().Select(uid)
+								item, _ := a.SidebarPresenter.Collections().FindItem(uid)
+								if item != nil && a.RequestPresenter != nil {
+									a.RequestPresenter.SetItem(item)
+								}
+							}
+						},
+						OnClose: func(uid string) {
+							if a.TabsPresenter != nil {
+								a.TabsPresenter.CloseTab(uid)
+								if act := a.TabsPresenter.ActiveTab(); act != nil {
+									if a.SidebarPresenter != nil && a.SidebarPresenter.Collections() != nil {
+										a.SidebarPresenter.Collections().Select(act.UID)
+										item, _ := a.SidebarPresenter.Collections().FindItem(act.UID)
+										if item != nil && a.RequestPresenter != nil {
+											a.RequestPresenter.SetItem(item)
+										}
+									}
+								} else {
+									if a.SidebarPresenter != nil && a.SidebarPresenter.Collections() != nil {
+										a.SidebarPresenter.Collections().ClearSelection()
+									}
+									if a.RequestPresenter != nil {
+										a.RequestPresenter.SetItem(nil)
+									}
+								}
+							}
+						},
+						OnNewTab: func() {
+							a.NewRequest("")
+						},
+					})
+				}
+				if a.RequestPresenter != nil {
+					ui.Box(c).Grow(1).FillWidth().Children(func() {
+						opts := request.Options{
+							Resolves:       a.resolvesVariable,
+							OnOpenVariable: func(string) { a.ShowEnvironment() },
+							Field:          a.urlField,
+						}
+						request.RequestScreenWith(c, a.RequestPresenter, opts, a.RequestScreenState)
+					})
+				}
+			})
 		},
 		ResponsePane: func(c *ui.Context) {
 			if a.ResponsePresenter != nil {
@@ -374,6 +529,93 @@ func (a *App) MenuActions() MenuActions {
 	}
 }
 
+func (a *App) buildLobeMenuItems() []overlay.MenuItem {
+	return []overlay.MenuItem{
+		{Key: "new-request", Label: "New Request", Icon: lucide.Plus(), Hotkey: "mod+n"},
+		{Key: "new-collection", Label: "New Collection", Icon: lucide.FolderPlus(), Hotkey: "mod+shift+n"},
+		{Key: "import-collection", Label: "Import Collection...", Icon: lucide.Upload(), Hotkey: "mod+o"},
+		{Divider: true},
+		{Key: "save", Label: "Save", Icon: lucide.Save(), Hotkey: "mod+s"},
+		{Key: "close-tab", Label: "Close Tab", Icon: lucide.X(), Hotkey: "mod+w"},
+		{Divider: true},
+		{Key: "send-request", Label: "Send Request", Icon: lucide.Send(), Hotkey: "mod+enter"},
+		{Key: "cancel-request", Label: "Cancel Request", Icon: lucide.Square(), Hotkey: "escape"},
+		{Divider: true},
+		{Key: "toggle-sidebar", Label: "Toggle Sidebar", Icon: lucide.Sidebar(), Hotkey: "mod+\\"},
+		{Key: "toggle-console", Label: "Toggle Console", Icon: lucide.Terminal(), Hotkey: "mod+t"},
+		{Key: "change-layout", Label: "Change Orientation", Icon: lucide.Columns(), Hotkey: "mod+j"},
+		{Divider: true},
+		{Key: "preferences", Label: "Preferences...", Icon: lucide.Settings(), Hotkey: "mod+,"},
+		{Divider: true},
+		{Key: "documentation", Label: "Documentation", Icon: lucide.BookOpen()},
+		{Key: "about", Label: "About fearless", Icon: lucide.Info()},
+		{Divider: true},
+		{Key: "quit", Label: "Quit fearless", Icon: lucide.LogOut(), Danger: true, Hotkey: "mod+q"},
+	}
+}
+
+func (a *App) handleMenuKey(key string) {
+	actions := a.MenuActions()
+	switch key {
+	case "new-request":
+		if actions.OnNewRequest != nil {
+			actions.OnNewRequest()
+		}
+	case "new-collection":
+		if actions.OnNewCollection != nil {
+			actions.OnNewCollection()
+		}
+	case "import-collection":
+		if actions.OnImportCollection != nil {
+			actions.OnImportCollection()
+		}
+	case "save":
+		if actions.OnSave != nil {
+			actions.OnSave()
+		}
+	case "close-tab":
+		if actions.OnCloseTab != nil {
+			actions.OnCloseTab()
+		}
+	case "send-request":
+		if actions.OnSendRequest != nil {
+			actions.OnSendRequest()
+		}
+	case "cancel-request":
+		if actions.OnCancelRequest != nil {
+			actions.OnCancelRequest()
+		}
+	case "toggle-sidebar":
+		if actions.OnToggleSidebar != nil {
+			actions.OnToggleSidebar()
+		}
+	case "toggle-console":
+		if actions.OnToggleConsole != nil {
+			actions.OnToggleConsole()
+		}
+	case "change-layout":
+		if actions.OnChangeLayout != nil {
+			actions.OnChangeLayout()
+		}
+	case "preferences":
+		if actions.OnPreferences != nil {
+			actions.OnPreferences()
+		}
+	case "documentation":
+		if actions.OnDocumentation != nil {
+			actions.OnDocumentation()
+		}
+	case "about":
+		if actions.OnAbout != nil {
+			actions.OnAbout()
+		}
+	case "quit":
+		if actions.OnQuit != nil {
+			actions.OnQuit()
+		}
+	}
+}
+
 // SafeUpdate marshals a UI mutation callback onto the MyGo UI loop via Window.Update.
 // If the window is not yet created (headless or startup), it executes synchronously.
 func (a *App) SafeUpdate(fn func()) {
@@ -442,9 +684,14 @@ func (a *App) NewRequest(parentUID string) {
 		if name == "" {
 			name = "Untitled Request"
 		}
+		method := vals["Method"]
+		if method == "" {
+			method = "GET"
+		}
+		reqURL := vals["URL"]
 		a.SafeUpdate(func() {
 			if a.CollectionPresenter != nil {
-				item, _ := a.CollectionPresenter.CreateRequest(context.Background(), "", parentUID, name, "GET", "")
+				item, _ := a.CollectionPresenter.CreateRequest(context.Background(), "", parentUID, name, method, reqURL)
 				if item != nil {
 					if a.RequestPresenter != nil {
 						a.RequestPresenter.SetItem(item)
@@ -479,15 +726,17 @@ func (a *App) CreateCollection() {
 
 // OpenCollection opens a directory picker or prompt to load an existing collection.
 func (a *App) OpenCollection() {
-	dir, err := a.Services.DialogsOr().OpenDirectory(context.Background(), platform.OpenOptions{
-		Title: "Open Collection",
-	})
-	if err == nil && dir != "" {
-		a.loadCollectionDir(dir)
-		return
-	}
-	if errors.Is(err, platform.ErrCancelled) {
-		return
+	if a.Services.Dialogs != nil {
+		dir, err := a.Services.Dialogs.OpenDirectory(context.Background(), platform.OpenOptions{
+			Title: "Open Collection",
+		})
+		if err == nil && dir != "" {
+			a.loadCollectionDir(dir)
+			return
+		}
+		if errors.Is(err, platform.ErrCancelled) {
+			return
+		}
 	}
 	if a.DialogQueue != nil {
 		_, _ = a.DialogQueue.Prompt("Open Collection", []string{"Folder Path"}, func(_ context.Context, vals map[string]string) error {
@@ -545,6 +794,22 @@ func (a *App) CloseActiveTab() {
 		if a.TabsPresenter != nil {
 			if act := a.TabsPresenter.ActiveTab(); act != nil && act.UID != "" {
 				a.TabsPresenter.CloseTab(act.UID)
+				if nextAct := a.TabsPresenter.ActiveTab(); nextAct != nil {
+					if a.SidebarPresenter != nil && a.SidebarPresenter.Collections() != nil {
+						a.SidebarPresenter.Collections().Select(nextAct.UID)
+						item, _ := a.SidebarPresenter.Collections().FindItem(nextAct.UID)
+						if item != nil && a.RequestPresenter != nil {
+							a.RequestPresenter.SetItem(item)
+						}
+					}
+				} else {
+					if a.SidebarPresenter != nil && a.SidebarPresenter.Collections() != nil {
+						a.SidebarPresenter.Collections().ClearSelection()
+					}
+					if a.RequestPresenter != nil {
+						a.RequestPresenter.SetItem(nil)
+					}
+				}
 			}
 		}
 	})
@@ -575,7 +840,31 @@ func (a *App) ToggleConsole() {
 	})
 }
 
-// ShowPreferences displays the preferences screen.
+// resolvesVariable reports whether name is defined for the active collection:
+// in the active environment, or in the collection's own variables.
+//
+// It backs the URL bar's `{{variable}}` colouring, so an undefined name reads
+// as a mistake before the request is sent.
+func (a *App) resolvesVariable(name string) bool {
+	if name == "" {
+		return false
+	}
+	if a.EnvironmentPresenter != nil {
+		if _, ok := a.EnvironmentPresenter.VariableValue(name); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// ShowEnvironment displays the environment editor for the active collection.
+func (a *App) ShowEnvironment() {
+	a.SafeUpdate(func() {
+		a.ActiveView = ViewKindEnvironment
+	})
+}
+
+// ShowPreferences displays the application preferences screen.
 func (a *App) ShowPreferences() {
 	a.SafeUpdate(func() {
 		a.ActiveView = ViewKindPreferences
@@ -617,6 +906,10 @@ func (a *App) ShowImport() {
 			if a.CollectionPresenter != nil && imp != nil && imp.Collection != nil {
 				cols := a.CollectionPresenter.Collections()
 				a.CollectionPresenter.SetCollections(append(cols, imp.Collection))
+				a.CollectionPresenter.Select(imp.Collection.UID)
+				if a.EnvironmentPresenter != nil && len(imp.Collection.Environments) > 0 {
+					a.EnvironmentPresenter.SetCollection(imp.Collection)
+				}
 			}
 		})
 		return nil
@@ -648,6 +941,8 @@ func (a *App) RootView(c *ui.Context) {
 			a.renderPreferencesView(c, tokens)
 		case ViewKindCollectionSettings:
 			a.renderCollectionSettingsView(c, tokens)
+		case ViewKindEnvironment:
+			a.renderEnvironmentView(c)
 		default:
 			a.renderMainView(c)
 		}
@@ -732,6 +1027,8 @@ func (a *App) renderMainView(c *ui.Context) {
 			CollectionName:   colName,
 			WorkspaceName:    "Default Workspace",
 			ShowMenu:         true,
+			MenuOpen:         &a.titleMenuOpen,
+			MenuItems:        a.buildLobeMenuItems(),
 			RequestCount:     requestCount,
 			EnvironmentName:  envName,
 			Environments:     envNames,
@@ -789,6 +1086,25 @@ func (a *App) renderPreferencesView(c *ui.Context, tokens *lobetheme.Tokens) {
 			if a.PreferencesPresenter != nil {
 				settings.PreferencesScreen(c, a.PreferencesPresenter)
 			}
+		})
+	})
+}
+
+// renderEnvironmentView shows the environment editor over the workspace, with
+// a back bar matching collection settings.
+func (a *App) renderEnvironmentView(c *ui.Context) {
+	tokens := lobetheme.TokensOf(c)
+	ui.Column(c).Fill().Children(func() {
+		ui.Row(c).Height(40).FillWidth().Padding(8, 16).AlignItems(ui.Center).Background(tokens.BgContainer).Children(func() {
+			widgets.Button(c, "← Back to Workspace", widgets.ButtonProps{
+				Variant: action.Default,
+				Size:    lobetheme.Small,
+			}).OnClick(func() { a.ShowMain() })
+			ui.Box(c).Width(16)
+			ui.Text(c, "Environments").TextColor(tokens.TextHeading)
+		})
+		ui.Box(c).Fill().Children(func() {
+			environment.Screen(c, a.EnvironmentPresenter, a.environmentState)
 		})
 	})
 }

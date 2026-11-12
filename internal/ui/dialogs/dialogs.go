@@ -37,6 +37,12 @@ const (
 	KindImport
 	// KindSaveTransient asks where to save a request that has no home yet.
 	KindSaveTransient
+	// KindCreateCollection creates a new collection.
+	KindCreateCollection
+	// KindStorageLocation asks where collections are saved on first run.
+	// It cannot be cancelled: the app has nowhere to write until it is
+	// answered (see "first run" in docs/progress/decisions.md D-022).
+	KindStorageLocation
 )
 
 // String is used in tests and logs.
@@ -50,6 +56,10 @@ func (k Kind) String() string {
 		return "import"
 	case KindSaveTransient:
 		return "save-transient"
+	case KindCreateCollection:
+		return "create-collection"
+	case KindStorageLocation:
+		return "storage-location"
 	}
 	return "unknown"
 }
@@ -140,6 +150,11 @@ type Queue struct {
 	warnings []string
 	// targets are the collections a save dialog may choose from.
 	targets []SaveTarget
+	// required marks a dialog that must be answered: Cancel is ignored and the
+	// shell hides its Cancel button.
+	required bool
+	// picker chooses a folder for a path field's Browse button.
+	picker func() (string, error)
 }
 
 // Field describes one input in a prompt or import dialog.
@@ -161,6 +176,37 @@ type Field struct {
 // NewQueue creates an empty queue.
 func NewQueue() *Queue {
 	return &Queue{phase: PhaseClosed}
+}
+
+// SetPathPicker installs the folder chooser a dialog with a path field uses for
+// its Browse button. nil removes it, and the button is hidden.
+func (q *Queue) SetPathPicker(fn func() (string, error)) {
+	q.mu.Lock()
+	q.picker = fn
+	q.mu.Unlock()
+}
+
+// CanBrowse reports whether a Browse button should be shown.
+func (q *Queue) CanBrowse() bool {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.picker != nil
+}
+
+// Browse runs the installed picker and, if it returns a path, records it.
+// A cancelled pick returns an empty path and changes nothing.
+func (q *Queue) Browse() {
+	q.mu.Lock()
+	fn := q.picker
+	q.mu.Unlock()
+	if fn == nil {
+		return
+	}
+	path, err := fn()
+	if err != nil || strings.TrimSpace(path) == "" {
+		return
+	}
+	q.SetValue("location", path)
 }
 
 // OnChanged registers a redraw callback, replacing any previous one.
@@ -270,6 +316,14 @@ func (q *Queue) Busy() bool {
 	return q.busyLocked()
 }
 
+// Required reports whether the active dialog refuses Cancel. The shell hides
+// the Cancel button when it is true.
+func (q *Queue) Required() bool {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.required
+}
+
 // busyLocked is Busy for a caller already holding the lock.
 func (q *Queue) busyLocked() bool {
 	if q.phase == PhaseRunning {
@@ -337,6 +391,7 @@ func (q *Queue) open(kind Kind, title, message, okText string, fields []Field, a
 	q.warnings = nil
 	q.targets = nil
 	q.phase = PhaseOpen
+	q.required = kind == KindStorageLocation
 	q.values = make(map[string]string, len(fields))
 	for _, f := range fields {
 		q.values[f.Key] = ""
@@ -380,9 +435,17 @@ func Await(ch <-chan result) (map[string]string, error) {
 // Cancel closes the active dialog without running its action. When an action is
 // already running, it closes the dialog and cancels the action's context; the
 // action's eventual result is discarded rather than reopening a closed dialog.
+//
+// A required dialog (KindStorageLocation) ignores Cancel: it is asked precisely
+// because the app has nowhere to write, so dismissing it would leave the app in
+// the state it exists to fix. The shell also hides the Cancel button.
 func (q *Queue) Cancel() {
 	q.mu.Lock()
 	if q.phase == PhaseClosed {
+		q.mu.Unlock()
+		return
+	}
+	if q.required {
 		q.mu.Unlock()
 		return
 	}

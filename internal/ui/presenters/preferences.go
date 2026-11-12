@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"context"
+	"strings"
 	"sync"
 
 	"fearless/internal/core/model"
@@ -194,6 +195,24 @@ func (p *PreferencesPresenter) Revert() {
 	p.draft = nil
 	p.mu.Unlock()
 	p.notifyChanged()
+}
+
+// SetStoragePath sets the folder new collections are saved in and saves it at
+// once. First run writes this straight to disk rather than leaving it in the
+// draft, because the app is unusable until the value persists.
+func (p *PreferencesPresenter) SetStoragePath(ctx context.Context, path string) error {
+	p.mu.Lock()
+	draft := p.ensureDraft()
+	draft.General.StoragePath = path
+	p.mu.Unlock()
+	p.notifyChanged()
+	return p.Save(ctx)
+}
+
+// NeedsStoragePath reports whether the app has no folder to save work in, which
+// is the first-run state the startup dialog exists to fix.
+func (p *PreferencesPresenter) NeedsStoragePath() bool {
+	return strings.TrimSpace(p.Settings().General.StoragePath) == ""
 }
 
 // Save commits the draft preferences via PreferencesSaverPort.

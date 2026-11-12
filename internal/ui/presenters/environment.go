@@ -154,6 +154,30 @@ func (p *EnvironmentPresenter) findSavedEnvironment(name string) *model.Environm
 	return nil
 }
 
+// VariableValue returns the value of a variable visible to the request: the
+// active environment's. It backs the URL bar's `{{variable}}` colouring, so an
+// undefined name reads as a mistake before the request is sent.
+func (p *EnvironmentPresenter) VariableValue(name string) (any, bool) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	if env := p.activeEnvironmentLocked(); env != nil {
+		return env.VariableValue(name)
+	}
+	return nil, false
+}
+
+func (p *EnvironmentPresenter) activeEnvironmentLocked() *model.Environment {
+	if p.collection == nil || p.collection.ActiveEnvironment == "" {
+		return nil
+	}
+	for _, env := range p.collection.Environments {
+		if env.Name == p.collection.ActiveEnvironment {
+			return env
+		}
+	}
+	return nil
+}
+
 // SelectEnvironment dispatches active environment selection.
 func (p *EnvironmentPresenter) SelectEnvironment(ctx context.Context, envName string) error {
 	p.mu.Lock()

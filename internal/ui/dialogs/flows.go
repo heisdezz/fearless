@@ -4,12 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"fearless/internal/convert/curl"
 	"fearless/internal/convert/insomnia"
 	"fearless/internal/convert/openapi"
 	"fearless/internal/convert/postman"
+	"fearless/internal/core/collection"
+	"fearless/internal/core/format"
 	"fearless/internal/core/model"
 )
 
@@ -67,9 +73,79 @@ var ErrImportEmpty = errors.New("dialogs: the document contained no requests")
 // ErrImportUnknown reports that auto-detection could not place the document.
 var ErrImportUnknown = errors.New("dialogs: could not tell what format this is")
 
-// ParseImport converts text into a request or collection. It does no I/O, so it
-// is safe to run from the import dialog's action goroutine.
+// ParseImport converts text, file path, or URL into a request or collection.
 func ParseImport(src ImportSource, text string) (*Imported, error) {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return nil, ErrImportEmpty
+	}
+
+	// 1. Filesystem path check (directory or file)
+	if fi, err := os.Stat(text); err == nil {
+		if fi.IsDir() {
+			col, err := collection.Load(text)
+			if err != nil {
+				return nil, fmt.Errorf("dialogs: loading collection: %w", err)
+			}
+			if col == nil {
+				return nil, ErrImportEmpty
+			}
+			return &Imported{Source: ImportAuto, Collection: col}, nil
+		}
+		fileBytes, err := os.ReadFile(text)
+		if err != nil {
+			return nil, fmt.Errorf("dialogs: reading file: %w", err)
+		}
+		if strings.HasSuffix(strings.ToLower(text), ".bru") {
+			codec, ok := format.Get(model.FormatBru)
+			if ok {
+				req, err := codec.ParseRequest(fileBytes)
+				if err == nil && req != nil {
+					return &Imported{Source: ImportAuto, Request: req}, nil
+				}
+			}
+		}
+		return parseDocumentContent(src, string(fileBytes))
+	}
+
+	// 2. URL fetch check
+	if strings.HasPrefix(text, "http://") || strings.HasPrefix(text, "https://") {
+		client := &http.Client{Timeout: 15 * time.Second}
+		resp, err := client.Get(text)
+		if err == nil {
+			defer resp.Body.Close()
+			bodyBytes, readErr := io.ReadAll(io.LimitReader(resp.Body, 10*1024*1024))
+			if readErr == nil && len(bodyBytes) > 0 {
+				if imp, err := parseDocumentContent(src, string(bodyBytes)); err == nil && imp != nil {
+					return imp, nil
+				}
+			}
+		}
+		// If remote fetch was not a multi-request specification, import URL as single GET request
+		return &Imported{
+			Source: ImportCurl,
+			Request: &model.Request{
+				Method: "GET",
+				URL:    text,
+			},
+		}, nil
+	}
+
+	// 3. Raw .bru text check
+	if strings.Contains(text, "meta {") && (strings.Contains(text, "get {") || strings.Contains(text, "post {") || strings.Contains(text, "put {") || strings.Contains(text, "delete {") || strings.Contains(text, "http {")) {
+		codec, ok := format.Get(model.FormatBru)
+		if ok {
+			req, err := codec.ParseRequest([]byte(text))
+			if err == nil && req != nil {
+				return &Imported{Source: ImportAuto, Request: req}, nil
+			}
+		}
+	}
+
+	return parseDocumentContent(src, text)
+}
+
+func parseDocumentContent(src ImportSource, text string) (*Imported, error) {
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return nil, ErrImportEmpty
@@ -165,14 +241,67 @@ func stripSpace(s string) string {
 	return b.String()
 }
 
+// CreateCollectionModal opens the modal to create a new collection.
+func (q *Queue) CreateCollectionModal(onCreate func(ctx context.Context, name, location string, format model.CollectionFormat) error) (*Wait, error) {
+	fields := []Field{
+		{Key: "name", Label: "Name", Placeholder: "Collection Name", Required: true},
+		{Key: "location", Label: "Location", Placeholder: "Folder path on filesystem", Required: true},
+		{Key: "format", Label: "File Format", Placeholder: "bru or yml"},
+	}
+	ch, err := q.open(KindCreateCollection, "Create Collection", "", "Create", fields, func(ctx context.Context, values map[string]string) error {
+		name := strings.TrimSpace(values["name"])
+		if name == "" {
+			return errors.New("collection name is required")
+		}
+		loc := strings.TrimSpace(values["location"])
+		if loc == "" {
+			return errors.New("location is required")
+		}
+		fmtVal := strings.ToLower(strings.TrimSpace(values["format"]))
+		fmtChoice := model.FormatBru
+		if fmtVal == "yml" || fmtVal == "yaml" || fmtVal == "opencollection" {
+			fmtChoice = model.FormatYML
+		}
+		return onCreate(ctx, name, loc, fmtChoice)
+	})
+	if err != nil {
+		return newWait(nil), err
+	}
+	q.notify()
+	return newWait(ch), nil
+}
+
+// StorageLocationModal asks, on first run, which folder collections are saved
+// in. It is the app's one uncancellable dialog: until a folder is chosen there
+// is nowhere to write, so it ignores cancel and keeps asking.
+//
+// onChoose runs on the action goroutine; returning an error keeps the dialog
+// open with the message so the user can pick a different folder.
+func (q *Queue) StorageLocationModal(onChoose func(ctx context.Context, location string) error) (*Wait, error) {
+	ch, err := q.open(KindStorageLocation, "Choose where to save your work", "Fearless keeps collections as plain files on disk. Pick a folder for new collections and workspaces.", "Continue", []Field{
+		{Key: "location", Label: "Folder", Placeholder: "Folder path on filesystem", Required: true},
+	}, func(ctx context.Context, values map[string]string) error {
+		loc := strings.TrimSpace(values["location"])
+		if loc == "" {
+			return errors.New("choose a folder")
+		}
+		return onChoose(ctx, loc)
+	})
+	if err != nil {
+		return newWait(nil), err
+	}
+	q.notify()
+	return newWait(ch), nil
+}
+
 // ImportModal opens the import dialog. onImported receives the parsed document
 // and runs on the action goroutine; its error keeps the dialog open so the user
 // can fix the paste.
 func (q *Queue) ImportModal(onImported func(context.Context, *Imported) error) (*Wait, error) {
-	ch, err := q.open(KindImport, "Import", "", "Import", []Field{{
+	ch, err := q.open(KindImport, "Import Collection", "", "Import", []Field{{
 		Key:         "document",
-		Label:       "Paste a cURL command, Postman, Insomnia or OpenAPI document",
-		Placeholder: "curl 'https://api.example.com/users'",
+		Label:       "File path, URL, cURL, or raw specification",
+		Placeholder: "Enter file path, URL, or paste cURL / Postman / Insomnia / OpenAPI...",
 		Multiline:   true,
 		Required:    true,
 	}}, func(ctx context.Context, values map[string]string) error {

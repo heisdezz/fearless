@@ -51,6 +51,23 @@ type RequestScreenState struct {
 
 // RequestScreen renders the comprehensive request editor screen.
 func RequestScreen(c *ui.Context, p *presenters.RequestPresenter, state ...*RequestScreenState) ui.Element {
+	return RequestScreenWith(c, p, Options{}, state...)
+}
+
+// Options carries the environment context the editor needs to interpret
+// `{{variables}}`: which names resolve, and what to do when one is clicked.
+type Options struct {
+	// Resolves reports whether a variable name is defined in the current
+	// scopes, so the URL bar can mark an undefined one.
+	Resolves widgets.VariableLookup
+	// OnOpenVariable runs when a `{{variable}}` in the URL bar is clicked.
+	OnOpenVariable func(name string)
+	// Field holds the URL bar's edit state across frames.
+	Field *widgets.TemplateField
+}
+
+// RequestScreenWith is RequestScreen with environment options.
+func RequestScreenWith(c *ui.Context, p *presenters.RequestPresenter, opts Options, state ...*RequestScreenState) ui.Element {
 	tk := lobetheme.TokensOf(c)
 
 	var st *RequestScreenState
@@ -92,9 +109,15 @@ func RequestScreen(c *ui.Context, p *presenters.RequestPresenter, state ...*Requ
 			// Target URL Input (styled with DataGroup for monospace tabular font)
 			ui.Box(c).Grow(1).Children(func() {
 				uitheme.DataGroup(c, func() {
-					widgets.VariableInput(c, &req.URL, widgets.VariableInputProps{
-						Placeholder: "https://api.example.com/v1/endpoint",
-						Size:        lobetheme.Small,
+					field := opts.Field
+					if field == nil {
+						field = &widgets.TemplateField{}
+					}
+					widgets.TemplateFieldView(c, field, &req.URL, widgets.TemplateFieldProps{
+						Placeholder:     "https://api.example.com/v1/endpoint",
+						Size:            lobetheme.Small,
+						Resolves:        opts.Resolves,
+						OnVariableClick: opts.OnOpenVariable,
 						OnChanged: func(v string) {
 							req.URL = v
 						},
