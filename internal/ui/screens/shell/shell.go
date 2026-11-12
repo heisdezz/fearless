@@ -35,6 +35,9 @@ type Snapshot struct {
 	Environments []string
 	// InFlight swaps the title strip's Run for Stop.
 	InFlight bool
+	// Maximized reports the window's state, so the title strip's window
+	// control shows the restore glyph rather than the maximize one.
+	Maximized bool
 	// Status are the right-hand chips of the status row.
 	Status []StatusEntry
 	// ActiveConsoleTab selects the dock's body. The bodies themselves are
@@ -61,8 +64,13 @@ type Actions struct {
 	OnManageEnvironment func()
 	OnRun               func()
 	OnStop              func()
-	OnConsoleTab        func(int)
-	OnConsoleClose      func()
+	// OnMinimize, OnToggleMaximize and OnClose are the window's controls.
+	// The window has no native title bar, so the app draws them.
+	OnMinimize       func()
+	OnToggleMaximize func()
+	OnClose          func()
+	OnConsoleTab     func(int)
+	OnConsoleClose   func()
 	// OnStatus runs a status chip's action, addressed by
 	// Snapshot.Status[].Index.
 	OnStatus func(index int)
@@ -154,6 +162,10 @@ func renderTitleBar(c *ui.Context, snap Snapshot, a Actions) {
 		InFlight:            snap.InFlight,
 		OnRun:               a.OnRun,
 		OnStop:              a.OnStop,
+		Maximized:           snap.Maximized,
+		OnMinimize:          a.OnMinimize,
+		OnToggleMaximize:    a.OnToggleMaximize,
+		OnClose:             a.OnClose,
 	}
 	bar.View(c)
 }

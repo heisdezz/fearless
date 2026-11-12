@@ -44,6 +44,7 @@ type Actions struct {
 	OnSelectNode         func(uid string)
 	OnToggleNode         func(uid string)
 	OnOpenCollection     func()
+	OnCreateCollection   func()
 	OnCreateRequest      func(parentUID string)
 	OnCreateFolder       func(parentUID string)
 	OnDeleteItem         func(uid string)
@@ -300,8 +301,15 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 		// They are quiet on purpose. The one accent in the window belongs to
 		// the primary action — Send — and the selected state; a toolbar of
 		// three identical filled buttons spends the hierarchy on nothing.
+		// The toolbar's actions are drawn, not spelled: three words do not
+		// fit across a 248 DIP sidebar, and a clipped label ("Oper") is
+		// worse than a word too many. Each control keeps its name in its
+		// tooltip, so the action is still named for anyone who asks.
 		ui.Row(c).FillWidth().Gap(4).AlignItems(ui.Center).Children(func() {
-			widgets.Button(c, "+ Request", widgets.ButtonProps{
+			widgets.IconButton(c, widgets.IconButtonProps{
+				Icon:    lucide.FilePlus(),
+				Label:   "+ Request",
+				Tooltip: "New request",
 				Size:    lobetheme.Small,
 				Variant: action.Text,
 			}).OnClick(func() {
@@ -310,12 +318,27 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 				}
 			})
 
-			widgets.Button(c, "+ Folder", widgets.ButtonProps{
+			widgets.IconButton(c, widgets.IconButtonProps{
+				Icon:    lucide.FolderPlus(),
+				Label:   "+ Folder",
+				Tooltip: "New folder",
 				Size:    lobetheme.Small,
 				Variant: action.Text,
 			}).OnClick(func() {
 				if actions.OnCreateFolder != nil {
 					actions.OnCreateFolder(snap.SelectedUID)
+				}
+			})
+
+			widgets.IconButton(c, widgets.IconButtonProps{
+				Icon:    lucide.Library(),
+				Label:   "+ Col",
+				Tooltip: "New collection",
+				Size:    lobetheme.Small,
+				Variant: action.Text,
+			}).OnClick(func() {
+				if actions.OnCreateCollection != nil {
+					actions.OnCreateCollection()
 				}
 			})
 
@@ -339,12 +362,30 @@ func (s *Screen) renderCollectionsSection(c *ui.Context, snap Snapshot, actions 
 			Grow(1).
 			Center().
 			Padding(16).
-			Gap(6).
+			Gap(8).
 			Children(func() {
 				theme.PanelHeader(c, "No requests found")
-				ui.Text(c, "Open a collection or create a request").
+				ui.Text(c, "Open an existing collection or create a new one").
 					FontSize(11).
 					TextColor(tk.TextSecondary)
+				ui.Row(c).Gap(6).Children(func() {
+					widgets.Button(c, "Create Collection", widgets.ButtonProps{
+						Size:    lobetheme.Small,
+						Variant: action.Primary,
+					}).OnClick(func() {
+						if actions.OnCreateCollection != nil {
+							actions.OnCreateCollection()
+						}
+					})
+					widgets.Button(c, "Open Collection", widgets.ButtonProps{
+						Size:    lobetheme.Small,
+						Variant: action.Default,
+					}).OnClick(func() {
+						if actions.OnOpenCollection != nil {
+							actions.OnOpenCollection()
+						}
+					})
+				})
 			})
 		return
 	}

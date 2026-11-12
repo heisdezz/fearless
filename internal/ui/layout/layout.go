@@ -395,6 +395,10 @@ func (r *RootView) View(c *ui.Context) {
 // request column. The environment strip that used to sit under this bar is
 // unmounted; RootView supplies the height, the window-control insets and the
 // drag region.
+//
+// The window's own controls are drawn here too: the window has no native
+// title bar, so the app owns the buttons that minimize, maximize and close
+// it. They sit at the strip's far right, where every other window puts them.
 type TitleBarView struct {
 	AppName        string
 	CollectionName string
@@ -419,6 +423,16 @@ type TitleBarView struct {
 	InFlight bool
 	OnRun    func()
 	OnStop   func()
+
+	// Maximized reports the window's state, so the window control shows the
+	// restore glyph rather than the maximize one.
+	Maximized bool
+	// OnMinimize, OnToggleMaximize and OnClose are the window's controls.
+	// They are drawn only when given: a strip that cannot close its window
+	// would be a trap.
+	OnMinimize      func()
+	OnToggleMaximize func()
+	OnClose         func()
 }
 
 // View renders the title-strip row; it fills whatever height RootView gives.
@@ -500,6 +514,47 @@ func (t *TitleBarView) View(c *ui.Context) {
 				Variant: action.Text,
 				Size:    lobetheme.Small,
 			}).OnClick(t.OnRun).Tooltip("Run this collection")
+		}
+
+		// The window's controls, drawn by the app: the window has no
+		// native title bar, so the buttons that minimize, maximize and
+		// close it live here, at the far right, where a window puts them.
+		if t.OnMinimize != nil || t.OnToggleMaximize != nil || t.OnClose != nil {
+			ui.Box(c).Width(6)
+
+			if t.OnMinimize != nil {
+				widgets.IconButton(c, widgets.IconButtonProps{
+					Icon:    lucide.Minus(),
+					Label:   "Minimize",
+					Tooltip: "Minimize",
+					Variant: action.Text,
+					Size:    lobetheme.Small,
+				}).OnClick(t.OnMinimize)
+			}
+			if t.OnToggleMaximize != nil {
+				icon := lucide.Square()
+				label := "Maximize"
+				if t.Maximized {
+					icon = lucide.Copy()
+					label = "Restore"
+				}
+				widgets.IconButton(c, widgets.IconButtonProps{
+					Icon:    icon,
+					Label:   label,
+					Tooltip: label,
+					Variant: action.Text,
+					Size:    lobetheme.Small,
+				}).OnClick(t.OnToggleMaximize)
+			}
+			if t.OnClose != nil {
+				widgets.IconButton(c, widgets.IconButtonProps{
+					Icon:    lucide.X(),
+					Label:   "Close",
+					Tooltip: "Close",
+					Variant: action.Text,
+					Size:    lobetheme.Small,
+				}).OnClick(t.OnClose)
+			}
 		}
 	})
 }

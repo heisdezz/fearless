@@ -38,6 +38,7 @@ type recorder struct {
 	menu, workspace, settings, envSelect, envManage, run, stop, consoleClose int
 	statuses                                                                 []int
 	consoleTabs                                                              []int
+	windowMinimize, windowMaximize, windowClose                              int
 }
 
 func testScreen(rec *recorder) *Screen {
@@ -69,6 +70,9 @@ func testScreen(rec *recorder) *Screen {
 			OnRun:               func() { rec.run++ },
 			OnStop:              func() { rec.stop++ },
 			OnConsoleClose:      func() { rec.consoleClose++ },
+			OnMinimize:          func() { rec.windowMinimize++ },
+			OnToggleMaximize:    func() { rec.windowMaximize++ },
+			OnClose:             func() { rec.windowClose++ },
 			OnStatus:            func(i int) { rec.statuses = append(rec.statuses, i) },
 			OnConsoleTab:        func(i int) { rec.consoleTabs = append(rec.consoleTabs, i) },
 		},
@@ -244,6 +248,38 @@ func TestNilStateRendersDefaults(t *testing.T) {
 	tt := newTester(s)
 	if !tt.HasText("demo") {
 		t.Errorf("title bar missing with nil State; texts: %v", tt.Texts())
+	}
+}
+
+// TestWindowControlsAreDrawn covers the window's own buttons: the window has
+// no native title bar, so the app draws the controls that minimize, maximize
+// and close it, and they report through the actions.
+func TestWindowControlsAreDrawn(t *testing.T) {
+	rec := &recorder{}
+	s := testScreen(rec)
+	tt := newTester(s)
+
+	for _, want := range []string{"Minimize", "Maximize", "Close"} {
+		if !tt.HasText(want) {
+			t.Errorf("title strip missing the %q control; texts: %v", want, tt.Texts())
+		}
+	}
+
+	for _, click := range []string{"Minimize", "Maximize", "Close"} {
+		if err := tt.Click(click); err != nil {
+			t.Fatalf("click %s: %v", click, err)
+		}
+	}
+	if rec.windowMinimize != 1 || rec.windowMaximize != 1 || rec.windowClose != 1 {
+		t.Errorf("window controls: minimize=%d maximize=%d close=%d, want 1 each",
+			rec.windowMinimize, rec.windowMaximize, rec.windowClose)
+	}
+
+	// A maximized window's control offers to restore, not to maximize.
+	s.Snapshot.Maximized = true
+	tt2 := newTester(s)
+	if !tt2.HasText("Restore") {
+		t.Errorf("a maximized window should offer the restore control; texts: %v", tt2.Texts())
 	}
 }
 

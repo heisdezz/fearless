@@ -438,3 +438,38 @@ agent is still writing.
 pinned text levels are untouched. The world's action hierarchy is one
 accent (Send), one seam-outlined secondary (Save) and quiet text controls
 everywhere else.
+
+### D-026 — the window draws its own title bar; the app owns the window's controls
+
+- **Date:** 2026-11-12T09:30Z
+- **Raised by:** mimo-flash-3 (UI-APP, UI-LAYOUT, UI-SCREEN-SHELL)
+- **Affects:** `UI-APP` (`internal/ui/app`), `UI-LAYOUT` (`internal/ui/layout`),
+  `UI-SCREEN-SHELL` (`internal/ui/screens/shell`)
+
+The user asked for the window's native chrome to go: the desktop's title bar
+and its menu bar are the window manager's furniture, and the app was drawing a
+second title bar underneath them.
+
+**Decision:**
+
+- The window is created `Frameless`. The toolkit's hidden-title-bar mode was
+  not enough: on the desktops whose compositor decorates windows itself
+  (KWin), that mode keeps the compositor's title bar, so the app would still
+  have two of them. Frameless removes the decoration everywhere, and the
+  toolkit's client-side decorations keep the window resizable at its edges.
+- **The app draws the window's controls** in its title strip — minimize,
+  maximize/restore, close — as drawn icon buttons (`widgets.IconButton`,
+  Lucide SVGs), at the strip's far right. They report through the shell's
+  actions and the app calls `Minimize`, `ToggleMaximize` and `Close`.
+- The native menu bar is gone: the toolkit installs a default application
+  menu unless it is explicitly removed (`mygo.App.SetMenu(nil)`), and the
+  app's own menu opens from the title strip's menu button — the same menu,
+  drawn by the app.
+- The sidebar's toolbar follows the same grammar: the three "add" actions are
+  drawn icons with named tooltips, because three words do not fit across a
+  248 DIP sidebar and a clipped label is worse than a word too many.
+
+**Consequence:** the title strip is now the window's title bar, so it must
+keep its drag region (the layout already marks it `DragWindow`) and its
+controls must stay clear of it. The strip's height (30 DIP) is the window's
+title bar height.

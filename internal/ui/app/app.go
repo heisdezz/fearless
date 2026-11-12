@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"sync"
 
 	"github.com/egoist/mygo"
@@ -12,6 +14,7 @@ import (
 	lobe "github.com/lobehub/lobe-mygo/pkg/layout"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
+	"fearless/internal/core/collection"
 	"fearless/internal/core/model"
 	"fearless/internal/platform"
 	"fearless/internal/ui/dialogs"
@@ -169,7 +172,10 @@ func (a *App) initScreens() {
 			}
 		},
 		OnOpenCollection: func() {
-			a.ShowImport()
+			a.OpenCollection()
+		},
+		OnCreateCollection: func() {
+			a.CreateCollection()
 		},
 		OnCreateRequest: func(parentUID string) {
 			a.NewRequest(parentUID)
@@ -222,6 +228,24 @@ func (a *App) initScreens() {
 		},
 		OnStop: func() {
 			a.CancelActiveRequest()
+		},
+		// The window's own controls: the window has no native title bar,
+		// so the app draws the buttons that minimize, maximize and close
+		// it in its title strip.
+		OnMinimize: func() {
+			if win := a.window(); win != nil {
+				win.Minimize()
+			}
+		},
+		OnToggleMaximize: func() {
+			if win := a.window(); win != nil {
+				win.ToggleMaximize()
+			}
+		},
+		OnClose: func() {
+			if win := a.window(); win != nil {
+				win.Close()
+			}
 		},
 		OnConsoleTab: func(tab int) {
 			a.mu.Lock()
@@ -305,7 +329,7 @@ func (a *App) MenuActions() MenuActions {
 			a.NewRequest("")
 		},
 		OnNewCollection: func() {
-			a.NewFolder("")
+			a.CreateCollection()
 		},
 		OnImportCollection: func() {
 			a.ShowImport()
@@ -420,10 +444,79 @@ func (a *App) NewRequest(parentUID string) {
 		}
 		a.SafeUpdate(func() {
 			if a.CollectionPresenter != nil {
-				_, _ = a.CollectionPresenter.CreateRequest(context.Background(), "", parentUID, name, "GET", "")
+				item, _ := a.CollectionPresenter.CreateRequest(context.Background(), "", parentUID, name, "GET", "")
+				if item != nil {
+					if a.RequestPresenter != nil {
+						a.RequestPresenter.SetItem(item)
+					}
+					if a.TabsPresenter != nil {
+						a.TabsPresenter.OpenTab(item)
+					}
+				}
 			}
 		})
 		return nil
+	})
+}
+
+// CreateCollection opens the modal to create a new collection.
+func (a *App) CreateCollection() {
+	if a.DialogQueue == nil {
+		return
+	}
+	_, _ = a.DialogQueue.CreateCollectionModal(func(ctx context.Context, name, location string, format model.CollectionFormat) error {
+		a.SafeUpdate(func() {
+			if a.CollectionPresenter != nil {
+				col, _ := a.CollectionPresenter.CreateCollection(ctx, name, location, format)
+				if col != nil {
+					a.CollectionPresenter.Select(col.UID)
+				}
+			}
+		})
+		return nil
+	})
+}
+
+// OpenCollection opens a directory picker or prompt to load an existing collection.
+func (a *App) OpenCollection() {
+	dir, err := a.Services.DialogsOr().OpenDirectory(context.Background(), platform.OpenOptions{
+		Title: "Open Collection",
+	})
+	if err == nil && dir != "" {
+		a.loadCollectionDir(dir)
+		return
+	}
+	if errors.Is(err, platform.ErrCancelled) {
+		return
+	}
+	if a.DialogQueue != nil {
+		_, _ = a.DialogQueue.Prompt("Open Collection", []string{"Folder Path"}, func(_ context.Context, vals map[string]string) error {
+			path := strings.TrimSpace(vals["Folder Path"])
+			if path == "" {
+				return errors.New("folder path is required")
+			}
+			a.loadCollectionDir(path)
+			return nil
+		})
+	}
+}
+
+func (a *App) loadCollectionDir(dir string) {
+	a.SafeUpdate(func() {
+		if a.CollectionPresenter != nil {
+			col, err := collection.Load(dir)
+			if err == nil && col != nil {
+				cols := a.CollectionPresenter.Collections()
+				for _, existing := range cols {
+					if existing.Path == col.Path || existing.UID == col.UID {
+						a.CollectionPresenter.Select(existing.UID)
+						return
+					}
+				}
+				a.CollectionPresenter.SetCollections(append(cols, col))
+				a.CollectionPresenter.Select(col.UID)
+			}
+		}
 	})
 }
 
@@ -600,6 +693,12 @@ func (a *App) renderMainView(c *ui.Context) {
 		if a.RequestPresenter != nil {
 			inFlight = a.RequestPresenter.InFlight()
 		}
+		// The window's state, for the title strip's window control: the
+		// glyph says whether a click maximizes or restores.
+		maximized := false
+		if win := a.window(); win != nil {
+			maximized = win.IsMaximized()
+		}
 
 		// The status bar shows facts, never decoration (PRODUCT.md): the
 		// request count of the mounted collections, the engine state and
@@ -637,12 +736,20 @@ func (a *App) renderMainView(c *ui.Context) {
 			EnvironmentName:  envName,
 			Environments:     envNames,
 			InFlight:         inFlight,
+			Maximized:        maximized,
 			Status:           status,
 			ActiveConsoleTab: a.activeConsoleTab,
 		}
 
 		a.ShellScreen.View(c)
 	}
+}
+
+// window returns the main window, or nil before the window exists.
+func (a *App) window() *mygo.Window {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.Window
 }
 
 // countRequestItems counts request items in a collection tree, recursing
