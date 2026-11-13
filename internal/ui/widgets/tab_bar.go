@@ -47,8 +47,18 @@ func RequestTabBar(c *ui.Context, tabs []*presenters.TabItem, activeUID string, 
 					}
 				}).
 				Children(func() {
+					selectTab := func() {
+						if props.OnSelect != nil {
+							props.OnSelect(tab.UID)
+						}
+					}
+
+					// The badge, title and dirty dot each carry the select handler
+					// too: they sit above the row and swallow the pointer, so a
+					// click on the method chip (the left of the tab) never reached
+					// the row's own OnClick and the tab stayed unselected.
 					// Method badge
-					MethodBadge(c, tab.Method, MethodBadgeProps{Size: 9, PaddingX: 4, PaddingY: 1})
+					MethodBadge(c, tab.Method, MethodBadgeProps{Size: 9, PaddingX: 4, PaddingY: 1}).OnClick(selectTab)
 
 					// Title (Decision R-3: preview tabs are italic only)
 					title := tab.Title
@@ -61,6 +71,7 @@ func RequestTabBar(c *ui.Context, tabs []*presenters.TabItem, activeUID string, 
 					if tab.IsTransient {
 						txt.Italic()
 					}
+					txt.OnClick(selectTab)
 
 					// Dirty dot
 					if tab.IsDirty {

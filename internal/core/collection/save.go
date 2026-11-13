@@ -128,6 +128,12 @@ func SaveCollectionConfig(col *model.Collection) error {
 		return fmt.Errorf("collection: write config %s: %w", targetPath, err)
 	}
 
+	// Keep the root file's variables in step with the config, so a host set in
+	// the UI is still there after the next load.
+	if err := writeRootVars(col.Path, col); err != nil {
+		return err
+	}
+
 	return nil
 }
 

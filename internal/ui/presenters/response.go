@@ -44,11 +44,14 @@ type ResponsePresenter struct {
 	state        ResponseState
 	activeSubTab ResponseSubTab
 	activeReqUID string
-	result       *model.Result
-	errMessage   string
-	streamBody   strings.Builder
-	streamSize   int64
-	onChanged    func()
+	// itemUID is the request this pane belongs to. A pane only adopts the
+	// executions of that item, so one tab's send never lands in another.
+	itemUID    string
+	result     *model.Result
+	errMessage string
+	streamBody strings.Builder
+	streamSize int64
+	onChanged  func()
 }
 
 // NewResponsePresenter creates an initialized ResponsePresenter.
@@ -57,6 +60,28 @@ func NewResponsePresenter() *ResponsePresenter {
 		state:        ResponseStateIdle,
 		activeSubTab: RespSubTabBody,
 	}
+}
+
+// BindItem ties the presenter to the request it shows. Only that request's
+// executions are adopted; an empty UID keeps the old accept-everything
+// behaviour, which a standalone presenter (tests, previews) still wants.
+func (p *ResponsePresenter) BindItem(itemUID string) {
+	p.mu.Lock()
+	if p.itemUID == itemUID {
+		p.mu.Unlock()
+		return
+	}
+	p.itemUID = itemUID
+	// Switching to another request starts from a clean pane rather than
+	// showing the previous request's response.
+	p.state = ResponseStateIdle
+	p.activeReqUID = ""
+	p.result = nil
+	p.errMessage = ""
+	p.streamBody.Reset()
+	p.streamSize = 0
+	p.mu.Unlock()
+	p.notifyChanged()
 }
 
 // State returns the current lifecycle state (idle, loading, completed, error).
@@ -225,6 +250,14 @@ func (p *ResponsePresenter) HandleEvent(ev events.Event) {
 	switch e := ev.(type) {
 	case events.RequestQueued:
 		p.mu.Lock()
+		// Adopt only this pane's own request. Without the filter every open
+		// tab latched onto whichever request was queued last, so a send in one
+		// tab put every other tab in loading state and then showed that tab's
+		// response.
+		if p.itemUID != "" && e.ItemUID != p.itemUID {
+			p.mu.Unlock()
+			return
+		}
 		p.activeReqUID = e.UID
 		p.state = ResponseStateLoading
 		p.result = nil

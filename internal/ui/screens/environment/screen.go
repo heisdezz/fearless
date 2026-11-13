@@ -142,7 +142,7 @@ func list(c *ui.Context, tk *lobetheme.Tokens, p *presenters.EnvironmentPresente
 		_ = p.DeleteEnvironment(context.Background(), toDelete)
 	}
 	if createNew {
-		_, _ = p.CreateEnvironment(context.Background(), NextEnvironmentName(envs))
+		_, _ = p.CreateEnvironment(context.Background(), presenters.NextEnvironmentName(envs))
 	}
 }
 
@@ -269,10 +269,4 @@ func empty(c *ui.Context, tk *lobetheme.Tokens, title, desc string) ui.Element {
 		ui.Text(c, title).FontSize(13).FontWeight(600).TextColor(tk.TextSecondary)
 		ui.Text(c, desc).FontSize(12).TextColor(tk.TextTertiary)
 	})
-}
-
-// NextEnvironmentName finds a free "Untitled N" name. It is the presenter's
-// rule, re-exported here for the screen's own call site.
-func NextEnvironmentName(envs []*model.Environment) string {
-	return presenters.NextEnvironmentName(envs)
 }

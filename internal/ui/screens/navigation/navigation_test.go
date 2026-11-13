@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/egoist/mygo/ui"
-	lobe "github.com/lobehub/lobe-mygo/pkg/layout"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/core/model"
@@ -86,12 +85,6 @@ func testScreen(rec *actionRecorder) *Screen {
 	}
 
 	actions := Actions{
-		OnSelectSection: func(s presenters.SidebarSection) {
-			rec.sections = append(rec.sections, s)
-		},
-		OnToggleCollapse: func() {
-			rec.collapseToggle++
-		},
 		OnFilterChanged: func(q string) {
 			rec.filters = append(rec.filters, q)
 		},
@@ -144,10 +137,10 @@ func TestNavigationSmokeTest(t *testing.T) {
 	s := testScreen(rec)
 	tt := newTester(s)
 
-	// The section switcher is set in small caps; the tree and the toolbar
-	// keep their prose.
+	// The collections header and the tree keep their prose; the old
+	// HISTORY/RUNNER switcher tabs are gone with their sections.
 	expectedTexts := []string{
-		"COLLECTIONS", "HISTORY", "RUNNER",
+		"Collections",
 		"+ Request", "+ Folder", "Open",
 		"Users", "Get Users", "Create User",
 	}
@@ -221,22 +214,6 @@ func TestActionsAreTheOnlyWrites(t *testing.T) {
 	s := testScreen(rec)
 	tt := newTester(s)
 
-	// Click section switcher to History
-	if err := tt.Click("HISTORY"); err != nil {
-		t.Fatalf("click HISTORY: %v", err)
-	}
-	if len(rec.sections) == 0 || rec.sections[len(rec.sections)-1] != presenters.SidebarSectionHistory {
-		t.Errorf("expected OnSelectSection history, got %v", rec.sections)
-	}
-
-	// Click section switcher to Runner
-	if err := tt.Click("RUNNER"); err != nil {
-		t.Fatalf("click RUNNER: %v", err)
-	}
-	if len(rec.sections) == 0 || rec.sections[len(rec.sections)-1] != presenters.SidebarSectionRunner {
-		t.Errorf("expected OnSelectSection runner, got %v", rec.sections)
-	}
-
 	// Click action buttons
 	if err := tt.Click("+ Request"); err != nil {
 		t.Fatalf("click + Request: %v", err)
@@ -258,52 +235,35 @@ func TestActionsAreTheOnlyWrites(t *testing.T) {
 	if rec.openCollection == 0 {
 		t.Errorf("expected OnOpenCollection callback")
 	}
-
-	if err := tt.Click("Collapse sidebar"); err != nil {
-		t.Fatalf("click Collapse sidebar: %v", err)
-	}
-	if rec.collapseToggle == 0 {
-		t.Errorf("expected OnToggleCollapse callback")
-	}
 }
 
-// TestRailCollapsedMode asserts proper icons and expand button when sidebar is collapsed.
-func TestRailCollapsedMode(t *testing.T) {
+// TestSidebarIsNotCollapsible asserts the nav has no collapse control: it is
+// resizable, with a minimum width, not collapsible.
+func TestSidebarIsNotCollapsible(t *testing.T) {
 	rec := &actionRecorder{}
 	s := testScreen(rec)
+
+	tt := newTester(s)
+	if tt.HasText("Collapse sidebar") {
+		t.Error("expected no collapse control in the sidebar")
+	}
+
+	// A Snapshot flagged collapsed must still render the expanded nav, since
+	// the collapse mode no longer exists.
 	s.Snapshot.IsCollapsed = true
-
-	tt := ui.NewTester(func(c *ui.Context) {
-		s.Sidebar(c, lobe.SideNavState{})
-	}, 64, testH)
-	tt.Frame()
-	tt.Advance(600 * time.Millisecond)
-	tt.Frame()
-
-	// Text headers should NOT be visible in rail mode
-	if tt.HasText("COLLECTIONS") {
-		t.Errorf("COLLECTIONS label unexpectedly visible in rail mode")
-	}
-
-	// Tooltips / Labels for icon buttons should be registered
-	if !tt.HasText("Collections") || !tt.HasText("History") || !tt.HasText("Runner") {
-		t.Errorf("expected rail buttons to have labels for tooltips; texts: %v", tt.Texts())
-	}
-
-	// Clicking expand button fires OnToggleCollapse
-	if err := tt.Click("Expand sidebar"); err != nil {
-		t.Fatalf("click expand button in rail: %v", err)
-	}
-	if rec.collapseToggle != 1 {
-		t.Errorf("expected OnToggleCollapse to be called once, got %d", rec.collapseToggle)
+	tt = newTester(s)
+	for _, want := range []string{"Collections", "My API", "+ Request"} {
+		if !tt.HasText(want) {
+			t.Errorf("expected expanded sidebar content %q, texts: %v", want, tt.Texts())
+		}
 	}
 }
 
 // TestTakeSnapshotAndNewScreen verifies snapshot creation from real presenters.
 func TestTakeSnapshotAndNewScreen(t *testing.T) {
 	col := &model.Collection{
-		UID:  "col-1",
-		Name: "Test Collection",
+		UID:               "col-1",
+		Name:              "Test Collection",
 		ActiveEnvironment: "Dev",
 		Items: []*model.Item{
 			{
@@ -363,26 +323,6 @@ func TestEmptyCollectionState(t *testing.T) {
 	}
 }
 
-// TestHistoryAndRunnerSections verifies secondary sections.
-func TestHistoryAndRunnerSections(t *testing.T) {
-	rec := &actionRecorder{}
-	s := testScreen(rec)
-
-	// History section
-	s.Snapshot.ActiveSection = presenters.SidebarSectionHistory
-	tt := newTester(s)
-	if !tt.HasText("REQUEST HISTORY") {
-		t.Errorf("expected Request History section title, texts: %v", tt.Texts())
-	}
-
-	// Runner section
-	s.Snapshot.ActiveSection = presenters.SidebarSectionRunner
-	tt = newTester(s)
-	if !tt.HasText("COLLECTION RUNNER") {
-		t.Errorf("expected Collection Runner section title, texts: %v", tt.Texts())
-	}
-}
-
 // TestNilStateRendersDefaults asserts that nil presenter produces safe defaults.
 func TestNilStateRendersDefaults(t *testing.T) {
 	snap := TakeSnapshot(nil)
@@ -392,8 +332,8 @@ func TestNilStateRendersDefaults(t *testing.T) {
 
 	s := &Screen{Snapshot: snap}
 	tt := newTester(s)
-	if !tt.HasText("COLLECTIONS") {
-		t.Errorf("expected COLLECTIONS switcher tab on nil snapshot")
+	if !tt.HasText("Collections") {
+		t.Errorf("expected Collections header on nil snapshot")
 	}
 }
 
@@ -539,39 +479,10 @@ func TestSidebar_HeaderMenuAndCollectionContextMenu(t *testing.T) {
 	rec := &actionRecorder{}
 	s := testScreen(rec)
 
-	// 1. Initial render: has Collections title; Mock Servers dock is closed by default
+	// 1. Initial render: has the Collections header title.
 	tt := newTester(s)
 	if !tt.HasText("Collections") {
 		t.Fatalf("expected header title Collections, texts: %v", tt.Texts())
-	}
-	if s.MockServersOpen {
-		t.Fatalf("expected MockServersOpen to default to false")
-	}
-	if !tt.HasText("Mock Servers") {
-		t.Fatalf("expected collapsed Mock Servers header label, texts: %v", tt.Texts())
-	}
-	if tt.HasText("No mock servers configured") {
-		t.Fatalf("expected mock servers body to be hidden when collapsed")
-	}
-
-	// Open Mock Servers dock
-	s.MockServersOpen = true
-	tt.Frame()
-	if !s.MockServersOpen {
-		t.Fatalf("expected MockServersOpen to be true")
-	}
-	if !tt.HasText("Mock Servers") || !tt.HasText("No mock servers configured") {
-		t.Fatalf("expected expanded Mock Servers dock content, texts: %v", tt.Texts())
-	}
-
-	// Close Mock Servers dock
-	s.MockServersOpen = false
-	tt.Frame()
-	if s.MockServersOpen {
-		t.Fatalf("expected MockServersOpen to be false again")
-	}
-	if tt.HasText("No mock servers configured") {
-		t.Fatalf("expected mock servers body to be hidden after collapse")
 	}
 
 	// 2. Open header dropdown menu (sidebar.png)
@@ -593,8 +504,6 @@ func TestSidebar_HeaderMenuAndCollectionContextMenu(t *testing.T) {
 		"Rename",
 		"Collapse",
 		"Reveal in File Manager",
-		"Create Mock server",
-		"Beta",
 		"Settings",
 		"Open in Terminal",
 		"Remove",

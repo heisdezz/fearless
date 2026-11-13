@@ -2,7 +2,9 @@ package widgets
 
 import (
 	"github.com/egoist/mygo/ui"
+	"github.com/lobehub/lobe-mygo/pkg/action"
 	"github.com/lobehub/lobe-mygo/pkg/lucide"
+	"github.com/lobehub/lobe-mygo/pkg/overlay"
 	lobetheme "github.com/lobehub/lobe-mygo/pkg/theme"
 
 	"fearless/internal/ui/presenters"
@@ -10,9 +12,12 @@ import (
 
 // TreeRowProps configures the CollectionTreeRow widget.
 type TreeRowProps struct {
-	OnToggle func(uid string)
-	OnSelect func(uid string)
-	OnMenu   func(uid string)
+	OnToggle   func(uid string)
+	OnSelect   func(uid string)
+	OnMenu     func(uid string)
+	MenuOpen   *bool
+	MenuItems  []overlay.MenuItem
+	OnMenuItem func(key string)
 }
 
 // CollectionTreeRow renders a single row in the collection tree sidebar.
@@ -49,6 +54,12 @@ func CollectionTreeRow(c *ui.Context, node *presenters.TreeNode, props TreeRowPr
 			BorderColor(tk.Primary)
 	} else {
 		row.Background(tk.BgLayout)
+	}
+
+		if len(props.MenuItems) > 0 {
+		if key := overlay.ContextMenu(c, row, overlay.DropdownMenuProps{Items: props.MenuItems}); key != "" && props.OnMenuItem != nil {
+			props.OnMenuItem(key)
+		}
 	}
 
 	return row.Children(func() {
@@ -108,8 +119,23 @@ func CollectionTreeRow(c *ui.Context, node *presenters.TreeNode, props TreeRowPr
 
 		ui.Box(c).Grow(1) // Spacer
 
-		// More options button (three dots)
-		if props.OnMenu != nil {
+		// More options button (three dots) with Lobe DropdownMenu
+		if props.MenuOpen != nil && len(props.MenuItems) > 0 {
+			key := overlay.DropdownMenu(c, props.MenuOpen, overlay.DropdownMenuProps{
+				Items: props.MenuItems,
+			}, func(trig ui.Element) {
+				StyleIconButton(c, trig, IconButtonProps{
+					Icon:    lucide.MoreHorizontal(),
+					Label:   "Options",
+					Tooltip: "Options",
+					Size:    lobetheme.Small,
+					Variant: action.Text,
+				})
+			})
+			if key != "" && props.OnMenuItem != nil {
+				props.OnMenuItem(key)
+			}
+		} else if props.OnMenu != nil {
 			ui.Icon(c, lucide.MoreHorizontal()).
 				Size(14, 14).
 				TextColor(tk.TextSecondary).

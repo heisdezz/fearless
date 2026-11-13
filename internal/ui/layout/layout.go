@@ -188,6 +188,10 @@ func (s *LayoutState) Normalize(b RegionBudget) {
 	}
 	s.SidebarWidth = clamp(s.SidebarWidth, b.SidebarMin, b.SidebarMax)
 
+	// The sidebar is resizable but never collapsible: a state file written by
+	// a build that supported the rail must not reopen as one.
+	s.SidebarExpanded = true
+
 	if s.SplitPercent <= 0 {
 		s.SplitPercent = d.SplitPercent
 	}
@@ -205,14 +209,14 @@ func (s *LayoutState) Normalize(b RegionBudget) {
 }
 
 // Degrade applies the §8.4 degraded modes for a window of the given width:
-// below MinWindowWidth the sidebar collapses to its rail and the panes
-// stack, so the editor keeps a usable width. It only ever collapses — a
-// window growing back does not re-open what the user (or this method) shut.
-// It is idempotent; call it whenever the window resizes.
+// below MinWindowWidth the panes stack, so the editor keeps a usable width.
+// The sidebar no longer collapses to a rail — it just narrows to its minimum
+// width instead — so only the orientation is downgraded here. It is
+// idempotent; call it whenever the window resizes.
 func (s *LayoutState) Degrade(width float32, b RegionBudget) {
 	b = b.withDefaults()
 	if width > 0 && width < b.MinWindowWidth {
-		s.SidebarExpanded = false
+		s.SidebarWidth = b.SidebarMin
 		s.RequestResponseOrientation = OrientationStacked
 	}
 }
@@ -310,9 +314,14 @@ func (r *RootView) View(c *ui.Context) {
 		// rather than covering them.
 		ui.Row(c).FillHeight().Grow(1).Children(func() {
 			if r.Sidebar != nil {
+				// The sidebar only resizes: NoExpand drops the collapse tab,
+				// and NoResize is left off so the seam stays draggable.
+				// MinWidth is where a drag stops, so the nav can never collapse
+				// into a rail.
 				props := lobe.DraggableSideNavProps{
-					MinWidth:   b.SidebarCollapsed, // the §8.1 icon rail
+					MinWidth:   b.SidebarMin,
 					MaxWidth:   b.SidebarMax,
+					NoExpand:   true,
 					Background: tk.BgContainer,
 				}
 				lobe.DraggableSideNav(c, &r.State.SidebarWidth, &r.State.SidebarExpanded, props, func(nav lobe.SideNavState) {

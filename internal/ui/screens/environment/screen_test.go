@@ -113,10 +113,10 @@ func TestEmptyState(t *testing.T) {
 // TestNextEnvironmentName: new environments get a free default name.
 func TestNextEnvironmentName(t *testing.T) {
 	envs := []*model.Environment{{Name: "Untitled 1"}, {Name: "Untitled 2"}}
-	if got := NextEnvironmentName(envs); got != "Untitled 3" {
+	if got := presenters.NextEnvironmentName(envs); got != "Untitled 3" {
 		t.Errorf("NextEnvironmentName = %q, want Untitled 3", got)
 	}
-	if got := NextEnvironmentName(nil); got != "Untitled 1" {
+	if got := presenters.NextEnvironmentName(nil); got != "Untitled 1" {
 		t.Errorf("NextEnvironmentName(nil) = %q, want Untitled 1", got)
 	}
 }

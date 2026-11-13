@@ -161,6 +161,14 @@ func (c *Codec) ParseFolder(data []byte) (*model.Item, error) {
 	if blk, ok := doc.FindBlock("vars:pre-request"); ok {
 		item.Vars = variablesFrom(blk)
 	}
+	// A plain `vars` block is the collection's own scope: collection.bru holds
+	// the variables `{{name}}` resolves against before any environment. It is
+	// read into the same field, since the root file has no other use for it.
+	if len(item.Vars) == 0 {
+		if blk, ok := doc.FindBlock("vars"); ok {
+			item.Vars = variablesFrom(blk)
+		}
+	}
 	if sc := buildScripts(doc); sc != nil {
 		item.Script = sc
 	}
@@ -219,6 +227,22 @@ func (c *Codec) WriteFolder(folder *model.Item) ([]byte, error) {
 		return nil, errors.New("bru: nil folder")
 	}
 	return []byte(writeFolder(folder)), nil
+}
+
+// WriteCollectionRoot serialises `collection.bru`, the root file that holds
+// collection-level settings. Only the variables block is written: they are the
+// values `{{name}}` resolves against at the collection scope, so a collection
+// saved without them loses every request's base URL on reload.
+func (c *Codec) WriteCollectionRoot(vars []model.Variable) ([]byte, error) {
+	w := &writer{}
+	if len(vars) > 0 {
+		w.open(0, "vars")
+		for _, v := range vars {
+			w.writeVariable(1, v)
+		}
+		w.closeBlock(0)
+	}
+	return []byte(strings.TrimRight(w.String(), "\n") + "\n"), nil
 }
 
 // WriteEnvironment serialises an environment file.

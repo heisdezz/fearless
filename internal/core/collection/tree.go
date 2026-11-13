@@ -98,8 +98,10 @@ func LoadCollection(dir string) (*model.Collection, error) {
 	rootFilePath := filepath.Join(absDir, rootFileName)
 	if rootBytes, err := os.ReadFile(rootFilePath); err == nil {
 		if rootItem, err := codec.ParseFolder(rootBytes); err == nil && rootItem != nil {
-			// Attach root-level folder settings to collection
-			// If needed by UI/Engine
+			// The root file carries collection-level variables. They are what
+			// `{{name}}` resolves against at the collection scope, so dropping
+			// them leaves imported requests pointing at nothing.
+			col.Config.Vars = rootItem.Vars
 		}
 	}
 

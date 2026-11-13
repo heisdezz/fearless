@@ -580,21 +580,67 @@ func (p *CollectionPresenter) CreateFolder(ctx context.Context, colUID, parentFo
 }
 
 // DeleteItem dispatches item deletion.
+//
+// With no deleter port (the app keeps its collections in memory rather than in
+// a bus store) the item is removed from the in-memory tree directly. Without
+// that fallback the call was a silent no-op and the Delete menu item did
+// nothing.
 func (p *CollectionPresenter) DeleteItem(ctx context.Context, colUID, itemUID string) error {
-	if p.deleter == nil {
+	if itemUID == "" {
 		return nil
 	}
-	err := p.deleter.DeleteItem(ctx, colUID, itemUID)
-	if err == nil {
-		p.mu.Lock()
-		delete(p.expandedFolders, itemUID)
-		if p.selectedUID == itemUID {
-			p.selectedUID = ""
+
+	if p.deleter != nil {
+		err := p.deleter.DeleteItem(ctx, colUID, itemUID)
+		if err != nil {
+			p.notifyChanged()
+			return err
 		}
-		p.mu.Unlock()
 	}
+
+	p.mu.Lock()
+	p.removeItemLocked(colUID, itemUID)
+	delete(p.expandedFolders, itemUID)
+	if p.selectedUID == itemUID {
+		p.selectedUID = ""
+	}
+	p.mu.Unlock()
 	p.notifyChanged()
-	return err
+	return nil
+}
+
+// removeItemLocked drops itemUID from the collection that owns it, pruning it
+// from its parent folder's children. colUID may be empty, in which case every
+// collection is searched.
+func (p *CollectionPresenter) removeItemLocked(colUID, itemUID string) {
+	for _, c := range p.collections {
+		if c == nil {
+			continue
+		}
+		if colUID != "" && c.UID != colUID && c.FindItem(itemUID) == nil {
+			continue
+		}
+		if removeFromTree(&c.Items, itemUID) {
+			return
+		}
+	}
+}
+
+// removeFromTree removes itemUID from items, recursing into folders.
+func removeFromTree(items *[]*model.Item, itemUID string) bool {
+	for i, it := range *items {
+		if it == nil {
+			continue
+		}
+		if it.UID == itemUID {
+			*items = append((*items)[:i], (*items)[i+1:]...)
+			return true
+		}
+		if it.IsFolder() && removeFromTree(&it.Children, itemUID) {
+			return true
+		}
+	}
+	return false
 }
 
 // MoveItem dispatches item move or reordering.

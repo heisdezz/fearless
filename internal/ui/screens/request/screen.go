@@ -60,9 +60,9 @@ type Options struct {
 	// Resolves reports whether a variable name is defined in the current
 	// scopes, so the URL bar can mark an undefined one.
 	Resolves widgets.VariableLookup
-	// OnOpenVariable runs when a `{{variable}}` in the URL bar is double-clicked,
-	// with the variable's name, so the editor can open that variable for
-	// creation or editing.
+	// OnOpenVariable runs when a `{{variable}}` in the URL bar is clicked, with
+	// the variable's name, so the editor can open that variable for creation or
+	// editing.
 	OnOpenVariable func(name string)
 	// Field holds the URL bar's edit state across frames.
 	Field *widgets.TemplateField

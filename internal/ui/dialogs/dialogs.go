@@ -43,6 +43,8 @@ const (
 	// It cannot be cancelled: the app has nowhere to write until it is
 	// answered (see "first run" in docs/progress/decisions.md D-022).
 	KindStorageLocation
+	// KindNewRequest composes a request: its type, name, method and URL.
+	KindNewRequest
 )
 
 // String is used in tests and logs.
@@ -60,6 +62,8 @@ func (k Kind) String() string {
 		return "create-collection"
 	case KindStorageLocation:
 		return "storage-location"
+	case KindNewRequest:
+		return "new-request"
 	}
 	return "unknown"
 }

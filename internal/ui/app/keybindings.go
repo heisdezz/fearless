@@ -316,3 +316,41 @@ func DefaultKeybindingRouter() *KeybindingRouter {
 
 	return r
 }
+
+// wireKeybindingHandlers binds the app's command methods to the router actions.
+func (a *App) wireKeybindingHandlers() {
+	if a.Router == nil {
+		return
+	}
+
+	a.Router.SetHandler(ActionSendRequest, func() {
+		a.SendActiveRequest()
+	})
+	a.Router.SetHandler(ActionCancelRequest, func() {
+		a.CancelActiveRequest()
+	})
+	a.Router.SetHandler(ActionSave, func() {
+		a.SaveActiveRequest()
+	})
+	a.Router.SetHandler(ActionNewRequest, func() {
+		a.NewRequest("")
+	})
+	a.Router.SetHandler(ActionCloseTab, func() {
+		a.CloseActiveTab()
+	})
+	a.Router.SetHandler(ActionPreferences, func() {
+		a.TogglePreferences()
+	})
+	a.Router.SetHandler(ActionToggleSidebar, func() {
+		a.ToggleSidebar()
+	})
+	a.Router.SetHandler(ActionChangeLayout, func() {
+		a.ToggleLayout()
+	})
+	a.Router.SetHandler(ActionToggleConsole, func() {
+		a.ToggleConsole()
+	})
+	a.Router.SetHandler(ActionImport, func() {
+		a.ShowImport()
+	})
+}

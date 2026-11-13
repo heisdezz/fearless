@@ -294,6 +294,80 @@ func (q *Queue) StorageLocationModal(onChoose func(ctx context.Context, location
 	return newWait(ch), nil
 }
 
+// RequestKind is the kind of request a new-request dialog composes. It maps
+// onto model.ItemType; the dialog only offers the kinds the app can edit.
+type RequestKind string
+
+const (
+	RequestKindHTTP      RequestKind = "http"
+	RequestKindGraphQL   RequestKind = "graphql"
+	RequestKindGRPC      RequestKind = "grpc"
+	RequestKindWebSocket RequestKind = "websocket"
+	RequestKindCURL      RequestKind = "curl"
+)
+
+// RequestKinds lists the kinds the New Request dialog offers, in display order.
+var RequestKinds = []RequestKind{
+	RequestKindHTTP,
+	RequestKindGraphQL,
+	RequestKindGRPC,
+	RequestKindWebSocket,
+	RequestKindCURL,
+}
+
+// NewRequestValues is what the New Request dialog collects.
+type NewRequestValues struct {
+	Kind   RequestKind
+	Name   string
+	Method string
+	URL    string
+}
+
+// NewRequestModal opens the dialog that composes a request: its type, name,
+// HTTP method and URL. onCreate runs on the action goroutine; returning an error
+// keeps the dialog open with the message shown.
+//
+// The values are kept in the queue's generic map (kind, name, method, url) so
+// the dialog shares the field plumbing with the other modals; the view draws the
+// type and method as pickers rather than text fields.
+func (q *Queue) NewRequestModal(onCreate func(ctx context.Context, values NewRequestValues) error) (*Wait, error) {
+	ch, err := q.open(KindNewRequest, "New Request", "", "Create", []Field{
+		{Key: "name", Label: "Request Name", Placeholder: "Request Name"},
+		{Key: "url", Label: "URL", Placeholder: "Request URL"},
+	}, func(ctx context.Context, values map[string]string) error {
+		kind := RequestKind(values["kind"])
+		if kind == "" {
+			kind = RequestKindHTTP
+		}
+		method := strings.ToUpper(strings.TrimSpace(values["method"]))
+		if method == "" {
+			method = "GET"
+		}
+		name := strings.TrimSpace(values["name"])
+		if name == "" {
+			name = "Untitled Request"
+		}
+		return onCreate(ctx, NewRequestValues{
+			Kind:   kind,
+			Name:   name,
+			Method: method,
+			URL:    strings.TrimSpace(values["url"]),
+		})
+	})
+	if err != nil {
+		return newWait(nil), err
+	}
+	q.mu.Lock()
+	if q.values == nil {
+		q.values = map[string]string{}
+	}
+	q.values["kind"] = string(RequestKindHTTP)
+	q.values["method"] = "GET"
+	q.mu.Unlock()
+	q.notify()
+	return newWait(ch), nil
+}
+
 // ImportModal opens the import dialog. onImported receives the parsed document
 // and runs on the action goroutine; its error keeps the dialog open so the user
 // can fix the paste.

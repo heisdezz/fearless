@@ -96,6 +96,14 @@ func CopyModelIntoStorage(col *model.Collection, storageRoot string) (string, er
 		return "", fmt.Errorf("collection: write config file: %w", err)
 	}
 
+	// Collection-level variables live in the root file, which Load reads back.
+	// Writing them here keeps an imported collection's `{{baseUrl}}`-style
+	// references resolvable after the reload that follows an import.
+	if err := writeRootVars(dst, col); err != nil {
+		_ = os.RemoveAll(dst)
+		return "", err
+	}
+
 	if err := writeItems(dst, col.Items, codec); err != nil {
 		_ = os.RemoveAll(dst)
 		return "", err
@@ -143,6 +151,33 @@ func codecForFormat(f model.CollectionFormat) (format.Codec, error) {
 		return c, nil
 	}
 	return nil, fmt.Errorf("collection: no codec for format %q", f)
+}
+
+// writeRootVars writes the collection's root file (collection.bru) so its
+// variables survive a reload. Collections in the yml dialect carry variables in
+// the config file itself, so only the bru dialect needs this.
+func writeRootVars(dir string, col *model.Collection) error {
+	if col == nil || len(col.Config.Vars) == 0 || col.Config.Format == model.FormatYML {
+		return nil
+	}
+	codec, ok := format.Get(model.FormatBru)
+	if !ok {
+		return nil
+	}
+	serializer, ok := codec.(interface {
+		WriteCollectionRoot([]model.Variable) ([]byte, error)
+	})
+	if !ok {
+		return nil
+	}
+	data, err := serializer.WriteCollectionRoot(col.Config.Vars)
+	if err != nil {
+		return fmt.Errorf("collection: serialize root vars: %w", err)
+	}
+	if len(data) == 0 {
+		return nil
+	}
+	return os.WriteFile(filepath.Join(dir, "collection.bru"), data, 0o644)
 }
 
 // configFilename is the collection configuration file for a dialect.

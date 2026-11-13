@@ -6,20 +6,17 @@ import (
 	"fearless/internal/core/events"
 )
 
-// SidebarSection identifies the active section of the sidebar.
+// SidebarSection identifies a section of the sidebar. Only Collections is left:
+// the History and Runner sections were placeholders with no backing data.
 type SidebarSection string
 
 const (
 	SidebarSectionCollections SidebarSection = "collections"
-	SidebarSectionHistory     SidebarSection = "history"
-	SidebarSectionRunner      SidebarSection = "runner"
 )
 
 // AllSidebarSections lists all available sidebar sections in standard order.
 var AllSidebarSections = []SidebarSection{
 	SidebarSectionCollections,
-	SidebarSectionHistory,
-	SidebarSectionRunner,
 }
 
 const (

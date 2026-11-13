@@ -1,7 +1,11 @@
 package app
 
 import (
+	"context"
+
 	"github.com/egoist/mygo"
+	"github.com/lobehub/lobe-mygo/pkg/lucide"
+	"github.com/lobehub/lobe-mygo/pkg/overlay"
 )
 
 // MenuActions collects callbacks triggered from application and window menus.
@@ -24,6 +28,145 @@ type MenuActions struct {
 	OnToggleFullScreen func()
 	OnAbout            func()
 	OnDocumentation    func()
+}
+
+// MenuActions returns the bound actions for window and application menus.
+func (a *App) MenuActions() MenuActions {
+	return MenuActions{
+		OnNewRequest: func() {
+			a.NewRequest("")
+		},
+		OnNewCollection: func() {
+			a.CreateCollection()
+		},
+		OnImportCollection: func() {
+			a.ShowImport()
+		},
+		OnSave: func() {
+			a.SaveActiveRequest()
+		},
+		OnCloseTab: func() {
+			a.CloseActiveTab()
+		},
+		OnPreferences: func() {
+			a.ShowPreferences()
+		},
+		OnQuit: func() {
+			mygo.App.Quit()
+		},
+		OnSendRequest: func() {
+			a.SendActiveRequest()
+		},
+		OnCancelRequest: func() {
+			a.CancelActiveRequest()
+		},
+		OnToggleSidebar: func() {
+			a.ToggleSidebar()
+		},
+		OnChangeLayout: func() {
+			a.ToggleLayout()
+		},
+		OnToggleConsole: func() {
+			a.ToggleConsole()
+		},
+		OnAbout: func() {
+			mygo.App.ShowAboutPanel(mygo.AboutPanelOptions{
+				ApplicationName: "fearless",
+				Version:         "1.0.0",
+			})
+		},
+		OnDocumentation: func() {
+			browser := a.Services.BrowserOr()
+			_ = browser.Open(context.Background(), "https://github.com/usebruno/bruno")
+		},
+	}
+}
+
+func (a *App) buildLobeMenuItems() []overlay.MenuItem {
+	return []overlay.MenuItem{
+		{Key: "new-request", Label: "New Request", Icon: lucide.Plus(), Hotkey: "mod+n"},
+		{Key: "new-collection", Label: "New Collection", Icon: lucide.FolderPlus(), Hotkey: "mod+shift+n"},
+		{Key: "import-collection", Label: "Import Collection...", Icon: lucide.Upload(), Hotkey: "mod+o"},
+		{Divider: true},
+		{Key: "save", Label: "Save", Icon: lucide.Save(), Hotkey: "mod+s"},
+		{Key: "close-tab", Label: "Close Tab", Icon: lucide.X(), Hotkey: "mod+w"},
+		{Divider: true},
+		{Key: "send-request", Label: "Send Request", Icon: lucide.Send(), Hotkey: "mod+enter"},
+		{Key: "cancel-request", Label: "Cancel Request", Icon: lucide.Square(), Hotkey: "escape"},
+		{Divider: true},
+		{Key: "toggle-sidebar", Label: "Toggle Sidebar", Icon: lucide.Sidebar(), Hotkey: "mod+\\"},
+		{Key: "toggle-console", Label: "Toggle Console", Icon: lucide.Terminal(), Hotkey: "mod+t"},
+		{Key: "change-layout", Label: "Change Orientation", Icon: lucide.Columns(), Hotkey: "mod+j"},
+		{Divider: true},
+		{Key: "preferences", Label: "Preferences...", Icon: lucide.Settings(), Hotkey: "mod+,"},
+		{Divider: true},
+		{Key: "documentation", Label: "Documentation", Icon: lucide.BookOpen()},
+		{Key: "about", Label: "About fearless", Icon: lucide.Info()},
+		{Divider: true},
+		{Key: "quit", Label: "Quit fearless", Icon: lucide.LogOut(), Danger: true, Hotkey: "mod+q"},
+	}
+}
+
+func (a *App) handleMenuKey(key string) {
+	actions := a.MenuActions()
+	switch key {
+	case "new-request":
+		if actions.OnNewRequest != nil {
+			actions.OnNewRequest()
+		}
+	case "new-collection":
+		if actions.OnNewCollection != nil {
+			actions.OnNewCollection()
+		}
+	case "import-collection":
+		if actions.OnImportCollection != nil {
+			actions.OnImportCollection()
+		}
+	case "save":
+		if actions.OnSave != nil {
+			actions.OnSave()
+		}
+	case "close-tab":
+		if actions.OnCloseTab != nil {
+			actions.OnCloseTab()
+		}
+	case "send-request":
+		if actions.OnSendRequest != nil {
+			actions.OnSendRequest()
+		}
+	case "cancel-request":
+		if actions.OnCancelRequest != nil {
+			actions.OnCancelRequest()
+		}
+	case "toggle-sidebar":
+		if actions.OnToggleSidebar != nil {
+			actions.OnToggleSidebar()
+		}
+	case "toggle-console":
+		if actions.OnToggleConsole != nil {
+			actions.OnToggleConsole()
+		}
+	case "change-layout":
+		if actions.OnChangeLayout != nil {
+			actions.OnChangeLayout()
+		}
+	case "preferences":
+		if actions.OnPreferences != nil {
+			actions.OnPreferences()
+		}
+	case "documentation":
+		if actions.OnDocumentation != nil {
+			actions.OnDocumentation()
+		}
+	case "about":
+		if actions.OnAbout != nil {
+			actions.OnAbout()
+		}
+	case "quit":
+		if actions.OnQuit != nil {
+			actions.OnQuit()
+		}
+	}
 }
 
 // BuildMenu constructs the standard fearless menu hierarchy:

@@ -107,11 +107,11 @@ func TestApp_ViewNavigation(t *testing.T) {
 func TestApp_LayoutToggles(t *testing.T) {
 	a := New()
 
-	// Sidebar expanded toggle
-	initSidebar := a.LayoutState.SidebarExpanded
+	// Sidebar reset-to-default-width
+	a.LayoutState.SidebarWidth = 500
 	a.ToggleSidebar()
-	if a.LayoutState.SidebarExpanded == initSidebar {
-		t.Error("ToggleSidebar did not flip SidebarExpanded")
+	if a.LayoutState.SidebarWidth != 248 {
+		t.Errorf("ToggleSidebar should reset the width to 248, got %f", a.LayoutState.SidebarWidth)
 	}
 
 	// Orientation toggle
@@ -198,26 +198,26 @@ func TestApp_ActionsAndDialogs(t *testing.T) {
 		t.Error("New Col not found in collection presenter after creation")
 	}
 
-	// Open Collection via prompt fallback
+	// Open Collection opens the import dialog, which accepts folders, files,
+	// URLs and pastes.
 	a.OpenCollection()
 	if !a.DialogQueue.Active() {
-		t.Error("OpenCollection did not open dialog prompt")
+		t.Error("OpenCollection did not open a dialog")
 	}
-	a.DialogQueue.SetValue("Folder Path", "")
-	a.DialogQueue.OK() // triggers validation error, stays active
-	if !a.DialogQueue.Active() {
-		t.Error("empty Folder Path should keep dialog active")
+	if a.DialogQueue.Kind() != dialogs.KindImport {
+		t.Errorf("OpenCollection opened %s, want the import dialog", a.DialogQueue.Kind())
 	}
-	a.DialogQueue.SetValue("Folder Path", "/nonexistent/test/path")
-	a.DialogQueue.OK()
 	a.DialogQueue.Cancel()
 
-	// New Request via DialogQueue
+	// New Request via the New Request dialog.
 	a.NewRequest("")
 	if !a.DialogQueue.Active() {
-		t.Error("NewRequest did not open dialog prompt")
+		t.Error("NewRequest did not open a dialog")
 	}
-	a.DialogQueue.SetValue("Request Name", "My Test Request")
+	if a.DialogQueue.Kind() != dialogs.KindNewRequest {
+		t.Errorf("NewRequest opened %s, want the new-request dialog", a.DialogQueue.Kind())
+	}
+	a.DialogQueue.SetValue("name", "My Test Request")
 	a.DialogQueue.OK()
 
 	waitFor("new request to finish", func() bool {
@@ -528,10 +528,10 @@ func TestApp_LobeDropdownMenu(t *testing.T) {
 	}
 
 	// Test handleMenuKey
-	initialSidebar := a.LayoutState.SidebarExpanded
+	a.LayoutState.SidebarWidth = 500
 	a.handleMenuKey("toggle-sidebar")
-	if a.LayoutState.SidebarExpanded == initialSidebar {
-		t.Error("expected toggle-sidebar to flip sidebar state")
+	if a.LayoutState.SidebarWidth != 248 {
+		t.Error("expected toggle-sidebar to reset the sidebar width")
 	}
 
 	initialLayout := a.LayoutState.RequestResponseOrientation
@@ -559,4 +559,3 @@ func TestApp_LobeDropdownMenu(t *testing.T) {
 		}
 	}
 }
-

@@ -157,8 +157,10 @@ func (a *App) collectionByPath(path string) *model.Collection {
 // restoreSession reopens the collections recorded by the last run.
 //
 // A path that no longer exists is skipped rather than reported: a collection on
-// a removable drive, or one the user deleted, should not block startup. The
-// session file is rewritten afterwards, so stale paths drop out.
+// a removable drive, or one the user deleted, should not block startup. It runs
+// before the window exists, so SafeUpdate executes synchronously and the
+// presenter is populated by the time this returns; the session file is
+// rewritten at the end, which drops the stale paths.
 func (a *App) restoreSession() {
 	s := loadSession(a.sessionPath)
 	if len(s.Collections) == 0 {
@@ -172,5 +174,8 @@ func (a *App) restoreSession() {
 			a.CollectionPresenter.Select(col.UID)
 		}
 	}
+	// Rewrite the session so paths that no longer load drop out. This runs
+	// before the window exists, so the loads above already executed and the
+	// presenter holds exactly what reopened.
 	a.persistSession()
 }

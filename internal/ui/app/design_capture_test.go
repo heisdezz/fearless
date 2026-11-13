@@ -131,6 +131,10 @@ func TestCaptureDesign(t *testing.T) {
 		// one asked for before the capture frame runs.
 		tt.SetDark(dark)
 		tt.Frame()
+		// Let the modal's entrance animation finish, so the capture shows the
+		// dialog open rather than mid-fade.
+		tt.Advance(600 * time.Millisecond)
+		tt.Frame()
 		path := filepath.Join(outDir, name+".png")
 		f, err := os.Create(path)
 		if err != nil {
@@ -147,6 +151,12 @@ func TestCaptureDesign(t *testing.T) {
 	render("empty-dark", empty, 1440, 900, true)
 	render("request-dark", loaded, 1440, 900, true)
 	render("request-light", loaded, 1440, 900, false)
+
+	// The New Request dialog, over the empty workspace: the form a user meets
+	// before any request exists.
+	composing := New()
+	composing.NewRequest("")
+	render("new-request-dark", composing, 900, 620, true)
 }
 
 // captureProvenance is the record every capture carries inside itself: how

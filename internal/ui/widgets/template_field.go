@@ -27,9 +27,8 @@ type TemplateFieldProps struct {
 	Size        lobetheme.Size
 	// Resolves reports whether a variable is defined; nil means "all defined".
 	Resolves VariableLookup
-	// OnVariableClick runs when a `{{variable}}` token is double-clicked, with
-	// the name without braces. A single click on a token starts editing the
-	// field, so one click still lands in the text.
+	// OnVariableClick runs when a `{{variable}}` token is clicked, with the
+	// name without braces, so a variable can be created or edited.
 	OnVariableClick func(name string)
 	OnChanged       func(string)
 }
@@ -39,8 +38,8 @@ type TemplateFieldProps struct {
 // MyGo's text input paints one colour for its whole value, so `{{variables}}`
 // could not be marked defined or undefined and could not be click targets of
 // their own. The field therefore shows a token run when idle and swaps to a real
-// input when clicked; double-clicking a variable token opens that variable
-// instead of starting an edit.
+// input when clicked; clicking a variable token opens that variable instead of
+// starting an edit.
 //
 // Keep one TemplateField per logical field across frames: it holds edit state.
 func TemplateFieldView(c *ui.Context, f *TemplateField, value *string, p TemplateFieldProps) ui.Element {
@@ -54,10 +53,8 @@ func TemplateFieldView(c *ui.Context, f *TemplateField, value *string, p Templat
 		size = lobetheme.Small
 	}
 
-	// A token double-click is recorded during the run and dispatched after the
-	// frame; a single click on a token asks for an edit to start.
+	// A token click is recorded during the run and dispatched after the frame.
 	var toOpen string
-	var startEdit bool
 
 	box := ui.Row(c).
 		FillWidth().
@@ -85,26 +82,19 @@ func TemplateFieldView(c *ui.Context, f *TemplateField, value *string, p Templat
 			return
 		}
 
-		// Idle: a click anywhere in the run starts editing, a variable token
-		// included; a double click on a token opens the variable instead. The
-		// run fills the box so the whole field is one click target, not just
-		// the typed text.
-		//
-		// A token takes the click itself, and an element takes every click
-		// under it, so the run is asked only about the clicks between tokens.
-		// The token handles a click on a variable both ways: see drawTemplate.
+		// Idle: a click anywhere in the run starts editing, except on a
+		// variable token, which opens the variable. The run fills the box so
+		// the whole field is one click target, not just the typed text.
 		run := ui.Row(c).FillWidth().Grow(1).FillHeight().AlignItems(ui.Center)
+		run.OnClick(func() { f.Editing = true })
 		run.Children(func() {
 			if strings.TrimSpace(val) == "" {
 				ui.Text(c, p.Placeholder).FontSize(fieldFontSize(size)).TextColor(tk.TextPlaceholder)
 				return
 			}
 			line := ui.Row(c).FillWidth().AlignItems(ui.Center)
-			line.Children(func() { drawTemplate(tk, c, val, p, &toOpen, &startEdit) })
+			line.Children(func() { drawTemplate(tk, c, val, p, &toOpen) })
 		})
-		if run.Clicked() || startEdit {
-			f.Editing = true
-		}
 	})
 
 	if toOpen != "" && p.OnVariableClick != nil {
@@ -116,11 +106,7 @@ func TemplateFieldView(c *ui.Context, f *TemplateField, value *string, p Templat
 }
 
 // drawTemplate lays out value as alternating plain text and variable tokens.
-//
-// A single click on a token starts an edit and a double click opens the
-// variable, so the field is one click target for text and one gesture opens a
-// variable. A token reports a double click before the click that makes it up.
-func drawTemplate(tk *lobetheme.Tokens, c *ui.Context, val string, p TemplateFieldProps, toOpen *string, edit *bool) {
+func drawTemplate(tk *lobetheme.Tokens, c *ui.Context, val string, p TemplateFieldProps, toOpen *string) {
 	spans := ParseVariables(val)
 	cursor := 0
 	for _, sp := range spans {
@@ -135,22 +121,10 @@ func drawTemplate(tk *lobetheme.Tokens, c *ui.Context, val string, p TemplateFie
 			colour, tint = tk.Error, tk.ErrorFillTertiary
 		}
 		token := ui.Box(c).Padding(1, 3).Radius(3).Background(tint)
-		doubled := token.DoubleClicked()
-		clicked := token.Clicked()
-		switch {
-		case doubled:
+		// The token takes the click itself: a click over its text would
+		// otherwise land on the text, which offers no handler.
+		if token.Clicked() {
 			*toOpen = seg.Name
-		case clicked:
-			// The run around the token is not asked about a click the token
-			// took, so the single click asks for the edit here. The action runs
-			// after the whole pass has read its input, so a double click is
-			// known to have cleared it by then.
-			start := edit
-			token.OnClick(func() {
-				if *toOpen == "" {
-					*start = true
-				}
-			})
 		}
 		token.Children(func() {
 			ui.Text(c, val[seg.Start:seg.End]).TextColor(colour)

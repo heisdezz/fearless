@@ -225,23 +225,23 @@ func TestRightRailPushesPanes(t *testing.T) {
 	}
 }
 
-// TestCollapsedSidebarStaysInRail: a collapsed nav never exceeds the
-// SidebarCollapsed rail width by more than the label that spills into it.
-func TestCollapsedSidebarStaysInRail(t *testing.T) {
+// TestSidebarNeverCollapses: the nav is resizable but not collapsible, so a
+// state flagged collapsed still renders at the minimum width, never as a rail.
+func TestSidebarNeverCollapses(t *testing.T) {
 	st := DefaultLayoutState()
 	st.SidebarExpanded = false
 	b := DefaultRegionBudget()
 
 	tt := newTester(sentinelRoot(st, false))
-	rail, ok := tt.Find("SIDEBAR")
+	side, ok := tt.Find("SIDEBAR")
 	if !ok {
 		t.Fatal("SIDEBAR not rendered")
 	}
-	if rail.X > b.SidebarCollapsed+tol {
-		t.Errorf("collapsed sidebar starts at X=%.1f, beyond rail width %.1f", rail.X, b.SidebarCollapsed)
+	if side.X > tol {
+		t.Errorf("sidebar starts at X=%.1f, want the window's left edge", side.X)
 	}
-	if rail.X+rail.W > b.SidebarMin+tol {
-		t.Errorf("collapsed sidebar spans to %.1f, beyond SidebarMin %.1f", rail.X+rail.W, b.SidebarMin)
+	if side.W < b.SidebarMin-tol {
+		t.Errorf("sidebar width %.1f is under the minimum %.1f (it must not collapse)", side.W, b.SidebarMin)
 	}
 }
 
@@ -256,7 +256,6 @@ func TestStatePersistsThroughJSON(t *testing.T) {
 	st.ConsoleOpen = true
 	st.RailWidth = 400
 	st.RailExpanded = true
-	st.SidebarExpanded = false
 
 	data, err := EncodeState(st)
 	if err != nil {
@@ -324,8 +323,8 @@ func TestNormalizeDefaults(t *testing.T) {
 		s.RailWidth != d.RailWidth || s.RequestResponseOrientation != d.RequestResponseOrientation {
 		t.Errorf("Normalize(zero) numerics = %+v, want defaults %+v", s, d)
 	}
-	if s.SidebarExpanded {
-		t.Error("Normalize must take bools as written, not force defaults")
+	if !s.SidebarExpanded {
+		t.Error("Normalize must keep the sidebar expanded: it is not collapsible")
 	}
 
 	s = LayoutState{SidebarWidth: 100, SplitPercent: 1, RailWidth: 9000}
@@ -335,24 +334,27 @@ func TestNormalizeDefaults(t *testing.T) {
 	}
 }
 
-// TestDegrade: §8.4 below 900 DIP the sidebar collapses and the panes
-// stack; growing back does not reopen what it shut.
+// TestDegrade: §8.4 below 900 DIP the sidebar narrows to its minimum width
+// and the panes stack. The sidebar never collapses.
 func TestDegrade(t *testing.T) {
 	b := DefaultRegionBudget()
 	st := DefaultLayoutState()
 	st.RequestResponseOrientation = OrientationSideBySide
 
 	st.Degrade(b.MinWindowWidth-1, b)
-	if st.SidebarExpanded {
-		t.Error("degraded mode must collapse the sidebar")
+	if st.SidebarWidth != b.SidebarMin {
+		t.Errorf("degraded mode must narrow the sidebar to %.1f, got %.1f", b.SidebarMin, st.SidebarWidth)
+	}
+	if !st.SidebarExpanded {
+		t.Error("degraded mode must not collapse the sidebar")
 	}
 	if st.RequestResponseOrientation != OrientationStacked {
 		t.Error("degraded mode must force stacked panes")
 	}
 
 	st.Degrade(1600, b)
-	if st.SidebarExpanded {
-		t.Error("growing back must not reopen the sidebar")
+	if !st.SidebarExpanded {
+		t.Error("growing back must leave the sidebar expanded")
 	}
 
 	fresh := DefaultLayoutState()

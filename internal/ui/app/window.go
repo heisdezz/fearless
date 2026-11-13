@@ -140,3 +140,10 @@ func (a *App) Run() error {
 	})
 	return mygo.App.Run()
 }
+
+// window returns the main window, or nil before the window exists.
+func (a *App) window() *mygo.Window {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.Window
+}

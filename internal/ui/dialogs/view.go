@@ -61,8 +61,130 @@ func widthFor(k Kind) float32 {
 		return 560
 	case KindStorageLocation:
 		return 520
+	case KindNewRequest:
+		return 560
 	}
 	return 520
+}
+
+// newRequestKinds are the types the New Request dialog offers, in the order the
+// mock shows them: three across, then the remaining two.
+var newRequestKinds = []struct {
+	kind  string
+	label string
+}{
+	{string(RequestKindHTTP), "HTTP"},
+	{string(RequestKindGRPC), "gRPC"},
+	{string(RequestKindCURL), "From cURL"},
+	{string(RequestKindGraphQL), "GraphQL"},
+	{string(RequestKindWebSocket), "WebSocket"},
+}
+
+// newRequestMethods are the HTTP verbs offered by the method picker.
+var newRequestMethods = []field.SelectOption{
+	{Value: "GET", Label: "GET"},
+	{Value: "POST", Label: "POST"},
+	{Value: "PUT", Label: "PUT"},
+	{Value: "PATCH", Label: "PATCH"},
+	{Value: "DELETE", Label: "DELETE"},
+	{Value: "HEAD", Label: "HEAD"},
+	{Value: "OPTIONS", Label: "OPTIONS"},
+}
+
+// renderNewRequestBody draws the New Request form: a type selector, a name
+// field, and a method + URL row.
+func renderNewRequestBody(c *ui.Context, q *Queue) {
+	tk := lobetheme.TokensOf(c)
+
+	ui.Column(c).Gap(16).AlignSelf(ui.Stretch).Children(func() {
+		// Type selector: a three-column grid of radio-style choices.
+		ui.Column(c).Gap(8).AlignSelf(ui.Stretch).Children(func() {
+			ui.Text(c, "Type").FontSize(tk.FontSize).FontWeight(500).TextColor(tk.TextSecondary)
+			current := q.Value("kind")
+			if current == "" {
+				current = string(RequestKindHTTP)
+			}
+
+			for rowStart := 0; rowStart < len(newRequestKinds); rowStart += 3 {
+				end := rowStart + 3
+				if end > len(newRequestKinds) {
+					end = len(newRequestKinds)
+				}
+				ui.Row(c).FillWidth().Gap(8).Children(func() {
+					for _, opt := range newRequestKinds[rowStart:end] {
+						opt := opt
+						selected := current == opt.kind
+						ui.ButtonBase(c).
+							Grow(1).
+							Row().AlignItems(ui.Center).Gap(8).
+							Padding(6, 4).
+							Cursor(ui.CursorPointer).
+							OnClick(func() {
+								q.SetValue("kind", opt.kind)
+							}).
+							Children(func() {
+								// A ring, filled when chosen, drawn rather than themed so it
+								// reads the same in both appearances.
+								ui.Box(c).Size(14, 14).Radius(7).Shrink(0).
+									BorderWidth(1).BorderColor(tk.Border).
+									AlignSelf(ui.Center).
+									Children(func() {
+										if selected {
+											ui.Box(c).Size(6, 6).Radius(3).Background(tk.Primary).
+												Margin(3, 0, 0, 0)
+										}
+									})
+								ui.Text(c, opt.label).FontSize(13).TextColor(tk.Text)
+							})
+					}
+				})
+			}
+		})
+
+		// Request Name
+		ui.Column(c).Gap(6).AlignSelf(ui.Stretch).Children(func() {
+			ui.Text(c, "Request Name").FontSize(tk.FontSize).FontWeight(500).TextColor(tk.TextSecondary)
+			name := q.Value("name")
+			input := widgets.FieldInput(c, &name, widgets.FieldInputProps{Placeholder: "Request Name"})
+			input.AlignSelf(ui.Stretch)
+			if name != q.Value("name") {
+				q.SetValue("name", name)
+			}
+		})
+
+		// URL, with the method picker to its left.
+		ui.Column(c).Gap(6).AlignSelf(ui.Stretch).Children(func() {
+			ui.Text(c, "URL").FontSize(tk.FontSize).FontWeight(500).TextColor(tk.TextSecondary)
+			ui.Row(c).FillWidth().Gap(8).AlignItems(ui.Center).Children(func() {
+				method := q.Value("method")
+				if method == "" {
+					method = "GET"
+				}
+				ui.Box(c).Width(96).Shrink(0).Children(func() {
+					widgets.FieldSelect(c, &method, widgets.FieldSelectProps{Options: newRequestMethods})
+				})
+				if method != q.Value("method") {
+					q.SetValue("method", method)
+				}
+
+				url := q.Value("url")
+				input := widgets.FieldInput(c, &url, widgets.FieldInputProps{Placeholder: "Request URL"})
+				input.Grow(1)
+				if url != q.Value("url") {
+					q.SetValue("url", url)
+				}
+			})
+		})
+
+		if n := len(q.Warnings()); n > 0 {
+			feedback.Alert(c, "Some details adapted", feedback.AlertProps{
+				Type:        feedback.Warning,
+				Description: joinWarnings(q.Warnings()),
+				Variant:     feedback.Soft,
+				Selectable:  true,
+			}).AlignSelf(ui.Stretch)
+		}
+	})
 }
 
 type importTabItem struct {
@@ -268,6 +390,11 @@ func body(c *ui.Context, q *Queue) {
 					Selectable:  true,
 				}).AlignSelf(ui.Stretch)
 			}
+			return
+		}
+
+		if q.Kind() == KindNewRequest {
+			renderNewRequestBody(c, q)
 			return
 		}
 
